@@ -9,7 +9,7 @@ export class RestBlockchain {
     constructor(
         private apiUrl: string,
         public network: string,
-        private cache = new Map<string, any>(),
+        public cache: {get: (key: string) => any, set: (key: string, value: any) => any} = new Map<string, any>(),
         private debug = false
     ) { }
 
