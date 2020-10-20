@@ -1,18 +1,15 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Wallet = void 0;
-const bsv_1 = require("bsv");
-const events_1 = require("events");
-const signed_message_1 = require("./signed-message");
-class Wallet extends events_1.EventEmitter {
+import { Address, Ecdsa, Hash, KeyPair, PrivKey, PubKey, Random, Script, Sig, Tx } from 'bsv';
+import { EventEmitter } from 'events';
+import { SignedMessage } from './signed-message';
+export class Wallet extends EventEmitter {
     constructor(paymail, keyPair, run) {
         super();
         this.paymail = paymail;
         this.keyPair = keyPair;
         this.timeouts = new Map();
         this.blockchain = run.blockchain;
-        this.ownerPair = bsv_1.KeyPair.fromPrivKey(bsv_1.PrivKey.fromString(run.owner.privkey));
-        this.pursePair = bsv_1.KeyPair.fromPrivKey(bsv_1.PrivKey.fromString(run.purse.privkey));
+        this.ownerPair = KeyPair.fromPrivKey(PrivKey.fromString(run.owner.privkey));
+        this.pursePair = KeyPair.fromPrivKey(PrivKey.fromString(run.purse.privkey));
         this.pubkey = keyPair.pubKey.toHex();
         this.purse = run.purse.address;
         this.address = run.owner.address;
@@ -50,7 +47,7 @@ class Wallet extends events_1.EventEmitter {
     buildMessage(messageData, sign = true) {
         messageData.ts = Date.now();
         messageData.from = this.keyPair.pubKey.toString();
-        const message = new signed_message_1.SignedMessage(messageData);
+        const message = new SignedMessage(messageData);
         if (sign)
             message.sign(this.keyPair);
         return message;
@@ -58,17 +55,17 @@ class Wallet extends events_1.EventEmitter {
     async signTx(tx) {
         return Promise.all(tx.txIns.map(async (txIn, i) => {
             const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
-            const outTx = bsv_1.Tx.fromHex(await this.blockchain.fetch(txid));
+            const outTx = Tx.fromHex(await this.blockchain.fetch(txid));
             const txOut = outTx.txOuts[txIn.txOutNum];
             if (txOut.script.isPubKeyHashOut()) {
-                const address = bsv_1.Address.fromTxOutScript(txOut.script).toString();
+                const address = Address.fromTxOutScript(txOut.script).toString();
                 if (address === this.purse) {
                     const sig = await tx.asyncSign(this.pursePair, undefined, i, txOut.script, txOut.valueBn);
-                    txIn.setScript(new bsv_1.Script().writeBuffer(sig.toTxFormat()).writeBuffer(this.pursePair.pubKey.toBuffer()));
+                    txIn.setScript(new Script().writeBuffer(sig.toTxFormat()).writeBuffer(this.pursePair.pubKey.toBuffer()));
                 }
                 else if (address === this.address) {
                     const sig = await tx.asyncSign(this.ownerPair, undefined, i, txOut.script, txOut.valueBn);
-                    txIn.setScript(new bsv_1.Script().writeBuffer(sig.toTxFormat()).writeBuffer(this.ownerPair.pubKey.toBuffer()));
+                    txIn.setScript(new Script().writeBuffer(sig.toTxFormat()).writeBuffer(this.ownerPair.pubKey.toBuffer()));
                 }
             }
             return txOut;
@@ -79,8 +76,8 @@ class Wallet extends events_1.EventEmitter {
     async decrypt(value) {
     }
     async verifySig(sig, hash, pubkey) {
-        const msgHash = await bsv_1.Hash.asyncSha256(Buffer.from(hash));
-        const verified = bsv_1.Ecdsa.verify(msgHash, bsv_1.Sig.fromString(sig), bsv_1.PubKey.fromString(pubkey));
+        const msgHash = await Hash.asyncSha256(Buffer.from(hash));
+        const verified = Ecdsa.verify(msgHash, Sig.fromString(sig), PubKey.fromString(pubkey));
         console.log('SIG:', verified, sig, hash, pubkey);
         return verified;
     }
@@ -88,7 +85,7 @@ class Wallet extends events_1.EventEmitter {
         return Math.floor(Math.random() * (max || Number.MAX_SAFE_INTEGER));
     }
     randomBytes(size) {
-        return bsv_1.Random.getRandomBuffer(size).toString('hex');
+        return Random.getRandomBuffer(size).toString('hex');
     }
     setTimeout(cb, ms) {
         const timeoutId = Date.now();
@@ -101,5 +98,4 @@ class Wallet extends events_1.EventEmitter {
         }
     }
 }
-exports.Wallet = Wallet;
 //# sourceMappingURL=wallet.js.map

@@ -1,12 +1,6 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RestStateCache = void 0;
-const http_error_1 = require("./http-error");
-const node_fetch_1 = __importDefault(require("node-fetch"));
-class RestStateCache {
+import { HttpError } from './http-error';
+import fetch from 'node-fetch';
+export class RestStateCache {
     constructor(apiUrl, cache = new Map(), debug = false) {
         this.apiUrl = apiUrl;
         this.cache = cache;
@@ -24,14 +18,14 @@ class RestStateCache {
         }
         if (!this.requests.has(key)) {
             const request = (async () => {
-                const resp = await node_fetch_1.default(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
+                const resp = await fetch(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
                 if (!resp.ok) {
                     if (resp.status === 404) {
                         if (this.debug)
                             console.log('Remote Miss:', key);
                         return;
                     }
-                    throw new http_error_1.HttpError(resp.status, resp.statusText);
+                    throw new HttpError(resp.status, resp.statusText);
                 }
                 if (this.debug)
                     console.log('Remote Hit:', key);
@@ -48,5 +42,4 @@ class RestStateCache {
         await this.cache.set(key, value);
     }
 }
-exports.RestStateCache = RestStateCache;
 //# sourceMappingURL=rest-state-cache.js.map

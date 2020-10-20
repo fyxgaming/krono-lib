@@ -1,13 +1,7 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RestBlockchain = void 0;
-const signed_message_1 = require("./signed-message");
-const http_error_1 = require("./http-error");
-const node_fetch_1 = __importDefault(require("node-fetch"));
-class RestBlockchain {
+import { SignedMessage } from './signed-message';
+import { HttpError } from './http-error';
+import fetch from 'node-fetch';
+export class RestBlockchain {
     constructor(apiUrl, network, cache = new Map(), debug = false) {
         this.apiUrl = apiUrl;
         this.network = network;
@@ -28,13 +22,13 @@ class RestBlockchain {
     async broadcast(rawtx) {
         if (this.debug)
             console.log('BROADCAST:', rawtx);
-        const resp = await node_fetch_1.default(`${this.apiUrl}/broadcast`, {
+        const resp = await fetch(`${this.apiUrl}/broadcast`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ rawtx })
         });
         if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, await resp.text());
+            throw new HttpError(resp.status, await resp.text());
         const txid = await resp.text();
         this.debug && console.log('Broadcast:', txid);
         await this.cache.set(`tx://${txid}`, rawtx);
@@ -54,9 +48,9 @@ class RestBlockchain {
             return rawtx;
         if (!this.requests.has(txid)) {
             const request = Promise.resolve().then(async () => {
-                const resp = await node_fetch_1.default(`${this.apiUrl}/tx/${txid}`);
+                const resp = await fetch(`${this.apiUrl}/tx/${txid}`);
                 if (!resp.ok)
-                    throw new http_error_1.HttpError(resp.status, await resp.text());
+                    throw new HttpError(resp.status, await resp.text());
                 rawtx = await resp.text();
                 await this.cache.set(`tx://${txid}`, rawtx);
                 this.requests.delete(txid);
@@ -85,9 +79,9 @@ class RestBlockchain {
             return spend;
         if (!this.requests.has(cacheKey)) {
             const request = (async () => {
-                const resp = await node_fetch_1.default(`${this.apiUrl}/spends/${txid}_o${vout}`);
+                const resp = await fetch(`${this.apiUrl}/spends/${txid}_o${vout}`);
                 if (!resp.ok)
-                    throw new http_error_1.HttpError(resp.status, await resp.text());
+                    throw new HttpError(resp.status, await resp.text());
                 spend = (await resp.text()) || null;
                 if (spend)
                     await this.cache.set(cacheKey, spend);
@@ -101,68 +95,67 @@ class RestBlockchain {
     async utxos(script) {
         if (this.debug)
             console.log('UTXOS:', script);
-        const resp = await node_fetch_1.default(`${this.apiUrl}/utxos/${script}`);
+        const resp = await fetch(`${this.apiUrl}/utxos/${script}`);
         if (!resp.ok)
             throw new Error(await resp.text());
         return resp.json();
     }
     ;
     async jigIndex(address) {
-        const resp = await node_fetch_1.default(`${this.apiUrl}/jigs/address/${address}`);
+        const resp = await fetch(`${this.apiUrl}/jigs/address/${address}`);
         if (!resp.ok)
             throw new Error(`${resp.status} ${resp.statusText}`);
         return resp.json();
     }
     async loadJigData(loc, unspent) {
-        const resp = await node_fetch_1.default(`${this.apiUrl}/jigs/${loc}${unspent && '?unspent'}`);
+        const resp = await fetch(`${this.apiUrl}/jigs/${loc}${unspent && '?unspent'}`);
         if (!resp.ok)
             throw new Error(`${resp.status} ${resp.statusText}`);
         return resp.json();
     }
     async kindHistory(kind, query) {
-        const resp = await node_fetch_1.default(`${this.apiUrl}/jigs/kind/${kind}`, {
+        const resp = await fetch(`${this.apiUrl}/jigs/kind/${kind}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(query)
         });
         if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, await resp.text());
+            throw new HttpError(resp.status, await resp.text());
         return resp.json();
     }
     async originHistory(origin, query) {
-        const resp = await node_fetch_1.default(`${this.apiUrl}/jigs/origin/${origin}`, {
+        const resp = await fetch(`${this.apiUrl}/jigs/origin/${origin}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(query)
         });
         if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, await resp.text());
+            throw new HttpError(resp.status, await resp.text());
         return resp.json();
     }
     async fund(address, satoshis) {
-        const resp = await node_fetch_1.default(`${this.apiUrl}/fund/${address}${satoshis ? `?satoshis=${satoshis}` : ''}`);
+        const resp = await fetch(`${this.apiUrl}/fund/${address}${satoshis ? `?satoshis=${satoshis}` : ''}`);
         if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, await resp.text());
+            throw new HttpError(resp.status, await resp.text());
         return resp.text();
     }
     async loadMessage(messageId) {
-        const resp = await node_fetch_1.default(`${this.apiUrl}/messages/${messageId}`);
+        const resp = await fetch(`${this.apiUrl}/messages/${messageId}`);
         if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, await resp.text());
-        return new signed_message_1.SignedMessage(await resp.json());
+            throw new HttpError(resp.status, await resp.text());
+        return new SignedMessage(await resp.json());
     }
     async sendMessage(message, postTo) {
         const url = postTo || `${this.apiUrl}/messages`;
         console.log('Post TO:', url);
-        const resp = await node_fetch_1.default(url, {
+        const resp = await fetch(url, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(message)
         });
         if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, await resp.text());
+            throw new HttpError(resp.status, await resp.text());
         return resp.json();
     }
 }
-exports.RestBlockchain = RestBlockchain;
 //# sourceMappingURL=rest-blockchain.js.map
