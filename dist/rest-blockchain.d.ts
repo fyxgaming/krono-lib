@@ -3,10 +3,16 @@ import { SignedMessage } from './signed-message';
 export declare class RestBlockchain {
     private apiUrl;
     network: string;
-    private cache;
+    cache: {
+        get: (key: string) => any;
+        set: (key: string, value: any) => any;
+    };
     private debug;
     private requests;
-    constructor(apiUrl: string, network: string, cache?: Map<string, any>, debug?: boolean);
+    constructor(apiUrl: string, network: string, cache?: {
+        get: (key: string) => any;
+        set: (key: string, value: any) => any;
+    }, debug?: boolean);
     get bsvNetwork(): string;
     broadcast(rawtx: any): Promise<string>;
     populateInputs(tx: any): Promise<void>;
