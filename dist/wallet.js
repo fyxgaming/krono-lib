@@ -4,6 +4,7 @@ exports.Wallet = void 0;
 const bsv_1 = require("bsv");
 const events_1 = require("events");
 const signed_message_1 = require("./signed-message");
+const buffer_1 = require("buffer");
 class Wallet extends events_1.EventEmitter {
     constructor(paymail, keyPair, run) {
         super();
@@ -57,7 +58,7 @@ class Wallet extends events_1.EventEmitter {
     }
     async signTx(tx) {
         return Promise.all(tx.txIns.map(async (txIn, i) => {
-            const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
+            const txid = buffer_1.Buffer.from(txIn.txHashBuf).reverse().toString('hex');
             const outTx = bsv_1.Tx.fromHex(await this.blockchain.fetch(txid));
             const txOut = outTx.txOuts[txIn.txOutNum];
             if (txOut.script.isPubKeyHashOut()) {
@@ -79,7 +80,7 @@ class Wallet extends events_1.EventEmitter {
     async decrypt(value) {
     }
     async verifySig(sig, hash, pubkey) {
-        const msgHash = await bsv_1.Hash.asyncSha256(Buffer.from(hash));
+        const msgHash = await bsv_1.Hash.asyncSha256(buffer_1.Buffer.from(hash));
         const verified = bsv_1.Ecdsa.verify(msgHash, bsv_1.Sig.fromString(sig), bsv_1.PubKey.fromString(pubkey));
         console.log('SIG:', verified, sig, hash, pubkey);
         return verified;

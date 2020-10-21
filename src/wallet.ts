@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import { RestBlockchain } from './rest-blockchain';
 import { IJig } from './interfaces';
 import { SignedMessage } from './signed-message';
+import { Buffer } from 'buffer';
 
 export class Wallet extends EventEmitter {
     private blockchain: RestBlockchain;
