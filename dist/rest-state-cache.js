@@ -1,13 +1,10 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RestStateCache = void 0;
 const http_error_1 = require("./http-error");
-const node_fetch_1 = __importDefault(require("node-fetch"));
 class RestStateCache {
-    constructor(apiUrl, cache = new Map(), debug = false) {
+    constructor(fetch, apiUrl, cache = new Map(), debug = false) {
+        this.fetch = fetch;
         this.apiUrl = apiUrl;
         this.cache = cache;
         this.debug = debug;
@@ -24,7 +21,7 @@ class RestStateCache {
         }
         if (!this.requests.has(key)) {
             const request = (async () => {
-                const resp = await node_fetch_1.default(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
+                const resp = await this.fetch(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
                 if (!resp.ok) {
                     if (resp.status === 404) {
                         if (this.debug)

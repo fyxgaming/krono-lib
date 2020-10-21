@@ -1,11 +1,11 @@
 import { IStorage } from './interfaces';
 
 import {HttpError} from './http-error';
-import fetch from 'node-fetch';
 
 export class RestStateCache implements IStorage<any> {
     private requests = new Map<string, Promise<any>>();
     constructor(
+        private fetch,
         private apiUrl: string,
         public cache: {get: (key: string) => any, set: (key: string, value: any) => any} = new Map<string, any>(),
         private debug = false
@@ -21,7 +21,7 @@ export class RestStateCache implements IStorage<any> {
 
         if (!this.requests.has(key)) {
             const request = (async () => {
-                const resp = await fetch(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
+                const resp = await this.fetch(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
                 if (!resp.ok) {
                     if (resp.status === 404) {
                         if(this.debug) console.log('Remote Miss:', key);
