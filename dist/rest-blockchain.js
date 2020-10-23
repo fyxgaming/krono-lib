@@ -116,18 +116,8 @@ class RestBlockchain {
             throw new Error(`${resp.status} ${resp.statusText}`);
         return resp.json();
     }
-    async kindHistory(kind, query) {
-        const resp = await this.fetchLib(`${this.apiUrl}/jigs/kind/${kind}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(query)
-        });
-        if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, await resp.text());
-        return resp.json();
-    }
-    async originHistory(origin, query) {
-        const resp = await this.fetchLib(`${this.apiUrl}/jigs/origin/${origin}`, {
+    async jigQuery(query, limit = 10) {
+        const resp = await this.fetchLib(`${this.apiUrl}/jigs/search?limit=${limit}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(query)

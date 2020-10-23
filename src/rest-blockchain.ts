@@ -112,18 +112,8 @@ export class RestBlockchain {
         return resp.json();
     }
 
-    async kindHistory(kind: string, query: any) {
-        const resp = await this.fetchLib(`${this.apiUrl}/jigs/kind/${kind}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(query)
-        });
-        if (!resp.ok) throw new HttpError(resp.status, await resp.text());
-        return resp.json();
-    }
-
-    async originHistory(origin: string, query: any) {
-        const resp = await this.fetchLib(`${this.apiUrl}/jigs/origin/${origin}`, {
+    async jigQuery(query: any, limit = 10) {
+        const resp = await this.fetchLib(`${this.apiUrl}/jigs/search?limit=${limit}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(query)
