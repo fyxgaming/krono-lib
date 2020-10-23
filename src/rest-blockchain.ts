@@ -134,7 +134,7 @@ export class RestBlockchain {
         return new SignedMessage(await resp.json());
     }
 
-    async sendMessage(message: SignedMessage, postTo?: string): Promise<void> {
+    async sendMessage(message: SignedMessage, postTo?: string): Promise<any> {
         const url = postTo || `${this.apiUrl}/messages`;
         console.log('Post TO:', url);
         const resp = await this.fetchLib(url, {

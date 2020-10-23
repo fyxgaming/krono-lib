@@ -26,5 +26,5 @@ export declare class RestBlockchain {
     jigQuery(query: any, limit?: number): Promise<any>;
     fund(address: string, satoshis?: number): Promise<any>;
     loadMessage(messageId: any): Promise<SignedMessage>;
-    sendMessage(message: SignedMessage, postTo?: string): Promise<void>;
+    sendMessage(message: SignedMessage, postTo?: string): Promise<any>;
 }
