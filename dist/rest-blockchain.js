@@ -105,7 +105,7 @@ class RestBlockchain {
     }
     ;
     async jigIndex(address, kind) {
-        const resp = await this.fetchLib(`${this.apiUrl}/jigs/address/${address}?kind=${kind}`);
+        const resp = await this.fetchLib(`${this.apiUrl}/jigs/address/${address}?kind=${kind || ''}`);
         if (!resp.ok)
             throw new Error(`${resp.status} ${resp.statusText}`);
         return resp.json();
