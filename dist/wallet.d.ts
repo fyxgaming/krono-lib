@@ -20,7 +20,7 @@ export declare class Wallet extends EventEmitter {
     timeouts: Map<number, any>;
     constructor(paymail: string, keyPair: KeyPair, run: any);
     get now(): number;
-    loadJigIndex(): Promise<any>;
+    loadJigIndex(kind?: string): Promise<any>;
     loadJig(loc: string): Promise<IJig | void>;
     loadJigs(): Promise<[unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]>;
     buildMessage(messageData: Partial<SignedMessage>, sign?: boolean): SignedMessage;

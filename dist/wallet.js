@@ -30,8 +30,8 @@ class Wallet extends events_1.EventEmitter {
     get now() {
         return Date.now();
     }
-    async loadJigIndex() {
-        return this.blockchain.jigIndex(this.address);
+    async loadJigIndex(kind) {
+        return this.blockchain.jigIndex(this.address, kind);
     }
     async loadJig(loc) {
         const jig = await this.load(loc).catch((e) => {
