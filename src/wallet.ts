@@ -49,8 +49,8 @@ export class Wallet extends EventEmitter {
         return Date.now();
     }
 
-    async loadJigIndex(kind?: string) {
-        return this.blockchain.jigIndex(this.address, kind);
+    async loadJigIndex(kind = '', limit = 100, offset = 0) {
+        return this.blockchain.jigIndex(this.address, kind, limit, offset);
     }
 
     async loadJig(loc: string): Promise<IJig | void> {
