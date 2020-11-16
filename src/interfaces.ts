@@ -1,3 +1,8 @@
+/**
+ * Module interfaces.ts defines interfaces used with the krono-lib library
+ * @packageDocumentation
+ */
+
 import { SignedMessage } from "./signed-message";
 
 export interface IJigData {

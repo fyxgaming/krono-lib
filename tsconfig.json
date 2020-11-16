@@ -10,9 +10,13 @@
     "lib": [
       "es2017"
     ],
-    "outDir": "dist"
+    "outDir": "dist"    
   },
   "include": [
     "src/**/*.ts"
-  ]
+  ],
+  "typedocOptions": {
+    "mode": "modules",
+    "out": "docs"
+  }
 }

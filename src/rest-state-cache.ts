@@ -1,3 +1,8 @@
+/**
+ * Module rest-state-cache.ts provides a local cache associated with the data RUN maintained local cache
+ * @packageDocumentation
+ */
+
 import { IStorage } from './interfaces';
 
 import {HttpError} from './http-error';

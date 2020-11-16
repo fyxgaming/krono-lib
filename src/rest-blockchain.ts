@@ -1,3 +1,9 @@
+/**
+ * Module rest-blockchain.ts provides a REST based implementation of the RUN BSV Blockchain
+ * @packageDocumentation
+ */
+
+
 import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
 
