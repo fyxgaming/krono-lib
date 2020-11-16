@@ -1,4 +1,4 @@
-#[@kronoverse/lib](README.md)
+# [@kronoverse/lib](README.md)
 
 **This is the Kroboverse library for using classes and objects to interact with the Kronoverse platform.**
 
