@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { KeyPair, Tx, TxOut } from 'bsv';
 import { EventEmitter } from 'events';
-import { IJig } from './interfaces';
+import { IJig, IJigQuery } from './interfaces';
 import { SignedMessage } from './signed-message';
 export declare class Wallet extends EventEmitter {
     paymail: string;
@@ -20,7 +20,7 @@ export declare class Wallet extends EventEmitter {
     timeouts: Map<number, any>;
     constructor(paymail: string, keyPair: KeyPair, run: any);
     get now(): number;
-    loadJigIndex(kind?: string, limit?: number, offset?: number, includeValue?: boolean): Promise<any>;
+    loadJigIndex(query?: IJigQuery): Promise<any>;
     loadJig(loc: string): Promise<IJig | void>;
     loadJigs(): Promise<[unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]>;
     buildMessage(messageData: Partial<SignedMessage>, sign?: boolean): SignedMessage;

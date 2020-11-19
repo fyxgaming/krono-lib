@@ -1,4 +1,4 @@
-import { IUTXO } from './interfaces';
+import { IJigQuery, IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
 
 import {HttpError} from './http-error';
@@ -100,9 +100,13 @@ export class RestBlockchain {
         return resp.json();
     };
 
-    async jigIndex(address: string, kind = '', limit = 1000, offset = 0, includeValue = true) {
-        const url = `${this.apiUrl}/jigs/address/${address}?limit=${limit}&offset=${offset}&kind=${kind || ''}${!includeValue ? '&trim=true' : ''}`;
-        const resp = await this.fetchLib(url);
+    async jigIndex(address: string, query: IJigQuery) {
+        const url = `${this.apiUrl}/jigs/address/${address}`;
+        const resp = await this.fetchLib(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(query)
+        });
         if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
         return resp.json();
     }

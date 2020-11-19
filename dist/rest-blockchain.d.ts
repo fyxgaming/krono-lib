@@ -1,4 +1,4 @@
-import { IUTXO } from './interfaces';
+import { IJigQuery, IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
 export declare class RestBlockchain {
     private fetchLib;
@@ -21,7 +21,7 @@ export declare class RestBlockchain {
     time(txid: string): Promise<number>;
     spends(txid: string, vout: number): Promise<string | null>;
     utxos(script: string): Promise<IUTXO[]>;
-    jigIndex(address: string, kind?: string, limit?: number, offset?: number, includeValue?: boolean): Promise<any>;
+    jigIndex(address: string, query: IJigQuery): Promise<any>;
     loadJigData(loc: string, unspent: boolean): Promise<any>;
     jigQuery(query: any, limit?: number): Promise<any>;
     fund(address: string, satoshis?: number): Promise<any>;

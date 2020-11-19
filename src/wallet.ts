@@ -1,7 +1,7 @@
 import { Address, Ecdsa, Hash, KeyPair, PrivKey, PubKey, Random, Script, Sig, Tx, TxOut } from 'bsv';
 import { EventEmitter } from 'events';
 import { RestBlockchain } from './rest-blockchain';
-import { IJig } from './interfaces';
+import { IJig, IJigQuery } from './interfaces';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
 
@@ -49,8 +49,8 @@ export class Wallet extends EventEmitter {
         return Date.now();
     }
 
-    async loadJigIndex(kind = '', limit = 1000, offset = 0, includeValue = true) {
-        return this.blockchain.jigIndex(this.address, kind, limit, offset, includeValue);
+    async loadJigIndex(query?: IJigQuery) {
+        return this.blockchain.jigIndex(this.address, query);
     }
 
     async loadJig(loc: string): Promise<IJig | void> {
@@ -133,14 +133,4 @@ export class Wallet extends EventEmitter {
             clearTimeout(this.timeouts.get(timeoutId));
         }
     }
-
-    // async cashout(address) {
-    //     const utxos = await this.blockchain.utxos(this.run.purse.address);
-    //     const tx = new Transaction()
-    //         .from(utxos)
-    //         .change(address)
-    //         .sign(this.run.purse.privkey);
-    //     await this.blockchain.broadcast(tx);
-    //     // this.clientEmit('BalanceUpdated', await this.balance);
-    // }
 }

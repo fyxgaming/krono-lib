@@ -104,9 +104,13 @@ class RestBlockchain {
         return resp.json();
     }
     ;
-    async jigIndex(address, kind = '', limit = 100, offset = 0, includeValue = true) {
-        const url = `${this.apiUrl}/jigs/address/${address}?limit=${limit}&offset=${offset}&kind=${kind || ''}${!includeValue ? '&trim=true' : ''}`;
-        const resp = await this.fetchLib(url);
+    async jigIndex(address, query) {
+        const url = `${this.apiUrl}/jigs/address/${address}`;
+        const resp = await this.fetchLib(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(query)
+        });
         if (!resp.ok)
             throw new Error(`${resp.status} ${resp.statusText}`);
         return resp.json();
