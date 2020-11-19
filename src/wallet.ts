@@ -49,7 +49,7 @@ export class Wallet extends EventEmitter {
         return Date.now();
     }
 
-    async loadJigIndex(kind = '', limit = 100, offset = 0, includeValue = true) {
+    async loadJigIndex(kind = '', limit = 1000, offset = 0, includeValue = true) {
         return this.blockchain.jigIndex(this.address, kind, limit, offset, includeValue);
     }
 
