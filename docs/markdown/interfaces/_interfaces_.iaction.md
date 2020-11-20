@@ -25,7 +25,7 @@
 
 •  **hash**: string
 
-*Defined in [src/interfaces.ts:85](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L85)*
+*Defined in [src/interfaces.ts:85](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L85)*
 
 ___
 
@@ -33,7 +33,7 @@ ___
 
 •  **loc**: string
 
-*Defined in [src/interfaces.ts:81](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L81)*
+*Defined in [src/interfaces.ts:81](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L81)*
 
 ___
 
@@ -41,7 +41,7 @@ ___
 
 •  **name**: string
 
-*Defined in [src/interfaces.ts:83](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L83)*
+*Defined in [src/interfaces.ts:83](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L83)*
 
 ___
 
@@ -49,7 +49,7 @@ ___
 
 • `Optional` **payload**: any
 
-*Defined in [src/interfaces.ts:84](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L84)*
+*Defined in [src/interfaces.ts:84](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L84)*
 
 ___
 
@@ -57,7 +57,7 @@ ___
 
 • `Optional` **seq**: number
 
-*Defined in [src/interfaces.ts:82](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L82)*
+*Defined in [src/interfaces.ts:82](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L82)*
 
 ___
 
@@ -65,4 +65,4 @@ ___
 
 •  **sig**: string
 
-*Defined in [src/interfaces.ts:86](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L86)*
+*Defined in [src/interfaces.ts:86](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L86)*

@@ -42,7 +42,7 @@
 
 \+ **new SignedMessage**(`message`: Partial\<[SignedMessage](_signed_message_.signedmessage.md)>): [SignedMessage](_signed_message_.signedmessage.md)
 
-*Defined in [src/signed-message.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L14)*
+*Defined in [src/signed-message.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L14)*
 
 #### Parameters:
 
@@ -58,7 +58,7 @@ Name | Type |
 
 •  **context**: string[] = []
 
-*Defined in [src/signed-message.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L11)*
+*Defined in [src/signed-message.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L11)*
 
 ___
 
@@ -66,7 +66,7 @@ ___
 
 •  **from**: string = ""
 
-*Defined in [src/signed-message.ts:7](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L7)*
+*Defined in [src/signed-message.ts:7](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L7)*
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 •  **payload**: string = ""
 
-*Defined in [src/signed-message.ts:12](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L12)*
+*Defined in [src/signed-message.ts:12](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L12)*
 
 ___
 
@@ -82,7 +82,7 @@ ___
 
 •  **reply**: string = ""
 
-*Defined in [src/signed-message.ts:9](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L9)*
+*Defined in [src/signed-message.ts:9](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L9)*
 
 ___
 
@@ -90,7 +90,7 @@ ___
 
 • `Optional` **sig**: string
 
-*Defined in [src/signed-message.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L14)*
+*Defined in [src/signed-message.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L14)*
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 •  **subject**: string = ""
 
-*Defined in [src/signed-message.ts:10](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L10)*
+*Defined in [src/signed-message.ts:10](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L10)*
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 •  **to**: string[] = []
 
-*Defined in [src/signed-message.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L8)*
+*Defined in [src/signed-message.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L8)*
 
 ___
 
@@ -114,7 +114,7 @@ ___
 
 •  **ts**: number = Date.now()
 
-*Defined in [src/signed-message.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L13)*
+*Defined in [src/signed-message.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L13)*
 
 ## Accessors
 
@@ -122,7 +122,7 @@ ___
 
 • get **hash**(): any
 
-*Defined in [src/signed-message.ts:20](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L20)*
+*Defined in [src/signed-message.ts:20](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L20)*
 
 **Returns:** any
 
@@ -132,7 +132,7 @@ ___
 
 • get **id**(): any
 
-*Defined in [src/signed-message.ts:38](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L38)*
+*Defined in [src/signed-message.ts:38](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L38)*
 
 **Returns:** any
 
@@ -142,7 +142,7 @@ ___
 
 • get **payloadObj**(): any
 
-*Defined in [src/signed-message.ts:42](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L42)*
+*Defined in [src/signed-message.ts:42](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L42)*
 
 **Returns:** any
 
@@ -152,7 +152,7 @@ ___
 
 ▸ **sign**(`keyPair`: KeyPair): void
 
-*Defined in [src/signed-message.ts:46](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L46)*
+*Defined in [src/signed-message.ts:46](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L46)*
 
 #### Parameters:
 
@@ -168,6 +168,6 @@ ___
 
 ▸ **verify**(): Promise\<any>
 
-*Defined in [src/signed-message.ts:50](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L50)*
+*Defined in [src/signed-message.ts:50](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L50)*
 
 **Returns:** Promise\<any>

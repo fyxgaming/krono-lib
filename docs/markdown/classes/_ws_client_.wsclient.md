@@ -56,7 +56,7 @@
 
 *Overrides void*
 
-*Defined in [src/ws-client.ts:6](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L6)*
+*Defined in [src/ws-client.ts:6](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L6)*
 
 #### Parameters:
 
@@ -74,7 +74,7 @@ Name | Type | Default value |
 
 • `Private` **channels**: Set\<string>
 
-*Defined in [src/ws-client.ts:5](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L5)*
+*Defined in [src/ws-client.ts:5](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L5)*
 
 ___
 
@@ -82,7 +82,7 @@ ___
 
 • `Private` **client**: any
 
-*Defined in [src/ws-client.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L8)*
+*Defined in [src/ws-client.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L8)*
 
 ___
 
@@ -90,7 +90,7 @@ ___
 
 • `Private` **lastIds**: Map\<string, number> = new Map\<string, number>()
 
-*Defined in [src/ws-client.ts:6](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L6)*
+*Defined in [src/ws-client.ts:6](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L6)*
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 • `Private` **socket**: any
 
-*Defined in [src/ws-client.ts:4](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L4)*
+*Defined in [src/ws-client.ts:4](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L4)*
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 • `Private` **url**: string
 
-*Defined in [src/ws-client.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L8)*
+*Defined in [src/ws-client.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L8)*
 
 ___
 
@@ -143,7 +143,7 @@ ___
 
 ▸ **close**(): void
 
-*Defined in [src/ws-client.ts:52](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L52)*
+*Defined in [src/ws-client.ts:52](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L52)*
 
 **Returns:** void
 
@@ -153,7 +153,7 @@ ___
 
 ▸ **connect**(): any
 
-*Defined in [src/ws-client.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L14)*
+*Defined in [src/ws-client.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L14)*
 
 **Returns:** any
 
@@ -410,7 +410,7 @@ ___
 
 ▸ **subscribe**(`channelId`: any, `lastId?`: number): void
 
-*Defined in [src/ws-client.ts:33](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L33)*
+*Defined in [src/ws-client.ts:33](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L33)*
 
 #### Parameters:
 
@@ -427,7 +427,7 @@ ___
 
 ▸ **unsubscribe**(`channelId`: any): void
 
-*Defined in [src/ws-client.ts:43](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/ws-client.ts#L43)*
+*Defined in [src/ws-client.ts:43](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L43)*
 
 #### Parameters:
 

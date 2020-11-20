@@ -21,7 +21,7 @@
 
 • `Const` **MAGIC\_BYTES**: Buffer = Buffer.from('Bitcoin Signed Message:\n')
 
-*Defined in [src/signed-message.ts:3](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L3)*
+*Defined in [src/signed-message.ts:3](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L3)*
 
 ___
 
@@ -29,4 +29,4 @@ ___
 
 • `Const` **MAGIC\_BYTES\_PREFIX**: any = Bw.varIntBufNum(MAGIC\_BYTES.length)
 
-*Defined in [src/signed-message.ts:4](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/signed-message.ts#L4)*
+*Defined in [src/signed-message.ts:4](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L4)*

@@ -7,17 +7,23 @@
 import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
 
-import {HttpError} from './http-error';
+import { HttpError } from './http-error';
 
 export class RestBlockchain {
     private requests = new Map<string, Promise<any>>();
+
     constructor(
         private fetchLib,
         private apiUrl: string,
         public network: string,
-        public cache: {get: (key: string) => any, set: (key: string, value: any) => any} = new Map<string, any>(),
+        public cache: { get: (key: string) => any, set: (key: string, value: any) => any } = new Map<string, any>(),
         private debug = false
     ) { }
+
+    /**
+    * Purpose: bsvNetwork - returns a string indicating whether the current network is mainnet, testnet or a different network
+    * 
+    */
 
     get bsvNetwork(): string {
         switch (this.network) {
@@ -31,7 +37,7 @@ export class RestBlockchain {
     }
 
     async broadcast(rawtx) {
-        if(this.debug) console.log('BROADCAST:', rawtx);
+        if (this.debug) console.log('BROADCAST:', rawtx);
         const resp = await this.fetchLib(`${this.apiUrl}/broadcast`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -52,7 +58,7 @@ export class RestBlockchain {
     }
 
     async fetch(txid: string) {
-        if(this.debug) console.log('FETCH:', txid);
+        if (this.debug) console.log('FETCH:', txid);
         let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx) return rawtx;
         if (!this.requests.has(txid)) {
@@ -81,7 +87,7 @@ export class RestBlockchain {
     }
 
     async spends(txid: string, vout: number): Promise<string | null> {
-        if(this.debug) console.log('SPENDS:', txid, vout);
+        if (this.debug) console.log('SPENDS:', txid, vout);
         const cacheKey = `spend://${txid}_${vout}`;
         let spend = await this.cache.get(cacheKey);
         if (spend) return spend;
@@ -90,7 +96,7 @@ export class RestBlockchain {
                 const resp = await this.fetchLib(`${this.apiUrl}/spends/${txid}_o${vout}`);
                 if (!resp.ok) throw new HttpError(resp.status, await resp.text());
                 spend = (await resp.text()) || null;
-                if(spend) await this.cache.set(cacheKey, spend);
+                if (spend) await this.cache.set(cacheKey, spend);
                 this.requests.delete(cacheKey);
                 return spend;
             })();
@@ -100,7 +106,7 @@ export class RestBlockchain {
     }
 
     async utxos(script: string): Promise<IUTXO[]> {
-        if(this.debug) console.log('UTXOS:', script);
+        if (this.debug) console.log('UTXOS:', script);
         const resp = await this.fetchLib(`${this.apiUrl}/utxos/${script}`);
         if (!resp.ok) throw new Error(await resp.text());
         return resp.json();

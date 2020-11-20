@@ -23,7 +23,7 @@
 
 ▸ **queryKind**(`kind`: string, `query`: [IJigQuery](_interfaces_.ijigquery.md)): Promise\<string[]>
 
-*Defined in [src/interfaces.ts:62](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L62)*
+*Defined in [src/interfaces.ts:62](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L62)*
 
 #### Parameters:
 
@@ -40,7 +40,7 @@ ___
 
 ▸ **queryLocation**(`locs`: string[]): Promise\<[IJig](_interfaces_.ijig.md)[]>
 
-*Defined in [src/interfaces.ts:61](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L61)*
+*Defined in [src/interfaces.ts:61](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L61)*
 
 #### Parameters:
 
@@ -56,7 +56,7 @@ ___
 
 ▸ **queryOrigin**(`origin`: string, `query`: [IJigQuery](_interfaces_.ijigquery.md)): Promise\<string[]>
 
-*Defined in [src/interfaces.ts:63](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L63)*
+*Defined in [src/interfaces.ts:63](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L63)*
 
 #### Parameters:
 
@@ -73,7 +73,7 @@ ___
 
 ▸ **save**(`jig`: [IJig](_interfaces_.ijig.md)): Promise\<void>
 
-*Defined in [src/interfaces.ts:60](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L60)*
+*Defined in [src/interfaces.ts:60](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L60)*
 
 #### Parameters:
 

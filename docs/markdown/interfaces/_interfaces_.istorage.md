@@ -31,7 +31,7 @@ Name |
 
 ▸ **get**(`key`: string): Promise\<T>
 
-*Defined in [src/interfaces.ts:76](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L76)*
+*Defined in [src/interfaces.ts:76](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L76)*
 
 #### Parameters:
 
@@ -47,7 +47,7 @@ ___
 
 ▸ **set**(`key`: string, `value`: T): Promise\<void>
 
-*Defined in [src/interfaces.ts:77](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/interfaces.ts#L77)*
+*Defined in [src/interfaces.ts:77](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L77)*
 
 #### Parameters:
 

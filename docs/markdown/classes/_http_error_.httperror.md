@@ -32,7 +32,7 @@ This class supports handling of HTTP errors and is also used within the krono-li
 
 \+ **new HttpError**(`status`: number, ...`args`: any[]): [HttpError](_http_error_.httperror.md)
 
-*Defined in [src/http-error.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/http-error.ts#L11)*
+*Defined in [src/http-error.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/http-error.ts#L11)*
 
 #### Parameters:
 
@@ -79,7 +79,7 @@ ___
 
 •  **status**: number
 
-*Defined in [src/http-error.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/http-error.ts#L13)*
+*Defined in [src/http-error.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/http-error.ts#L13)*
 
 ___
 

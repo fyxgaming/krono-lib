@@ -37,7 +37,7 @@
 
 \+ **new RestStateCache**(`fetch`: any, `apiUrl`: string, `cache?`: { get: (key: string) => any ; set: (key: string, value: any) => any  }, `debug?`: boolean): [RestStateCache](_rest_state_cache_.reststatecache.md)
 
-*Defined in [src/rest-state-cache.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-state-cache.ts#L11)*
+*Defined in [src/rest-state-cache.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L11)*
 
 #### Parameters:
 
@@ -56,7 +56,7 @@ Name | Type | Default value |
 
 • `Private` **apiUrl**: string
 
-*Defined in [src/rest-state-cache.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-state-cache.ts#L14)*
+*Defined in [src/rest-state-cache.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L14)*
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 •  **cache**: { get: (key: string) => any ; set: (key: string, value: any) => any  }
 
-*Defined in [src/rest-state-cache.ts:15](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-state-cache.ts#L15)*
+*Defined in [src/rest-state-cache.ts:15](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L15)*
 
 #### Type declaration:
 
@@ -79,7 +79,7 @@ ___
 
 • `Private` **debug**: boolean
 
-*Defined in [src/rest-state-cache.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-state-cache.ts#L16)*
+*Defined in [src/rest-state-cache.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L16)*
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 • `Private` **fetch**: any
 
-*Defined in [src/rest-state-cache.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-state-cache.ts#L13)*
+*Defined in [src/rest-state-cache.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L13)*
 
 ___
 
@@ -95,7 +95,7 @@ ___
 
 • `Private` **requests**: Map\<string, Promise\<any>> = new Map\<string, Promise\<any>>()
 
-*Defined in [src/rest-state-cache.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-state-cache.ts#L11)*
+*Defined in [src/rest-state-cache.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L11)*
 
 ## Methods
 
@@ -105,7 +105,7 @@ ___
 
 *Implementation of [IStorage](../interfaces/_interfaces_.istorage.md)*
 
-*Defined in [src/rest-state-cache.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-state-cache.ts#L19)*
+*Defined in [src/rest-state-cache.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L19)*
 
 #### Parameters:
 
@@ -121,7 +121,7 @@ ___
 
 ▸ **set**(`key`: string, `value`: any): Promise\<void>
 
-*Defined in [src/rest-state-cache.ts:49](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-state-cache.ts#L49)*
+*Defined in [src/rest-state-cache.ts:49](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L49)*
 
 #### Parameters:
 

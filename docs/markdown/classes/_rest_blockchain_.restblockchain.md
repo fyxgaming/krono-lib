@@ -48,7 +48,7 @@
 
 \+ **new RestBlockchain**(`fetchLib`: any, `apiUrl`: string, `network`: string, `cache?`: { get: (key: string) => any ; set: (key: string, value: any) => any  }, `debug?`: boolean): [RestBlockchain](_rest_blockchain_.restblockchain.md)
 
-*Defined in [src/rest-blockchain.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L13)*
+*Defined in [src/rest-blockchain.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L13)*
 
 #### Parameters:
 
@@ -68,7 +68,7 @@ Name | Type | Default value |
 
 • `Private` **apiUrl**: string
 
-*Defined in [src/rest-blockchain.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L16)*
+*Defined in [src/rest-blockchain.ts:17](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L17)*
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 •  **cache**: { get: (key: string) => any ; set: (key: string, value: any) => any  }
 
-*Defined in [src/rest-blockchain.ts:18](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L18)*
+*Defined in [src/rest-blockchain.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L19)*
 
 #### Type declaration:
 
@@ -91,7 +91,7 @@ ___
 
 • `Private` **debug**: boolean
 
-*Defined in [src/rest-blockchain.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L19)*
+*Defined in [src/rest-blockchain.ts:20](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L20)*
 
 ___
 
@@ -99,7 +99,7 @@ ___
 
 • `Private` **fetchLib**: any
 
-*Defined in [src/rest-blockchain.ts:15](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L15)*
+*Defined in [src/rest-blockchain.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L16)*
 
 ___
 
@@ -107,7 +107,7 @@ ___
 
 •  **network**: string
 
-*Defined in [src/rest-blockchain.ts:17](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L17)*
+*Defined in [src/rest-blockchain.ts:18](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L18)*
 
 ___
 
@@ -115,7 +115,7 @@ ___
 
 • `Private` **requests**: Map\<string, Promise\<any>> = new Map\<string, Promise\<any>>()
 
-*Defined in [src/rest-blockchain.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L13)*
+*Defined in [src/rest-blockchain.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L13)*
 
 ## Accessors
 
@@ -123,7 +123,9 @@ ___
 
 • get **bsvNetwork**(): string
 
-*Defined in [src/rest-blockchain.ts:22](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L22)*
+*Defined in [src/rest-blockchain.ts:28](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L28)*
+
+Purpose: bsvNetwork - returns a string indicating whether the current network is mainnet, testnet or a different network
 
 **Returns:** string
 
@@ -133,7 +135,7 @@ ___
 
 ▸ **broadcast**(`rawtx`: any): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:33](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L33)*
+*Defined in [src/rest-blockchain.ts:39](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L39)*
 
 #### Parameters:
 
@@ -149,7 +151,7 @@ ___
 
 ▸ **fetch**(`txid`: string): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:54](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L54)*
+*Defined in [src/rest-blockchain.ts:60](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L60)*
 
 #### Parameters:
 
@@ -165,7 +167,7 @@ ___
 
 ▸ **fund**(`address`: string, `satoshis?`: number): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:132](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L132)*
+*Defined in [src/rest-blockchain.ts:138](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L138)*
 
 #### Parameters:
 
@@ -182,7 +184,7 @@ ___
 
 ▸ **jigIndex**(`address`: string, `kind?`: string, `limit?`: number, `offset?`: number, `includeValue?`: boolean): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:109](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L109)*
+*Defined in [src/rest-blockchain.ts:115](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L115)*
 
 #### Parameters:
 
@@ -202,7 +204,7 @@ ___
 
 ▸ **jigQuery**(`query`: any, `limit?`: number): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:122](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L122)*
+*Defined in [src/rest-blockchain.ts:128](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L128)*
 
 #### Parameters:
 
@@ -219,7 +221,7 @@ ___
 
 ▸ **loadJigData**(`loc`: string, `unspent`: boolean): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:116](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L116)*
+*Defined in [src/rest-blockchain.ts:122](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L122)*
 
 #### Parameters:
 
@@ -236,7 +238,7 @@ ___
 
 ▸ **loadMessage**(`messageId`: any): Promise\<[SignedMessage](_signed_message_.signedmessage.md)>
 
-*Defined in [src/rest-blockchain.ts:138](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L138)*
+*Defined in [src/rest-blockchain.ts:144](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L144)*
 
 #### Parameters:
 
@@ -252,7 +254,7 @@ ___
 
 ▸ **populateInputs**(`tx`: any): Promise\<void>
 
-*Defined in [src/rest-blockchain.ts:47](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L47)*
+*Defined in [src/rest-blockchain.ts:53](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L53)*
 
 #### Parameters:
 
@@ -268,7 +270,7 @@ ___
 
 ▸ **sendMessage**(`message`: [SignedMessage](_signed_message_.signedmessage.md), `postTo?`: string): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:144](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L144)*
+*Defined in [src/rest-blockchain.ts:150](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L150)*
 
 #### Parameters:
 
@@ -285,7 +287,7 @@ ___
 
 ▸ **spends**(`txid`: string, `vout`: number): Promise\<string \| null>
 
-*Defined in [src/rest-blockchain.ts:83](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L83)*
+*Defined in [src/rest-blockchain.ts:89](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L89)*
 
 #### Parameters:
 
@@ -302,7 +304,7 @@ ___
 
 ▸ **time**(`txid`: string): Promise\<number>
 
-*Defined in [src/rest-blockchain.ts:73](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L73)*
+*Defined in [src/rest-blockchain.ts:79](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L79)*
 
 #### Parameters:
 
@@ -318,7 +320,7 @@ ___
 
 ▸ **utxos**(`script`: string): Promise\<[IUTXO](../interfaces/_interfaces_.iutxo.md)[]>
 
-*Defined in [src/rest-blockchain.ts:102](https://github.com/kronoverse-inc/krono-lib/blob/bda32c6/src/rest-blockchain.ts#L102)*
+*Defined in [src/rest-blockchain.ts:108](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L108)*
 
 #### Parameters:
 

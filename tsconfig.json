@@ -17,6 +17,6 @@
   ],
   "typedocOptions": {
     "mode": "modules",
-    "out": "docs/html"
+    "out": "docs/markdown"
   }
 }
