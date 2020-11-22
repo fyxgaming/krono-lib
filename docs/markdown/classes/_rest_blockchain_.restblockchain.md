@@ -48,7 +48,10 @@
 
 \+ **new RestBlockchain**(`fetchLib`: any, `apiUrl`: string, `network`: string, `cache?`: { get: (key: string) => any ; set: (key: string, value: any) => any  }, `debug?`: boolean): [RestBlockchain](_rest_blockchain_.restblockchain.md)
 
-*Defined in [src/rest-blockchain.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L13)*
+*Defined in [src/rest-blockchain.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L13)*
+
+Purpose: creates a new RestBlockchain object with a fetch library handle, a URL that points to the blockchain data, the network name and
+a handle to the local RUN cache. The input parameters are stored as private variables for later reference.
 
 #### Parameters:
 
@@ -68,7 +71,7 @@ Name | Type | Default value |
 
 • `Private` **apiUrl**: string
 
-*Defined in [src/rest-blockchain.ts:17](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L17)*
+*Defined in [src/rest-blockchain.ts:23](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L23)*
 
 ___
 
@@ -76,7 +79,7 @@ ___
 
 •  **cache**: { get: (key: string) => any ; set: (key: string, value: any) => any  }
 
-*Defined in [src/rest-blockchain.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L19)*
+*Defined in [src/rest-blockchain.ts:25](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L25)*
 
 #### Type declaration:
 
@@ -91,7 +94,7 @@ ___
 
 • `Private` **debug**: boolean
 
-*Defined in [src/rest-blockchain.ts:20](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L20)*
+*Defined in [src/rest-blockchain.ts:26](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L26)*
 
 ___
 
@@ -99,7 +102,7 @@ ___
 
 • `Private` **fetchLib**: any
 
-*Defined in [src/rest-blockchain.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L16)*
+*Defined in [src/rest-blockchain.ts:22](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L22)*
 
 ___
 
@@ -107,7 +110,7 @@ ___
 
 •  **network**: string
 
-*Defined in [src/rest-blockchain.ts:18](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L18)*
+*Defined in [src/rest-blockchain.ts:24](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L24)*
 
 ___
 
@@ -115,7 +118,7 @@ ___
 
 • `Private` **requests**: Map\<string, Promise\<any>> = new Map\<string, Promise\<any>>()
 
-*Defined in [src/rest-blockchain.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L13)*
+*Defined in [src/rest-blockchain.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L13)*
 
 ## Accessors
 
@@ -123,9 +126,9 @@ ___
 
 • get **bsvNetwork**(): string
 
-*Defined in [src/rest-blockchain.ts:28](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L28)*
+*Defined in [src/rest-blockchain.ts:34](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L34)*
 
-Purpose: bsvNetwork - returns a string indicating whether the current network is mainnet, testnet or a different network
+Purpose: returns a string indicating whether the current network is mainnet, testnet or a different network
 
 **Returns:** string
 
@@ -135,7 +138,9 @@ Purpose: bsvNetwork - returns a string indicating whether the current network is
 
 ▸ **broadcast**(`rawtx`: any): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:39](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L39)*
+*Defined in [src/rest-blockchain.ts:50](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L50)*
+
+Purpose: broadcasts a raw transaction to the blockchain
 
 #### Parameters:
 
@@ -151,7 +156,11 @@ ___
 
 ▸ **fetch**(`txid`: string): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:60](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L60)*
+*Defined in [src/rest-blockchain.ts:84](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L84)*
+
+Purpose: given a transaction ID, returns the raw transaction associated with it. The raw transaction is
+either retrieved from cache (if present) or is fetched by making a request for the raw transaction associated
+with this transaction ID.
 
 #### Parameters:
 
@@ -167,7 +176,9 @@ ___
 
 ▸ **fund**(`address`: string, `satoshis?`: number): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:138](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L138)*
+*Defined in [src/rest-blockchain.ts:205](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L205)*
+
+Purpose: given a wallet address, funds the address with the given satoshi value
 
 #### Parameters:
 
@@ -184,7 +195,12 @@ ___
 
 ▸ **jigIndex**(`address`: string, `kind?`: string, `limit?`: number, `offset?`: number, `includeValue?`: boolean): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:115](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L115)*
+*Defined in [src/rest-blockchain.ts:164](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L164)*
+
+Purpose: returns the JIGs associated with an address based with the ability to filter the response data
+based on input parameters.
+
+Default output: returns up to 100 JIGs of all kinds along with their values
 
 #### Parameters:
 
@@ -204,7 +220,11 @@ ___
 
 ▸ **jigQuery**(`query`: any, `limit?`: number): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:128](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L128)*
+*Defined in [src/rest-blockchain.ts:190](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L190)*
+
+Purpose: given a query object, the JIGs associated with the query input parameters.
+
+Example: const jigData = await blockchain.jigQuery({kind: location}, 10);
 
 #### Parameters:
 
@@ -221,7 +241,10 @@ ___
 
 ▸ **loadJigData**(`loc`: string, `unspent`: boolean): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:122](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L122)*
+*Defined in [src/rest-blockchain.ts:177](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L177)*
+
+Purpose: given a location, returns JIG data associated with that location. The unspent flag controls whether
+this method should only return unspent data or all of it.
 
 #### Parameters:
 
@@ -238,7 +261,9 @@ ___
 
 ▸ **loadMessage**(`messageId`: any): Promise\<[SignedMessage](_signed_message_.signedmessage.md)>
 
-*Defined in [src/rest-blockchain.ts:144](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L144)*
+*Defined in [src/rest-blockchain.ts:216](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L216)*
+
+Purpose: returns a signed message associated with the given messageId
 
 #### Parameters:
 
@@ -254,7 +279,10 @@ ___
 
 ▸ **populateInputs**(`tx`: any): Promise\<void>
 
-*Defined in [src/rest-blockchain.ts:53](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L53)*
+*Defined in [src/rest-blockchain.ts:70](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L70)*
+
+Purpose: given a transaction object, populates the inputs property of this transaction object
+with the outputs of the previous transaction
 
 #### Parameters:
 
@@ -270,7 +298,10 @@ ___
 
 ▸ **sendMessage**(`message`: [SignedMessage](_signed_message_.signedmessage.md), `postTo?`: string): Promise\<any>
 
-*Defined in [src/rest-blockchain.ts:150](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L150)*
+*Defined in [src/rest-blockchain.ts:228](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L228)*
+
+Purpose: sends a signed message to the URL path provided by the postTo parm.
+If postTo is ommitted, the message is delivered to the generic /messages path
 
 #### Parameters:
 
@@ -287,7 +318,11 @@ ___
 
 ▸ **spends**(`txid`: string, `vout`: number): Promise\<string \| null>
 
-*Defined in [src/rest-blockchain.ts:89](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L89)*
+*Defined in [src/rest-blockchain.ts:125](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L125)*
+
+Purpose: given a transaction ID and an output number, returns the spent amount associated with it. The raw transaction is
+either retrieved from cache (if present) or is fetched by making a request for the raw transaction associated
+with this transaction ID and output number.
 
 #### Parameters:
 
@@ -304,7 +339,9 @@ ___
 
 ▸ **time**(`txid`: string): Promise\<number>
 
-*Defined in [src/rest-blockchain.ts:79](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L79)*
+*Defined in [src/rest-blockchain.ts:108](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L108)*
+
+Purpose: returns the current time
 
 #### Parameters:
 
@@ -320,7 +357,9 @@ ___
 
 ▸ **utxos**(`script`: string): Promise\<[IUTXO](../interfaces/_interfaces_.iutxo.md)[]>
 
-*Defined in [src/rest-blockchain.ts:108](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-blockchain.ts#L108)*
+*Defined in [src/rest-blockchain.ts:149](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-blockchain.ts#L149)*
+
+Purpose: returns the Unspent Transaction Outputs (UTXOs) associated with the given input script.
 
 #### Parameters:
 

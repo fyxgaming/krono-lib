@@ -4,6 +4,8 @@
 
 # Module: "ws-client"
 
+Module ws-client.ts implements a websocket client
+
 ## Index
 
 ### Classes

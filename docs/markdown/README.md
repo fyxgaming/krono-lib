@@ -9,6 +9,5 @@
 ## Installation
 
 1. ##### npm install --save-dev @kronoverse/lib
-##
 
-> [Documentation](globals.md)
+> [Documentation](SUMMARY.md)

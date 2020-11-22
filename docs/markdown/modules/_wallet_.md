@@ -4,6 +4,8 @@
 
 # Module: "wallet"
 
+Module wallet.ts implements a wallet
+
 ## Index
 
 ### Classes

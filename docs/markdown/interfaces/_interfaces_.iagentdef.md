@@ -22,7 +22,7 @@
 
 •  **agent**: string
 
-*Defined in [src/interfaces.ts:26](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L26)*
+*Defined in [src/interfaces.ts:26](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L26)*
 
 ___
 
@@ -30,7 +30,7 @@ ___
 
 • `Optional` **anonymous**: boolean
 
-*Defined in [src/interfaces.ts:30](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L30)*
+*Defined in [src/interfaces.ts:30](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L30)*
 
 ___
 
@@ -38,4 +38,4 @@ ___
 
 •  **location**: string
 
-*Defined in [src/interfaces.ts:27](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L27)*
+*Defined in [src/interfaces.ts:27](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L27)*

@@ -56,7 +56,9 @@
 
 *Overrides void*
 
-*Defined in [src/ws-client.ts:6](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L6)*
+*Defined in [src/ws-client.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L11)*
+
+Purpose: creates a new websocket client with an input websocket, URL and a list of channels
 
 #### Parameters:
 
@@ -74,7 +76,7 @@ Name | Type | Default value |
 
 • `Private` **channels**: Set\<string>
 
-*Defined in [src/ws-client.ts:5](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L5)*
+*Defined in [src/ws-client.ts:10](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L10)*
 
 ___
 
@@ -82,7 +84,7 @@ ___
 
 • `Private` **client**: any
 
-*Defined in [src/ws-client.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L8)*
+*Defined in [src/ws-client.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L19)*
 
 ___
 
@@ -90,7 +92,7 @@ ___
 
 • `Private` **lastIds**: Map\<string, number> = new Map\<string, number>()
 
-*Defined in [src/ws-client.ts:6](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L6)*
+*Defined in [src/ws-client.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L11)*
 
 ___
 
@@ -98,7 +100,7 @@ ___
 
 • `Private` **socket**: any
 
-*Defined in [src/ws-client.ts:4](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L4)*
+*Defined in [src/ws-client.ts:9](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L9)*
 
 ___
 
@@ -106,7 +108,7 @@ ___
 
 • `Private` **url**: string
 
-*Defined in [src/ws-client.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L8)*
+*Defined in [src/ws-client.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L19)*
 
 ___
 
@@ -143,7 +145,9 @@ ___
 
 ▸ **close**(): void
 
-*Defined in [src/ws-client.ts:52](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L52)*
+*Defined in [src/ws-client.ts:87](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L87)*
+
+Purpose: closes this object's websocket connection
 
 **Returns:** void
 
@@ -153,7 +157,9 @@ ___
 
 ▸ **connect**(): any
 
-*Defined in [src/ws-client.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L14)*
+*Defined in [src/ws-client.ts:31](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L31)*
+
+Purpose: connects this object's websocket client to this object's URL property
 
 **Returns:** any
 
@@ -410,7 +416,9 @@ ___
 
 ▸ **subscribe**(`channelId`: any, `lastId?`: number): void
 
-*Defined in [src/ws-client.ts:33](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L33)*
+*Defined in [src/ws-client.ts:56](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L56)*
+
+Purpose: subscribes this object to the input channel ID
 
 #### Parameters:
 
@@ -427,7 +435,9 @@ ___
 
 ▸ **unsubscribe**(`channelId`: any): void
 
-*Defined in [src/ws-client.ts:43](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/ws-client.ts#L43)*
+*Defined in [src/ws-client.ts:72](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/ws-client.ts#L72)*
+
+Purpose: unsubscribes this object from a given channel ID
 
 #### Parameters:
 

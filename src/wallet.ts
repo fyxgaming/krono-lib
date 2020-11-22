@@ -1,3 +1,8 @@
+/**
+ * Module wallet.ts implements a wallet
+ * @packageDocumentation
+ */
+
 import { Address, Ecdsa, Hash, KeyPair, PrivKey, PubKey, Random, Script, Sig, Tx, TxOut } from 'bsv';
 import { EventEmitter } from 'events';
 import { RestBlockchain } from './rest-blockchain';
@@ -20,6 +25,22 @@ export class Wallet extends EventEmitter {
     pursePair: KeyPair;
 
     timeouts = new Map<number, any>();
+
+    /**
+    * Purpose: creates a wallet using a paymail and a KeyPair object, and a reference to a RUN instance
+    * 
+    * Example: 
+    *   const paymail = `${run.owner.address}@localhost`;
+    *   const keyPair = KeyPair.fromPrivKey(PrivKey.fromString(owner));
+    *   const run = new Run({
+    *        network: 'testnet',
+    *        blockchain,
+    *        owner,
+    *        purse,
+    *        state: new LRUCache(100000000)
+    *   });
+    * 
+    */
 
     constructor(
         public paymail: string,
@@ -45,13 +66,29 @@ export class Wallet extends EventEmitter {
         console.log(`PURSE: ${this.purse}`);
     }
 
+    /**
+    * Purpose: returns the current date in milliseconds since epoch (see https://currentmillis.com/ for milliseconds since epoch information)
+    * 
+    */
+
     get now() {
         return Date.now();
     }
 
+    /**
+    * Purpose: returns the JIGs associated with this wallet's address. Any data filtering options can be supplied as input parameters.
+    * 
+    * Invokes RestBlockchain.jigIndex
+    */
+
     async loadJigIndex(kind = '', limit = 100, offset = 0, includeValue = true) {
         return this.blockchain.jigIndex(this.address, kind, limit, offset, includeValue);
     }
+
+    /**
+    * Purpose: loads and returns a JIG associated with a specific location string.
+    * 
+    */
 
     async loadJig(loc: string): Promise<IJig | void> {
         const jig = await this.load(loc).catch((e) => {
@@ -62,12 +99,22 @@ export class Wallet extends EventEmitter {
         return jig;
     }
 
+    /**
+    * Purpose: loads and returns all the JIGs associated with this wallet's address.
+    * 
+    */
+
     async loadJigs() {
         const jigIndex = await this.loadJigIndex();
         const jigs = await Promise.all(jigIndex.map(j => this.loadJig(j.location)))
         console.log('JIGS:', jigs.length);
         return jigs;
     }
+
+    /**
+    * Purpose: builds a signed message from a given input message.
+    * 
+    */
 
     buildMessage(messageData: Partial<SignedMessage>, sign = true): SignedMessage {
         messageData.ts = Date.now();
@@ -76,6 +123,11 @@ export class Wallet extends EventEmitter {
         if (sign) message.sign(this.keyPair);
         return message;
     }
+
+    /**
+    * Purpose: signs an input transaction and returns the signed form of the input transaction.
+    * 
+    */
 
     async signTx(tx: Tx): Promise<TxOut[]> {
         return Promise.all(tx.txIns.map(async (txIn, i) => {
@@ -96,13 +148,28 @@ export class Wallet extends EventEmitter {
         }));
     }
 
+    /**
+    * Purpose: Reserved for a future implementation.
+    * 
+    */
+
     async encrypt(pubkey: string) {
 
     }
 
+    /**
+    * Purpose: Reserved for a future implementation.
+    * 
+    */
+
     async decrypt(value) {
 
     }
+
+    /**
+    * Purpose: given a signature, hash of a transaction and a public key, verifies that the signature on the transaction hash is valid.
+    * 
+    */
 
     async verifySig(sig, hash, pubkey): Promise<boolean> {
         const msgHash = await Hash.asyncSha256(Buffer.from(hash));
@@ -111,13 +178,29 @@ export class Wallet extends EventEmitter {
         return verified;
     }
 
+    /**
+    * Purpose: generates a random integer given an upper limit.
+    * 
+    */
+
     randomInt(max) {
         return Math.floor(Math.random() * (max || Number.MAX_SAFE_INTEGER));
     }
 
+    /**
+    * Purpose: generates a random bytes buffer of a given input size.
+    * 
+    */
+
     randomBytes(size: number): string {
         return Random.getRandomBuffer(size).toString('hex');
     }
+
+    /**
+    * Purpose: given a callback and milliseconds as input, creates a timeout ID and waits for the input milliseconds and returns the timeout ID.
+    * This reimplements Node.js setTimeout method. Both the ID and the timeout output are stored to a map for audit purposes.
+    * 
+    */
 
     setTimeout(cb: () => Promise<void>, ms: number): number {
         const timeoutId = Date.now();
@@ -127,6 +210,11 @@ export class Wallet extends EventEmitter {
         );
         return timeoutId;
     }
+
+    /**
+    * Purpose: given a timeout ID, clears it from the stored map of timeouts.
+    * 
+    */
 
     clearTimeout(timeoutId: number): void {
         if (this.timeouts.has(timeoutId)) {

@@ -37,7 +37,10 @@
 
 \+ **new RestStateCache**(`fetch`: any, `apiUrl`: string, `cache?`: { get: (key: string) => any ; set: (key: string, value: any) => any  }, `debug?`: boolean): [RestStateCache](_rest_state_cache_.reststatecache.md)
 
-*Defined in [src/rest-state-cache.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L11)*
+*Defined in [src/rest-state-cache.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-state-cache.ts#L11)*
+
+Purpose: creates a new RestStateCache object with a fetch library handle, a URL that points to the blockchain data and
+a handle to the local RUN cache. The input parameters are stored as private variables for later reference.
 
 #### Parameters:
 
@@ -56,7 +59,7 @@ Name | Type | Default value |
 
 • `Private` **apiUrl**: string
 
-*Defined in [src/rest-state-cache.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L14)*
+*Defined in [src/rest-state-cache.ts:21](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-state-cache.ts#L21)*
 
 ___
 
@@ -64,7 +67,7 @@ ___
 
 •  **cache**: { get: (key: string) => any ; set: (key: string, value: any) => any  }
 
-*Defined in [src/rest-state-cache.ts:15](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L15)*
+*Defined in [src/rest-state-cache.ts:22](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-state-cache.ts#L22)*
 
 #### Type declaration:
 
@@ -79,7 +82,7 @@ ___
 
 • `Private` **debug**: boolean
 
-*Defined in [src/rest-state-cache.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L16)*
+*Defined in [src/rest-state-cache.ts:23](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-state-cache.ts#L23)*
 
 ___
 
@@ -87,7 +90,7 @@ ___
 
 • `Private` **fetch**: any
 
-*Defined in [src/rest-state-cache.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L13)*
+*Defined in [src/rest-state-cache.ts:20](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-state-cache.ts#L20)*
 
 ___
 
@@ -95,7 +98,7 @@ ___
 
 • `Private` **requests**: Map\<string, Promise\<any>> = new Map\<string, Promise\<any>>()
 
-*Defined in [src/rest-state-cache.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L11)*
+*Defined in [src/rest-state-cache.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-state-cache.ts#L11)*
 
 ## Methods
 
@@ -105,7 +108,9 @@ ___
 
 *Implementation of [IStorage](../interfaces/_interfaces_.istorage.md)*
 
-*Defined in [src/rest-state-cache.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L19)*
+*Defined in [src/rest-state-cache.ts:31](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-state-cache.ts#L31)*
+
+Purpose: given a cache key, returns the value associated with the key from the RestStateCache object
 
 #### Parameters:
 
@@ -121,7 +126,9 @@ ___
 
 ▸ **set**(`key`: string, `value`: any): Promise\<void>
 
-*Defined in [src/rest-state-cache.ts:49](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/rest-state-cache.ts#L49)*
+*Defined in [src/rest-state-cache.ts:66](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/rest-state-cache.ts#L66)*
+
+Purpose: given a key and value input parameters, sets up a key-value pair based map in the RestStateCache object.
 
 #### Parameters:
 

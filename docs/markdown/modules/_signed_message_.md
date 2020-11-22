@@ -4,6 +4,8 @@
 
 # Module: "signed-message"
 
+Module signed-message.ts provides functionality for signing and verifying messages.
+
 ## Index
 
 ### Classes
@@ -21,7 +23,7 @@
 
 • `Const` **MAGIC\_BYTES**: Buffer = Buffer.from('Bitcoin Signed Message:\n')
 
-*Defined in [src/signed-message.ts:3](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L3)*
+*Defined in [src/signed-message.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L8)*
 
 ___
 
@@ -29,4 +31,4 @@ ___
 
 • `Const` **MAGIC\_BYTES\_PREFIX**: any = Bw.varIntBufNum(MAGIC\_BYTES.length)
 
-*Defined in [src/signed-message.ts:4](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L4)*
+*Defined in [src/signed-message.ts:9](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L9)*

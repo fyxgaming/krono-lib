@@ -77,7 +77,20 @@
 
 *Overrides void*
 
-*Defined in [src/wallet.ts:22](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L22)*
+*Defined in [src/wallet.ts:27](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L27)*
+
+Purpose: creates a wallet using a paymail and a KeyPair object, and a reference to a RUN instance
+
+Example:
+  const paymail = `${run.owner.address}@localhost`;
+  const keyPair = KeyPair.fromPrivKey(PrivKey.fromString(owner));
+  const run = new Run({
+       network: 'testnet',
+       blockchain,
+       owner,
+       purse,
+       state: new LRUCache(100000000)
+  });
 
 #### Parameters:
 
@@ -95,7 +108,7 @@ Name | Type |
 
 •  **address**: string
 
-*Defined in [src/wallet.ts:10](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L10)*
+*Defined in [src/wallet.ts:15](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L15)*
 
 ___
 
@@ -103,7 +116,7 @@ ___
 
 •  **balance**: () => Promise\<number>
 
-*Defined in [src/wallet.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L13)*
+*Defined in [src/wallet.ts:18](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L18)*
 
 ___
 
@@ -111,7 +124,7 @@ ___
 
 • `Private` **blockchain**: [RestBlockchain](_rest_blockchain_.restblockchain.md)
 
-*Defined in [src/wallet.ts:9](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L9)*
+*Defined in [src/wallet.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L14)*
 
 ___
 
@@ -119,7 +132,7 @@ ___
 
 •  **createTransaction**: () => any
 
-*Defined in [src/wallet.ts:15](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L15)*
+*Defined in [src/wallet.ts:20](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L20)*
 
 ___
 
@@ -127,7 +140,7 @@ ___
 
 •  **getTxPayload**: (rawtx: string) => any
 
-*Defined in [src/wallet.ts:17](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L17)*
+*Defined in [src/wallet.ts:22](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L22)*
 
 ___
 
@@ -135,7 +148,7 @@ ___
 
 • `Private` **keyPair**: KeyPair
 
-*Defined in [src/wallet.ts:26](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L26)*
+*Defined in [src/wallet.ts:47](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L47)*
 
 ___
 
@@ -143,7 +156,7 @@ ___
 
 •  **load**: (loc: string) => Promise\<[IJig](../interfaces/_interfaces_.ijig.md)>
 
-*Defined in [src/wallet.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L14)*
+*Defined in [src/wallet.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L19)*
 
 ___
 
@@ -151,7 +164,7 @@ ___
 
 •  **loadTransaction**: (rawtx: string) => Promise\<any>
 
-*Defined in [src/wallet.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L16)*
+*Defined in [src/wallet.ts:21](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L21)*
 
 ___
 
@@ -159,7 +172,7 @@ ___
 
 •  **ownerPair**: KeyPair
 
-*Defined in [src/wallet.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L19)*
+*Defined in [src/wallet.ts:24](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L24)*
 
 ___
 
@@ -167,7 +180,7 @@ ___
 
 •  **paymail**: string
 
-*Defined in [src/wallet.ts:25](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L25)*
+*Defined in [src/wallet.ts:46](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L46)*
 
 ___
 
@@ -175,7 +188,7 @@ ___
 
 •  **pubkey**: string
 
-*Defined in [src/wallet.ts:12](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L12)*
+*Defined in [src/wallet.ts:17](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L17)*
 
 ___
 
@@ -183,7 +196,7 @@ ___
 
 •  **purse**: string
 
-*Defined in [src/wallet.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L11)*
+*Defined in [src/wallet.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L16)*
 
 ___
 
@@ -191,7 +204,7 @@ ___
 
 •  **pursePair**: KeyPair
 
-*Defined in [src/wallet.ts:20](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L20)*
+*Defined in [src/wallet.ts:25](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L25)*
 
 ___
 
@@ -199,7 +212,7 @@ ___
 
 •  **timeouts**: Map\<number, any> = new Map\<number, any>()
 
-*Defined in [src/wallet.ts:22](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L22)*
+*Defined in [src/wallet.ts:27](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L27)*
 
 ___
 
@@ -217,7 +230,9 @@ ___
 
 • get **now**(): number
 
-*Defined in [src/wallet.ts:48](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L48)*
+*Defined in [src/wallet.ts:74](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L74)*
+
+Purpose: returns the current date in milliseconds since epoch (see https://currentmillis.com/ for milliseconds since epoch information)
 
 **Returns:** number
 
@@ -246,7 +261,9 @@ ___
 
 ▸ **buildMessage**(`messageData`: Partial\<[SignedMessage](_signed_message_.signedmessage.md)>, `sign?`: boolean): [SignedMessage](_signed_message_.signedmessage.md)
 
-*Defined in [src/wallet.ts:72](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L72)*
+*Defined in [src/wallet.ts:119](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L119)*
+
+Purpose: builds a signed message from a given input message.
 
 #### Parameters:
 
@@ -263,7 +280,9 @@ ___
 
 ▸ **clearTimeout**(`timeoutId`: number): void
 
-*Defined in [src/wallet.ts:131](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L131)*
+*Defined in [src/wallet.ts:219](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L219)*
+
+Purpose: given a timeout ID, clears it from the stored map of timeouts.
 
 #### Parameters:
 
@@ -279,7 +298,9 @@ ___
 
 ▸ **decrypt**(`value`: any): Promise\<void>
 
-*Defined in [src/wallet.ts:103](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L103)*
+*Defined in [src/wallet.ts:165](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L165)*
+
+Purpose: Reserved for a future implementation.
 
 #### Parameters:
 
@@ -314,7 +335,9 @@ ___
 
 ▸ **encrypt**(`pubkey`: string): Promise\<void>
 
-*Defined in [src/wallet.ts:99](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L99)*
+*Defined in [src/wallet.ts:156](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L156)*
+
+Purpose: Reserved for a future implementation.
 
 #### Parameters:
 
@@ -390,7 +413,9 @@ ___
 
 ▸ **loadJig**(`loc`: string): Promise\<[IJig](../interfaces/_interfaces_.ijig.md) \| void>
 
-*Defined in [src/wallet.ts:56](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L56)*
+*Defined in [src/wallet.ts:93](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L93)*
+
+Purpose: loads and returns a JIG associated with a specific location string.
 
 #### Parameters:
 
@@ -406,7 +431,11 @@ ___
 
 ▸ **loadJigIndex**(`kind?`: string, `limit?`: number, `offset?`: number, `includeValue?`: boolean): Promise\<any>
 
-*Defined in [src/wallet.ts:52](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L52)*
+*Defined in [src/wallet.ts:84](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L84)*
+
+Purpose: returns the JIGs associated with this wallet's address. Any data filtering options can be supplied as input parameters.
+
+Invokes RestBlockchain.jigIndex
 
 #### Parameters:
 
@@ -425,7 +454,9 @@ ___
 
 ▸ **loadJigs**(): Promise\<[unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]>
 
-*Defined in [src/wallet.ts:65](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L65)*
+*Defined in [src/wallet.ts:107](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L107)*
+
+Purpose: loads and returns all the JIGs associated with this wallet's address.
 
 **Returns:** Promise\<[unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]>
 
@@ -530,7 +561,9 @@ ___
 
 ▸ **randomBytes**(`size`: number): string
 
-*Defined in [src/wallet.ts:118](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L118)*
+*Defined in [src/wallet.ts:195](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L195)*
+
+Purpose: generates a random bytes buffer of a given input size.
 
 #### Parameters:
 
@@ -546,7 +579,9 @@ ___
 
 ▸ **randomInt**(`max`: any): number
 
-*Defined in [src/wallet.ts:114](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L114)*
+*Defined in [src/wallet.ts:186](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L186)*
+
+Purpose: generates a random integer given an upper limit.
 
 #### Parameters:
 
@@ -635,7 +670,10 @@ ___
 
 ▸ **setTimeout**(`cb`: () => Promise\<void>, `ms`: number): number
 
-*Defined in [src/wallet.ts:122](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L122)*
+*Defined in [src/wallet.ts:205](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L205)*
+
+Purpose: given a callback and milliseconds as input, creates a timeout ID and waits for the input milliseconds and returns the timeout ID.
+This reimplements Node.js setTimeout method. Both the ID and the timeout output are stored to a map for audit purposes.
 
 #### Parameters:
 
@@ -652,7 +690,9 @@ ___
 
 ▸ **signTx**(`tx`: Tx): Promise\<TxOut[]>
 
-*Defined in [src/wallet.ts:80](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L80)*
+*Defined in [src/wallet.ts:132](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L132)*
+
+Purpose: signs an input transaction and returns the signed form of the input transaction.
 
 #### Parameters:
 
@@ -668,7 +708,9 @@ ___
 
 ▸ **verifySig**(`sig`: any, `hash`: any, `pubkey`: any): Promise\<boolean>
 
-*Defined in [src/wallet.ts:107](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/wallet.ts#L107)*
+*Defined in [src/wallet.ts:174](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/wallet.ts#L174)*
+
+Purpose: given a signature, hash of a transaction and a public key, verifies that the signature on the transaction hash is valid.
 
 #### Parameters:
 

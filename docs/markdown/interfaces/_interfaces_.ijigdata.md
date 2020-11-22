@@ -20,4 +20,4 @@
 
 •  **location**: string
 
-*Defined in [src/interfaces.ts:9](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/interfaces.ts#L9)*
+*Defined in [src/interfaces.ts:9](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L9)*

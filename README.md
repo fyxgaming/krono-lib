@@ -6,4 +6,4 @@
 
 1. ##### npm install --save-dev @kronoverse/lib
 
-> [Documentation](./SUMMARY.md)
+> [Documentation](SUMMARY.md)

@@ -42,7 +42,9 @@
 
 \+ **new SignedMessage**(`message`: Partial\<[SignedMessage](_signed_message_.signedmessage.md)>): [SignedMessage](_signed_message_.signedmessage.md)
 
-*Defined in [src/signed-message.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L14)*
+*Defined in [src/signed-message.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L19)*
+
+Purpose: creates a new SignedMessage object with a fully or partially defined input SignedMessage object
 
 #### Parameters:
 
@@ -58,7 +60,7 @@ Name | Type |
 
 •  **context**: string[] = []
 
-*Defined in [src/signed-message.ts:11](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L11)*
+*Defined in [src/signed-message.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L16)*
 
 ___
 
@@ -66,7 +68,7 @@ ___
 
 •  **from**: string = ""
 
-*Defined in [src/signed-message.ts:7](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L7)*
+*Defined in [src/signed-message.ts:12](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L12)*
 
 ___
 
@@ -74,7 +76,7 @@ ___
 
 •  **payload**: string = ""
 
-*Defined in [src/signed-message.ts:12](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L12)*
+*Defined in [src/signed-message.ts:17](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L17)*
 
 ___
 
@@ -82,7 +84,7 @@ ___
 
 •  **reply**: string = ""
 
-*Defined in [src/signed-message.ts:9](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L9)*
+*Defined in [src/signed-message.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L14)*
 
 ___
 
@@ -90,7 +92,7 @@ ___
 
 • `Optional` **sig**: string
 
-*Defined in [src/signed-message.ts:14](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L14)*
+*Defined in [src/signed-message.ts:19](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L19)*
 
 ___
 
@@ -98,7 +100,7 @@ ___
 
 •  **subject**: string = ""
 
-*Defined in [src/signed-message.ts:10](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L10)*
+*Defined in [src/signed-message.ts:15](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L15)*
 
 ___
 
@@ -106,7 +108,7 @@ ___
 
 •  **to**: string[] = []
 
-*Defined in [src/signed-message.ts:8](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L8)*
+*Defined in [src/signed-message.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L13)*
 
 ___
 
@@ -114,7 +116,7 @@ ___
 
 •  **ts**: number = Date.now()
 
-*Defined in [src/signed-message.ts:13](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L13)*
+*Defined in [src/signed-message.ts:18](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L18)*
 
 ## Accessors
 
@@ -122,7 +124,9 @@ ___
 
 • get **hash**(): any
 
-*Defined in [src/signed-message.ts:20](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L20)*
+*Defined in [src/signed-message.ts:35](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L35)*
+
+Purpose: returns a hash of this object's properties
 
 **Returns:** any
 
@@ -132,7 +136,9 @@ ___
 
 • get **id**(): any
 
-*Defined in [src/signed-message.ts:38](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L38)*
+*Defined in [src/signed-message.ts:58](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L58)*
+
+Purpose: returns a string of the hash of this object's properties
 
 **Returns:** any
 
@@ -142,7 +148,9 @@ ___
 
 • get **payloadObj**(): any
 
-*Defined in [src/signed-message.ts:42](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L42)*
+*Defined in [src/signed-message.ts:67](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L67)*
+
+Purpose: returns a JSON.parse of this object's payload property
 
 **Returns:** any
 
@@ -152,7 +160,10 @@ ___
 
 ▸ **sign**(`keyPair`: KeyPair): void
 
-*Defined in [src/signed-message.ts:46](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L46)*
+*Defined in [src/signed-message.ts:77](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L77)*
+
+Purpose: given a collection of a private key and a public key (BSV KeyPair object), sets the sig property of this object
+by transforming it through an ECDSA signature method
 
 #### Parameters:
 
@@ -168,6 +179,8 @@ ___
 
 ▸ **verify**(): Promise\<any>
 
-*Defined in [src/signed-message.ts:50](https://github.com/kronoverse-inc/krono-lib/blob/95ea605/src/signed-message.ts#L50)*
+*Defined in [src/signed-message.ts:86](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/signed-message.ts#L86)*
+
+Purpose: verifies the signature held by this object
 
 **Returns:** Promise\<any>
