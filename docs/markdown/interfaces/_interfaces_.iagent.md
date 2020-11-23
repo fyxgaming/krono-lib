@@ -22,7 +22,7 @@
 
 ▸ **onEvent**(`type`: string, `payload`: any): Promise\<any>
 
-*Defined in [src/interfaces.ts:21](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L21)*
+*Defined in [src/interfaces.ts:21](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L21)*
 
 #### Parameters:
 
@@ -39,7 +39,7 @@ ___
 
 ▸ **onJig**(`jigData`: [IJigData](_interfaces_.ijigdata.md)): Promise\<any>
 
-*Defined in [src/interfaces.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L16)*
+*Defined in [src/interfaces.ts:16](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L16)*
 
 #### Parameters:
 
@@ -55,7 +55,7 @@ ___
 
 ▸ **onMessage**(`message`: [SignedMessage](../classes/_signed_message_.signedmessage.md)): Promise\<any>
 
-*Defined in [src/interfaces.ts:22](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L22)*
+*Defined in [src/interfaces.ts:22](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L22)*
 
 #### Parameters:
 

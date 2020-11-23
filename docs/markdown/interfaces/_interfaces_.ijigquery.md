@@ -25,7 +25,7 @@
 
 •  **from**: number
 
-*Defined in [src/interfaces.ts:68](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L68)*
+*Defined in [src/interfaces.ts:68](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L68)*
 
 ___
 
@@ -33,7 +33,7 @@ ___
 
 • `Optional` **isOrigin**: boolean
 
-*Defined in [src/interfaces.ts:72](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L72)*
+*Defined in [src/interfaces.ts:72](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L72)*
 
 ___
 
@@ -41,7 +41,7 @@ ___
 
 • `Optional` **limit**: number
 
-*Defined in [src/interfaces.ts:70](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L70)*
+*Defined in [src/interfaces.ts:70](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L70)*
 
 ___
 
@@ -49,7 +49,7 @@ ___
 
 • `Optional` **offset**: number
 
-*Defined in [src/interfaces.ts:71](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L71)*
+*Defined in [src/interfaces.ts:71](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L71)*
 
 ___
 
@@ -57,7 +57,7 @@ ___
 
 • `Optional` **owner**: string
 
-*Defined in [src/interfaces.ts:67](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L67)*
+*Defined in [src/interfaces.ts:67](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L67)*
 
 ___
 
@@ -65,4 +65,4 @@ ___
 
 •  **to**: number
 
-*Defined in [src/interfaces.ts:69](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L69)*
+*Defined in [src/interfaces.ts:69](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L69)*

@@ -26,7 +26,7 @@
 
 •  **address**: string
 
-*Defined in [src/interfaces.ts:35](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L35)*
+*Defined in [src/interfaces.ts:35](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L35)*
 
 ___
 
@@ -34,7 +34,7 @@ ___
 
 •  **loc**: string
 
-*Defined in [src/interfaces.ts:34](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L34)*
+*Defined in [src/interfaces.ts:34](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L34)*
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 •  **satoshis**: number
 
-*Defined in [src/interfaces.ts:39](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L39)*
+*Defined in [src/interfaces.ts:39](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L39)*
 
 ___
 
@@ -50,7 +50,7 @@ ___
 
 •  **script**: string
 
-*Defined in [src/interfaces.ts:38](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L38)*
+*Defined in [src/interfaces.ts:38](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L38)*
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 •  **ts**: number
 
-*Defined in [src/interfaces.ts:40](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L40)*
+*Defined in [src/interfaces.ts:40](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L40)*
 
 ___
 
@@ -66,7 +66,7 @@ ___
 
 •  **txid**: string
 
-*Defined in [src/interfaces.ts:36](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L36)*
+*Defined in [src/interfaces.ts:36](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L36)*
 
 ___
 
@@ -74,4 +74,4 @@ ___
 
 •  **vout**: number
 
-*Defined in [src/interfaces.ts:37](https://github.com/kronoverse-inc/krono-lib/blob/724f1dc/src/interfaces.ts#L37)*
+*Defined in [src/interfaces.ts:37](https://github.com/kronoverse-inc/krono-lib/blob/9a1373d/src/interfaces.ts#L37)*
