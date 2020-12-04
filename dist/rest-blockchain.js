@@ -104,8 +104,8 @@ class RestBlockchain {
         return resp.json();
     }
     ;
-    async jigIndex(address, query) {
-        const url = `${this.apiUrl}/jigs/address/${address}`;
+    async jigIndex(address, query, type = 'address') {
+        const url = `${this.apiUrl}/jigs/${type}/${address}`;
         const resp = await this.fetchLib(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
