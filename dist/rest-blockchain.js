@@ -98,7 +98,7 @@ class RestBlockchain {
     async utxos(script) {
         if (this.debug)
             console.log('UTXOS:', script);
-        const resp = await this.fetchLib(`${this.apiUrl}/utxos/${script}`);
+        const resp = await this.fetchLib(`${this.apiUrl}/utxos/script/${script}`);
         if (!resp.ok)
             throw new Error(await resp.text());
         return resp.json();
