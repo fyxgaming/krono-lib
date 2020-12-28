@@ -6,11 +6,11 @@ import {HttpError} from './http-error';
 export class RestBlockchain {
     private requests = new Map<string, Promise<any>>();
     constructor(
-        private fetchLib,
-        private apiUrl: string,
+        protected fetchLib,
+        protected apiUrl: string,
         public network: string,
         public cache: {get: (key: string) => any, set: (key: string, value: any) => any} = new Map<string, any>(),
-        private debug = false
+        protected debug = false
     ) { }
 
     get bsvNetwork(): string {

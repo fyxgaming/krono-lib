@@ -1,14 +1,14 @@
 import { IJigQuery, IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
 export declare class RestBlockchain {
-    private fetchLib;
-    private apiUrl;
+    protected fetchLib: any;
+    protected apiUrl: string;
     network: string;
     cache: {
         get: (key: string) => any;
         set: (key: string, value: any) => any;
     };
-    private debug;
+    protected debug: boolean;
     private requests;
     constructor(fetchLib: any, apiUrl: string, network: string, cache?: {
         get: (key: string) => any;
