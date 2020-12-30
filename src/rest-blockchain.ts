@@ -93,9 +93,9 @@ export class RestBlockchain {
         return this.requests.get(cacheKey);
     }
 
-    async utxos(script: string): Promise<IUTXO[]> {
+    async utxos(script: string, limit: number = 1000): Promise<IUTXO[]> {
         if(this.debug) console.log('UTXOS:', script);
-        const resp = await this.fetchLib(`${this.apiUrl}/utxos/script/${script}`);
+        const resp = await this.fetchLib(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
         if (!resp.ok) throw new Error(await resp.text());
         return resp.json();
     };
