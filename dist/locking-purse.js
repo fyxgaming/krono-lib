@@ -40,7 +40,7 @@ class LockingPurse {
         tx.addTxIn(Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, bsv_1.Script.fromString('OP_0 OP_0'), bsv_1.TxIn.SEQUENCE_FINAL);
         totalIn += utxo.satoshis;
         const change = totalIn - totalOut - fee;
-        const changeScript = change > this.recycleThreashold ?
+        const changeScript = (!this.changeAddress || change > this.recycleThreashold) ?
             this.address.toTxOutScript() :
             bsv_1.Address.fromString(this.changeAddress).toTxOutScript();
         tx.addTxOut(bsv_1.Bn(change), changeScript);

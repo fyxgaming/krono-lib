@@ -4,7 +4,7 @@ import { RestBlockchain } from './rest-blockchain';
 export class LockingPurse {
     private address: Address;
     private scripthash: string;
-    constructor(private keyPair: KeyPair, private blockchain: RestBlockchain, private redis: any, private changeAddress: string, private recycleThreashold = 50000) {
+    constructor(private keyPair: KeyPair, private blockchain: RestBlockchain, private redis: any, private changeAddress?: string, private recycleThreashold = 50000) {
         this.address = Address.fromPrivKey(keyPair.privKey);
         this.scripthash = Hash.sha256(this.address.toTxOutScript().toBuffer()).toString('hex');
     }
@@ -41,7 +41,7 @@ export class LockingPurse {
         totalIn += utxo.satoshis;
         
         const change = totalIn - totalOut - fee;
-        const changeScript = change > this.recycleThreashold ?
+        const changeScript = (!this.changeAddress || change > this.recycleThreashold) ?
             this.address.toTxOutScript() :
             Address.fromString(this.changeAddress).toTxOutScript();
         tx.addTxOut(
