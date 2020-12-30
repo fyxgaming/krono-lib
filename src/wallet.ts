@@ -8,7 +8,6 @@ import { Buffer } from 'buffer';
 export class Wallet extends EventEmitter {
     private blockchain: RestBlockchain;
     address: string;
-    purse: string;
     pubkey: string;
     balance: () => Promise<number>
     load: (loc: string) => Promise<IJig>;
@@ -17,7 +16,6 @@ export class Wallet extends EventEmitter {
     getTxPayload: (rawtx: string) => any;
 
     ownerPair: KeyPair;
-    pursePair: KeyPair;
 
     timeouts = new Map<number, any>();
 
@@ -29,11 +27,8 @@ export class Wallet extends EventEmitter {
         super();
         this.blockchain = run.blockchain;
         this.ownerPair = KeyPair.fromPrivKey(PrivKey.fromString(run.owner.privkey));
-        this.pursePair = KeyPair.fromPrivKey(PrivKey.fromString(run.purse.privkey));
         this.pubkey = keyPair.pubKey.toHex();
-        this.purse = run.purse.address;
         this.address = run.owner.address;
-        this.balance = run.purse.balance.bind(run.purse);
         this.load = run.load.bind(run);
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx: string) => run.import(rawtx);
@@ -42,7 +37,6 @@ export class Wallet extends EventEmitter {
         console.log(`PAYMAIL: ${paymail}`);
         console.log(`PUBKEY: ${keyPair.pubKey.toString()}`);
         console.log(`ADDRESS: ${this.address}`);
-        console.log(`PURSE: ${this.purse}`);
     }
 
     get now() {
@@ -75,25 +69,6 @@ export class Wallet extends EventEmitter {
         const message = new SignedMessage(messageData);
         if (sign) message.sign(this.keyPair);
         return message;
-    }
-
-    async signTx(tx: Tx): Promise<TxOut[]> {
-        return Promise.all(tx.txIns.map(async (txIn, i) => {
-            const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
-            const outTx = Tx.fromHex(await this.blockchain.fetch(txid));
-            const txOut = outTx.txOuts[txIn.txOutNum];
-            if (txOut.script.isPubKeyHashOut()) {
-                const address = Address.fromTxOutScript(txOut.script).toString();
-                if (address === this.purse) {
-                    const sig = await tx.asyncSign(this.pursePair, undefined, i, txOut.script, txOut.valueBn);
-                    txIn.setScript(new Script().writeBuffer(sig.toTxFormat()).writeBuffer(this.pursePair.pubKey.toBuffer()));
-                } else if (address === this.address) {
-                    const sig = await tx.asyncSign(this.ownerPair, undefined, i, txOut.script, txOut.valueBn);
-                    txIn.setScript(new Script().writeBuffer(sig.toTxFormat()).writeBuffer(this.ownerPair.pubKey.toBuffer()));
-                }
-            }
-            return txOut;
-        }));
     }
 
     async encrypt(pubkey: string) {

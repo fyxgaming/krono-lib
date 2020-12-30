@@ -13,11 +13,8 @@ class Wallet extends events_1.EventEmitter {
         this.timeouts = new Map();
         this.blockchain = run.blockchain;
         this.ownerPair = bsv_1.KeyPair.fromPrivKey(bsv_1.PrivKey.fromString(run.owner.privkey));
-        this.pursePair = bsv_1.KeyPair.fromPrivKey(bsv_1.PrivKey.fromString(run.purse.privkey));
         this.pubkey = keyPair.pubKey.toHex();
-        this.purse = run.purse.address;
         this.address = run.owner.address;
-        this.balance = run.purse.balance.bind(run.purse);
         this.load = run.load.bind(run);
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx) => run.import(rawtx);
@@ -25,7 +22,6 @@ class Wallet extends events_1.EventEmitter {
         console.log(`PAYMAIL: ${paymail}`);
         console.log(`PUBKEY: ${keyPair.pubKey.toString()}`);
         console.log(`ADDRESS: ${this.address}`);
-        console.log(`PURSE: ${this.purse}`);
     }
     get now() {
         return Date.now();
@@ -55,25 +51,6 @@ class Wallet extends events_1.EventEmitter {
         if (sign)
             message.sign(this.keyPair);
         return message;
-    }
-    async signTx(tx) {
-        return Promise.all(tx.txIns.map(async (txIn, i) => {
-            const txid = buffer_1.Buffer.from(txIn.txHashBuf).reverse().toString('hex');
-            const outTx = bsv_1.Tx.fromHex(await this.blockchain.fetch(txid));
-            const txOut = outTx.txOuts[txIn.txOutNum];
-            if (txOut.script.isPubKeyHashOut()) {
-                const address = bsv_1.Address.fromTxOutScript(txOut.script).toString();
-                if (address === this.purse) {
-                    const sig = await tx.asyncSign(this.pursePair, undefined, i, txOut.script, txOut.valueBn);
-                    txIn.setScript(new bsv_1.Script().writeBuffer(sig.toTxFormat()).writeBuffer(this.pursePair.pubKey.toBuffer()));
-                }
-                else if (address === this.address) {
-                    const sig = await tx.asyncSign(this.ownerPair, undefined, i, txOut.script, txOut.valueBn);
-                    txIn.setScript(new bsv_1.Script().writeBuffer(sig.toTxFormat()).writeBuffer(this.ownerPair.pubKey.toBuffer()));
-                }
-            }
-            return txOut;
-        }));
     }
     async encrypt(pubkey) {
     }

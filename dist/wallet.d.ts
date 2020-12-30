@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { KeyPair, Tx, TxOut } from 'bsv';
+import { KeyPair } from 'bsv';
 import { EventEmitter } from 'events';
 import { IJig, IJigQuery } from './interfaces';
 import { SignedMessage } from './signed-message';
@@ -8,7 +8,6 @@ export declare class Wallet extends EventEmitter {
     private keyPair;
     private blockchain;
     address: string;
-    purse: string;
     pubkey: string;
     balance: () => Promise<number>;
     load: (loc: string) => Promise<IJig>;
@@ -16,7 +15,6 @@ export declare class Wallet extends EventEmitter {
     loadTransaction: (rawtx: string) => Promise<any>;
     getTxPayload: (rawtx: string) => any;
     ownerPair: KeyPair;
-    pursePair: KeyPair;
     timeouts: Map<number, any>;
     constructor(paymail: string, keyPair: KeyPair, run: any);
     get now(): number;
@@ -24,7 +22,6 @@ export declare class Wallet extends EventEmitter {
     loadJig(loc: string): Promise<IJig | void>;
     loadJigs(): Promise<[unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]>;
     buildMessage(messageData: Partial<SignedMessage>, sign?: boolean): SignedMessage;
-    signTx(tx: Tx): Promise<TxOut[]>;
     encrypt(pubkey: string): Promise<void>;
     decrypt(value: any): Promise<void>;
     verifySig(sig: any, hash: any, pubkey: any): Promise<boolean>;
