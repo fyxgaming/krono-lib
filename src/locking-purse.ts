@@ -18,7 +18,6 @@ export class LockingPurse {
         fee += 160;
         const utxos = await this.blockchain.utxos(this.script, 50);
         let utxo;
-        console.log('UTXOS:', utxos.length);
         for (const u of utxos) {
             const lockKey = `lock:${u.txid}_o${u.vout}`;
             if (await this.redis.setnx(lockKey, Date.now())) {
