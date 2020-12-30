@@ -10,17 +10,17 @@ class LockingPurse {
         this.changeAddress = changeAddress;
         this.recycleThreashold = recycleThreashold;
         this.address = bsv_1.Address.fromPrivKey(keyPair.privKey);
-        this.scripthash = bsv_1.Hash.sha256(this.address.toTxOutScript().toBuffer()).toString('hex');
+        this.script = this.address.toTxOutScript().toBuffer().toString('hex');
     }
     async pay(rawtx, parents) {
         const tx = bsv_1.Tx.fromHex(rawtx);
         let fee = Math.ceil(rawtx.length / 4);
         let totalIn = parents.reduce((a, { satoshis }) => a + satoshis, 0);
         const totalOut = tx.txOuts.reduce((a, { valueBn }) => a + valueBn.toNumber(), 0);
-        if (totalIn <= totalOut + fee)
+        if (totalIn >= totalOut + fee)
             return rawtx;
         fee += 160;
-        const utxos = await this.blockchain.utxos(this.scripthash, 50);
+        const utxos = await this.blockchain.utxos(this.script, 50);
         let utxo;
         console.log('UTXOS:', utxos.length);
         for (const u of utxos) {

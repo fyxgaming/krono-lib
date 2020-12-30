@@ -3,10 +3,10 @@ import { RestBlockchain } from './rest-blockchain';
 
 export class LockingPurse {
     private address: Address;
-    private scripthash: string;
+    private script: string;
     constructor(private keyPair: KeyPair, private blockchain: RestBlockchain, private redis: any, private changeAddress?: string, private recycleThreashold = 50000) {
         this.address = Address.fromPrivKey(keyPair.privKey);
-        this.scripthash = Hash.sha256(this.address.toTxOutScript().toBuffer()).toString('hex');
+        this.script = this.address.toTxOutScript().toBuffer().toString('hex');
     }
 
     async pay (rawtx: string, parents: { satoshis: number, script: string }[]) {
@@ -14,9 +14,9 @@ export class LockingPurse {
         let fee = Math.ceil(rawtx.length / 4);
         let totalIn = parents.reduce((a, {satoshis}) => a + satoshis, 0);
         const totalOut = tx.txOuts.reduce((a, {valueBn}) => a + valueBn.toNumber(), 0);
-        if(totalIn <= totalOut + fee) return rawtx;
+        if(totalIn >= totalOut + fee) return rawtx;
         fee += 160;
-        const utxos = await this.blockchain.utxos(this.scripthash, 50);
+        const utxos = await this.blockchain.utxos(this.script, 50);
         let utxo;
         console.log('UTXOS:', utxos.length);
         for (const u of utxos) {

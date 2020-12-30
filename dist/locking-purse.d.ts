@@ -7,7 +7,7 @@ export declare class LockingPurse {
     private changeAddress?;
     private recycleThreashold;
     private address;
-    private scripthash;
+    private script;
     constructor(keyPair: KeyPair, blockchain: RestBlockchain, redis: any, changeAddress?: string, recycleThreashold?: number);
     pay(rawtx: string, parents: {
         satoshis: number;
