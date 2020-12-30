@@ -9,8 +9,9 @@ class LockingPurse {
         this.redis = redis;
         this.changeAddress = changeAddress;
         this.recycleThreashold = recycleThreashold;
-        this.address = bsv_1.Address.fromPrivKey(keyPair.privKey);
-        this.script = this.address.toTxOutScript().toBuffer().toString('hex');
+        const address = bsv_1.Address.fromPrivKey(keyPair.privKey);
+        this.script = address.toTxOutScript();
+        this.address = address.toString();
     }
     async pay(rawtx, parents) {
         const tx = bsv_1.Tx.fromHex(rawtx);
@@ -40,7 +41,7 @@ class LockingPurse {
         totalIn += utxo.satoshis;
         const change = totalIn - totalOut - fee;
         const changeScript = (!this.changeAddress || change > this.recycleThreashold) ?
-            this.address.toTxOutScript() :
+            this.script :
             bsv_1.Address.fromString(this.changeAddress).toTxOutScript();
         tx.addTxOut(bsv_1.Bn(change), changeScript);
         const sig = await tx.asyncSign(this.keyPair, undefined, tx.txIns.length - 1, changeScript, bsv_1.Bn(change));

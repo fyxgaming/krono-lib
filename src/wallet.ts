@@ -37,6 +37,7 @@ export class Wallet extends EventEmitter {
         console.log(`PAYMAIL: ${paymail}`);
         console.log(`PUBKEY: ${keyPair.pubKey.toString()}`);
         console.log(`ADDRESS: ${this.address}`);
+        console.log(`PURSE: ${run.purse.address}`);
     }
 
     get now() {

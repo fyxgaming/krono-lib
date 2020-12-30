@@ -1,12 +1,13 @@
-import { Address, Bn, Hash, KeyPair, Script, Tx, TxIn } from 'bsv';
+import { Address, Bn, KeyPair, Script, Tx, TxIn } from 'bsv';
 import { RestBlockchain } from './rest-blockchain';
 
 export class LockingPurse {
-    private address: Address;
-    private script: string;
+    private address: string;
+    private script: Script;
     constructor(private keyPair: KeyPair, private blockchain: RestBlockchain, private redis: any, private changeAddress?: string, private recycleThreashold = 50000) {
-        this.address = Address.fromPrivKey(keyPair.privKey);
-        this.script = this.address.toTxOutScript().toBuffer().toString('hex');
+        const address = Address.fromPrivKey(keyPair.privKey);
+        this.script = address.toTxOutScript();
+        this.address = address.toString();
     }
 
     async pay (rawtx: string, parents: { satoshis: number, script: string }[]) {
@@ -41,7 +42,7 @@ export class LockingPurse {
         
         const change = totalIn - totalOut - fee;
         const changeScript = (!this.changeAddress || change > this.recycleThreashold) ?
-            this.address.toTxOutScript() :
+            this.script :
             Address.fromString(this.changeAddress).toTxOutScript();
         tx.addTxOut(
             Bn(change),
