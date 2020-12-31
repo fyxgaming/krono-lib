@@ -2,7 +2,7 @@ import { Address, Bn, KeyPair, Script, Tx, TxIn } from 'bsv';
 import { RestBlockchain } from './rest-blockchain';
 
 export class LockingPurse {
-    private address: string;
+    address: string;
     private script: Script;
     constructor(private keyPair: KeyPair, private blockchain: RestBlockchain, private redis: any, private changeAddress?: string, private recycleThreashold = 50000) {
         const address = Address.fromPrivKey(keyPair.privKey);
@@ -30,7 +30,7 @@ export class LockingPurse {
                 console.log('UTXO locked:', lockKey);
             }
         }
-        if (!utxo) throw new Error('No UTXOs found');
+        if (!utxo) throw new Error(`No UTXOs found for purse: ${this.address}`);
 
         tx.addTxIn(
             Buffer.from(utxo.txid, 'hex').reverse(),

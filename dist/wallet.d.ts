@@ -8,6 +8,7 @@ export declare class Wallet extends EventEmitter {
     private keyPair;
     private blockchain;
     address: string;
+    purse: string;
     pubkey: string;
     balance: () => Promise<number>;
     load: (loc: string) => Promise<IJig>;

@@ -36,7 +36,7 @@ class LockingPurse {
             }
         }
         if (!utxo)
-            throw new Error('No UTXOs found');
+            throw new Error(`No UTXOs found for purse: ${this.address}`);
         tx.addTxIn(Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, bsv_1.Script.fromString('OP_0 OP_0'), bsv_1.TxIn.SEQUENCE_FINAL);
         totalIn += utxo.satoshis;
         const change = totalIn - totalOut - fee;

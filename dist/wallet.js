@@ -15,6 +15,7 @@ class Wallet extends events_1.EventEmitter {
         this.ownerPair = bsv_1.KeyPair.fromPrivKey(bsv_1.PrivKey.fromString(run.owner.privkey));
         this.pubkey = keyPair.pubKey.toHex();
         this.address = run.owner.address;
+        this.purse = run.purse.address;
         this.load = run.load.bind(run);
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx) => run.import(rawtx);
@@ -22,7 +23,7 @@ class Wallet extends events_1.EventEmitter {
         console.log(`PAYMAIL: ${paymail}`);
         console.log(`PUBKEY: ${keyPair.pubKey.toString()}`);
         console.log(`ADDRESS: ${this.address}`);
-        console.log(`PURSE: ${run.purse.address}`);
+        console.log(`PURSE: ${this.purse}`);
     }
     get now() {
         return Date.now();

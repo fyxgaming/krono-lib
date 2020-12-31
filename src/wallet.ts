@@ -8,6 +8,7 @@ import { Buffer } from 'buffer';
 export class Wallet extends EventEmitter {
     private blockchain: RestBlockchain;
     address: string;
+    purse: string;
     pubkey: string;
     balance: () => Promise<number>
     load: (loc: string) => Promise<IJig>;
@@ -29,6 +30,7 @@ export class Wallet extends EventEmitter {
         this.ownerPair = KeyPair.fromPrivKey(PrivKey.fromString(run.owner.privkey));
         this.pubkey = keyPair.pubKey.toHex();
         this.address = run.owner.address;
+        this.purse = run.purse.address;
         this.load = run.load.bind(run);
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx: string) => run.import(rawtx);
@@ -37,7 +39,7 @@ export class Wallet extends EventEmitter {
         console.log(`PAYMAIL: ${paymail}`);
         console.log(`PUBKEY: ${keyPair.pubKey.toString()}`);
         console.log(`ADDRESS: ${this.address}`);
-        console.log(`PURSE: ${run.purse.address}`);
+        console.log(`PURSE: ${this.purse}`);
     }
 
     get now() {
