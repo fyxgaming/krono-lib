@@ -21,7 +21,7 @@ class LockingPurse {
         if (totalIn >= totalOut + fee)
             return rawtx;
         fee += 160;
-        const utxos = await this.blockchain.utxos(this.script, 50);
+        const utxos = await this.blockchain.utxos(this.script.toHex(), 50);
         let utxo;
         for (const u of utxos) {
             const lockKey = `lock:${u.txid}_o${u.vout}`;
