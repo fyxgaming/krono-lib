@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RestBlockchain = void 0;
 const signed_message_1 = require("./signed-message");
+const bsv_1 = require("bsv");
 const http_error_1 = require("./http-error");
 class RestBlockchain {
     constructor(fetchLib, apiUrl, network, cache = new Map(), debug = false) {
@@ -37,10 +38,14 @@ class RestBlockchain {
         await this.cache.set(`tx://${txid}`, rawtx);
         return txid;
     }
-    async populateInputs(tx) {
-        await Promise.all(tx.inputs.map(async (input) => {
-            const outTx = await this.fetch(input.prevTxId.toString('hex'));
-            input.output = outTx.outputs[input.outputIndex];
+    async retrieveOutputs(tx) {
+        return Promise.all(tx.txIns.map(async (txIn) => {
+            const txid = new bsv_1.Br(txIn.txHashBuf).readReverse().toString('hex');
+            const outTx = bsv_1.Transaction.fromHex(await this.fetch(txid));
+            return {
+                location: `${txid}_o${txIn.txOutNum}`,
+                script: outTx.toOuts[txIn.txOutNum].script.toString(),
+            };
         }));
     }
     async fetch(txid) {

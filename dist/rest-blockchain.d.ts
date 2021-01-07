@@ -1,5 +1,6 @@
 import { IJigQuery, IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
+import { Tx } from 'bsv';
 export declare class RestBlockchain {
     protected fetchLib: any;
     protected apiUrl: string;
@@ -16,7 +17,7 @@ export declare class RestBlockchain {
     }, debug?: boolean);
     get bsvNetwork(): string;
     broadcast(rawtx: any): Promise<any>;
-    populateInputs(tx: any): Promise<void>;
+    retrieveOutputs(tx: Tx): Promise<[unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]>;
     fetch(txid: string): Promise<any>;
     time(txid: string): Promise<number>;
     spends(txid: string, vout: number): Promise<string | null>;
