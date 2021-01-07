@@ -1,6 +1,6 @@
 import { IJigQuery, IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
-import { Br, Transaction, Tx } from 'bsv';
+import { Br, Tx } from 'bsv';
 
 import {HttpError} from './http-error';
 
@@ -42,7 +42,7 @@ export class RestBlockchain {
     async retrieveOutputs(tx: Tx) {
         return Promise.all(tx.txIns.map(async txIn => {
             const txid = new Br(txIn.txHashBuf).readReverse().toString('hex');
-            const outTx = Transaction.fromHex(await this.fetch(txid));
+            const outTx = Tx.fromHex(await this.fetch(txid));
             return {
                 location: `${txid}_o${txIn.txOutNum}`,
                 script: outTx.toOuts[txIn.txOutNum].script.toString(),

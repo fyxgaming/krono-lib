@@ -41,7 +41,7 @@ class RestBlockchain {
     async retrieveOutputs(tx) {
         return Promise.all(tx.txIns.map(async (txIn) => {
             const txid = new bsv_1.Br(txIn.txHashBuf).readReverse().toString('hex');
-            const outTx = bsv_1.Transaction.fromHex(await this.fetch(txid));
+            const outTx = bsv_1.Tx.fromHex(await this.fetch(txid));
             return {
                 location: `${txid}_o${txIn.txOutNum}`,
                 script: outTx.toOuts[txIn.txOutNum].script.toString(),
