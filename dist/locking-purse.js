@@ -44,7 +44,7 @@ class LockingPurse {
             this.script :
             bsv_1.Address.fromString(this.changeAddress).toTxOutScript();
         tx.addTxOut(bsv_1.Bn(change), changeScript);
-        const sig = await tx.asyncSign(this.keyPair, undefined, tx.txIns.length - 1, changeScript, bsv_1.Bn(change));
+        const sig = await tx.asyncSign(this.keyPair, undefined, tx.txIns.length - 1, bsv_1.Script.fromString(utxo.script), bsv_1.Bn(utxo.satoshis));
         const sigScript = new bsv_1.Script()
             .writeBuffer(sig.toTxFormat())
             .writeBuffer(this.keyPair.pubKey.toBuffer());

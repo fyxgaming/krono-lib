@@ -48,8 +48,8 @@ export class LockingPurse {
             Bn(change),
             changeScript
         );
-
-        const sig = await tx.asyncSign(this.keyPair, undefined, tx.txIns.length - 1, changeScript, Bn(change));
+        
+        const sig = await tx.asyncSign(this.keyPair, undefined, tx.txIns.length - 1, Script.fromString(utxo.script), Bn(utxo.satoshis));
         const sigScript = new Script()
             .writeBuffer(sig.toTxFormat())
             .writeBuffer(this.keyPair.pubKey.toBuffer());
