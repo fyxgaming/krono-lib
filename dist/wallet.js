@@ -11,6 +11,7 @@ class Wallet extends events_1.EventEmitter {
         this.paymail = paymail;
         this.keyPair = keyPair;
         this.timeouts = new Map();
+        this.intervals = new Map();
         this.blockchain = run.blockchain;
         this.ownerPair = bsv_1.KeyPair.fromPrivKey(bsv_1.PrivKey.fromString(run.owner.privkey));
         this.pubkey = keyPair.pubKey.toHex();
@@ -78,6 +79,16 @@ class Wallet extends events_1.EventEmitter {
     clearTimeout(timeoutId) {
         if (this.timeouts.has(timeoutId)) {
             clearTimeout(this.timeouts.get(timeoutId));
+        }
+    }
+    setInterval(cb, ms) {
+        const intervalId = Date.now();
+        this.intervals.set(intervalId, setInterval(async () => cb().catch(e => console.error('Timeout Error', e)), ms));
+        return intervalId;
+    }
+    clearInterval(intervalId) {
+        if (this.intervals.has(intervalId)) {
+            clearInterval(this.intervals.get(intervalId));
         }
     }
 }

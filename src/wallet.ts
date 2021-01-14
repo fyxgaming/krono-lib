@@ -19,6 +19,7 @@ export class Wallet extends EventEmitter {
     ownerPair: KeyPair;
 
     timeouts = new Map<number, any>();
+    intervals = new Map<number, any>();
 
     constructor(
         public paymail: string,
@@ -109,6 +110,21 @@ export class Wallet extends EventEmitter {
     clearTimeout(timeoutId: number): void {
         if (this.timeouts.has(timeoutId)) {
             clearTimeout(this.timeouts.get(timeoutId));
+        }
+    }
+
+    setInterval(cb: () => Promise<void>, ms: number): number {
+        const intervalId = Date.now();
+        this.intervals.set(
+            intervalId,
+            setInterval(async () => cb().catch(e => console.error('Timeout Error', e)), ms)
+        )
+        return intervalId;
+    }
+
+    clearInterval(intervalId: number): void {
+        if (this.intervals.has(intervalId)) {
+            clearInterval(this.intervals.get(intervalId));
         }
     }
 }

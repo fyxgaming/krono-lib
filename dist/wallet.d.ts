@@ -17,6 +17,7 @@ export declare class Wallet extends EventEmitter {
     getTxPayload: (rawtx: string) => any;
     ownerPair: KeyPair;
     timeouts: Map<number, any>;
+    intervals: Map<number, any>;
     constructor(paymail: string, keyPair: KeyPair, run: any);
     get now(): number;
     loadJigIndex(query?: IJigQuery): Promise<any>;
@@ -30,4 +31,6 @@ export declare class Wallet extends EventEmitter {
     randomBytes(size: number): string;
     setTimeout(cb: () => Promise<void>, ms: number): number;
     clearTimeout(timeoutId: number): void;
+    setInterval(cb: () => Promise<void>, ms: number): number;
+    clearInterval(intervalId: number): void;
 }
