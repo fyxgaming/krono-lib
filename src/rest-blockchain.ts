@@ -116,8 +116,8 @@ export class RestBlockchain {
         return resp.json();
     }
 
-    async loadJigData(loc: string, unspent: boolean) {
-        const resp = await this.fetchLib(`${this.apiUrl}/jigs/${loc}${unspent && '?unspent'}`);
+    async loadJigData(loc: string, unspent = false) {
+        const resp = await this.fetchLib(`${this.apiUrl}/jigs/${loc}?unspent=${unspent ? 'true' : ''}`);
         if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
         return resp.json();
     }
