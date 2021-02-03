@@ -10,6 +10,7 @@ export declare class Wallet extends EventEmitter {
     address: string;
     purse: string;
     pubkey: string;
+    handle: string;
     balance: () => Promise<number>;
     load: (loc: string) => Promise<IJig>;
     createTransaction: () => any;

@@ -17,6 +17,7 @@ class Wallet extends events_1.EventEmitter {
         this.pubkey = keyPair.pubKey.toHex();
         this.address = run.owner.address;
         this.purse = run.purse.address;
+        [this.handle] = paymail.split('@');
         this.load = run.load.bind(run);
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx) => run.import(rawtx);

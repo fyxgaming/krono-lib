@@ -10,6 +10,7 @@ export class Wallet extends EventEmitter {
     address: string;
     purse: string;
     pubkey: string;
+    handle: string;
     balance: () => Promise<number>
     load: (loc: string) => Promise<IJig>;
     createTransaction: () => any;
@@ -32,11 +33,12 @@ export class Wallet extends EventEmitter {
         this.pubkey = keyPair.pubKey.toHex();
         this.address = run.owner.address;
         this.purse = run.purse.address;
+        [this.handle] = paymail.split('@');
+        
         this.load = run.load.bind(run);
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx: string) => run.import(rawtx);
         this.getTxPayload = (rawtx: string) => run.payload(rawtx);
-
         console.log(`PAYMAIL: ${paymail}`);
         console.log(`PUBKEY: ${keyPair.pubKey.toString()}`);
         console.log(`ADDRESS: ${this.address}`);
