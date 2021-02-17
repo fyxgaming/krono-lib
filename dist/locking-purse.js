@@ -3,11 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LockingPurse = void 0;
 const bsv_1 = require("bsv");
 class LockingPurse {
-    constructor(keyPair, blockchain, redis, changeAddress, recycleThreashold = 50000) {
+    constructor(keyPair, blockchain, redis, changeAddress, satsPerByte = 0.25, recycleThreashold = 50000) {
         this.keyPair = keyPair;
         this.blockchain = blockchain;
         this.redis = redis;
         this.changeAddress = changeAddress;
+        this.satsPerByte = satsPerByte;
         this.recycleThreashold = recycleThreashold;
         const address = bsv_1.Address.fromPrivKey(keyPair.privKey);
         this.script = address.toTxOutScript();
@@ -15,13 +16,13 @@ class LockingPurse {
     }
     async pay(rawtx, parents) {
         const tx = bsv_1.Tx.fromHex(rawtx);
-        let fee = Math.ceil(rawtx.length / 4);
+        let fee = Math.ceil(rawtx.length / 2 * this.satsPerByte);
         let totalIn = parents.reduce((a, { satoshis }) => a + satoshis, 0);
         const totalOut = tx.txOuts.reduce((a, { valueBn }) => a + valueBn.toNumber(), 0);
         if (totalIn >= totalOut + fee)
             return rawtx;
-        fee += 160;
-        const utxos = await this.blockchain.utxos(this.script.toHex(), 50);
+        fee += Math.ceil(((rawtx.length / 2) + 160) * this.satsPerByte);
+        const utxos = await this.blockchain.utxos(this.script.toHex(), 25);
         let utxo;
         for (const u of utxos) {
             const lockKey = `lock:${u.txid}_o${u.vout}`;

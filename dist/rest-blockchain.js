@@ -126,8 +126,8 @@ class RestBlockchain {
             throw new Error(`${resp.status} ${resp.statusText}`);
         return resp.json();
     }
-    async jigQuery(query, limit = 10) {
-        const resp = await this.fetchLib(`${this.apiUrl}/jigs/search?limit=${limit}`, {
+    async jigQuery(query) {
+        const resp = await this.fetchLib(`${this.apiUrl}/jigs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(query)

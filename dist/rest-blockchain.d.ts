@@ -24,7 +24,7 @@ export declare class RestBlockchain {
     utxos(script: string, limit?: number): Promise<IUTXO[]>;
     jigIndex(address: string, query: IJigQuery, type?: 'address' | 'script'): Promise<any>;
     loadJigData(loc: string, unspent?: boolean): Promise<any>;
-    jigQuery(query: any, limit?: number): Promise<any>;
+    jigQuery(query: any): Promise<any>;
     fund(address: string, satoshis?: number): Promise<any>;
     loadMessage(messageId: any): Promise<SignedMessage>;
     sendMessage(message: SignedMessage, postTo?: string): Promise<any>;
