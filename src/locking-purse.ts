@@ -9,7 +9,7 @@ export class LockingPurse {
         private blockchain: RestBlockchain, 
         private redis: any, 
         private changeAddress?: string, 
-        public satsPerByte = 0.25, 
+        public satsPerByte = 0.5, 
         private recycleThreashold = 50000
     ) {
         const address = Address.fromPrivKey(keyPair.privKey);

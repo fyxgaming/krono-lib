@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LockingPurse = void 0;
 const bsv_1 = require("bsv");
 class LockingPurse {
-    constructor(keyPair, blockchain, redis, changeAddress, satsPerByte = 0.25, recycleThreashold = 50000) {
+    constructor(keyPair, blockchain, redis, changeAddress, satsPerByte = 0.5, recycleThreashold = 50000) {
         this.keyPair = keyPair;
         this.blockchain = blockchain;
         this.redis = redis;
