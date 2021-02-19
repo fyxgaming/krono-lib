@@ -40,6 +40,8 @@ class SignedMessage {
         return this.payload && JSON.parse(this.payload);
     }
     sign(keyPair) {
+        this.from = keyPair.pubKey.toString();
+        this.ts = Date.now();
         this.sig = bsv_1.Ecdsa.sign(this.hash, keyPair).toString();
     }
     async verify() {

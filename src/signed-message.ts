@@ -44,6 +44,8 @@ export class SignedMessage {
     }
 
     sign(keyPair: KeyPair) {
+        this.from = keyPair.pubKey.toString();
+        this.ts = Date.now();
         this.sig = Ecdsa.sign(this.hash, keyPair).toString();
     }
 
