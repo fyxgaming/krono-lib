@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LockingPurse = void 0;
 const bsv_1 = require("bsv");
+const ADDITIONAL_INPUT_BYTES = 225;
 class LockingPurse {
     constructor(keyPair, blockchain, redis, changeAddress, satsPerByte = 0.5, recycleThreashold = 50000) {
         this.keyPair = keyPair;
@@ -21,7 +22,7 @@ class LockingPurse {
         const totalOut = tx.txOuts.reduce((a, { valueBn }) => a + valueBn.toNumber(), 0);
         if (totalIn >= totalOut + fee)
             return rawtx;
-        fee = Math.ceil(((rawtx.length / 2) + 160) * this.satsPerByte);
+        fee += Math.ceil(ADDITIONAL_INPUT_BYTES * this.satsPerByte);
         const utxos = await this.blockchain.utxos(this.script.toHex(), 25);
         let utxo;
         for (const u of utxos) {
