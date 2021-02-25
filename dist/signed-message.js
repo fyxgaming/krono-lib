@@ -6,7 +6,7 @@ const buffer_1 = require("buffer");
 const MAGIC_BYTES = buffer_1.Buffer.from('Bitcoin Signed Message:\n');
 const MAGIC_BYTES_PREFIX = bsv_1.Bw.varIntBufNum(MAGIC_BYTES.length);
 class SignedMessage {
-    constructor(message) {
+    constructor(message, keyPair) {
         this.from = '';
         this.to = [];
         this.reply = '';
@@ -15,6 +15,8 @@ class SignedMessage {
         this.payload = '';
         this.ts = Date.now();
         Object.assign(this, message);
+        if (keyPair)
+            this.sign(keyPair);
     }
     get hash() {
         const payloadBuf = buffer_1.Buffer.concat([

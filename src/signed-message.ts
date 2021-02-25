@@ -13,8 +13,9 @@ export class SignedMessage {
     ts: number = Date.now();
     sig?: string;
 
-    constructor(message: Partial<SignedMessage>) {
+    constructor(message: Partial<SignedMessage>, keyPair?: KeyPair) {
         Object.assign(this, message);
+        if(keyPair) this.sign(keyPair);
     }
 
     get hash() {

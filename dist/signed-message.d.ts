@@ -8,7 +8,7 @@ export declare class SignedMessage {
     payload: string;
     ts: number;
     sig?: string;
-    constructor(message: Partial<SignedMessage>);
+    constructor(message: Partial<SignedMessage>, keyPair?: KeyPair);
     get hash(): any;
     get id(): any;
     get payloadObj(): any;
