@@ -4,13 +4,12 @@ import { EventEmitter } from 'events';
 import { IJig, IJigQuery } from './interfaces';
 import { SignedMessage } from './signed-message';
 export declare class Wallet extends EventEmitter {
-    paymail: string;
+    handle: string;
     private keyPair;
     private blockchain;
     address: string;
     purse: string;
     pubkey: string;
-    handle: string;
     balance: () => Promise<number>;
     load: (loc: string) => Promise<IJig>;
     createTransaction: () => any;
@@ -19,7 +18,7 @@ export declare class Wallet extends EventEmitter {
     ownerPair: KeyPair;
     timeouts: Map<number, any>;
     intervals: Map<number, any>;
-    constructor(paymail: string, keyPair: KeyPair, run: any);
+    constructor(handle: string, keyPair: KeyPair, run: any);
     get now(): number;
     loadJigIndex(query?: IJigQuery): Promise<any>;
     loadJig(loc: string): Promise<IJig | void>;

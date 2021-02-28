@@ -6,9 +6,9 @@ const events_1 = require("events");
 const signed_message_1 = require("./signed-message");
 const buffer_1 = require("buffer");
 class Wallet extends events_1.EventEmitter {
-    constructor(paymail, keyPair, run) {
+    constructor(handle, keyPair, run) {
         super();
-        this.paymail = paymail;
+        this.handle = handle;
         this.keyPair = keyPair;
         this.timeouts = new Map();
         this.intervals = new Map();
@@ -17,12 +17,11 @@ class Wallet extends events_1.EventEmitter {
         this.pubkey = keyPair.pubKey.toHex();
         this.address = run.owner.address;
         this.purse = run.purse.address;
-        [this.handle] = paymail.split('@');
         this.load = run.load.bind(run);
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx) => run.import(rawtx);
         this.getTxPayload = (rawtx) => run.payload(rawtx);
-        console.log(`PAYMAIL: ${paymail}`);
+        console.log(`HANDLE: ${handle}`);
         console.log(`PUBKEY: ${keyPair.pubKey.toString()}`);
         console.log(`ADDRESS: ${this.address}`);
         console.log(`PURSE: ${this.purse}`);
