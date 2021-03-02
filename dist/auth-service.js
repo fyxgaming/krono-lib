@@ -66,15 +66,12 @@ class AuthService {
         const resp = await fetch(`${this.apiUrl}/accounts/${id}`, {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify(new signed_message_1.SignedMessage({
-                subject: 'Register',
-                payload: JSON.stringify({
-                    id,
-                    xpub: bip32.toPublic().toString(),
-                    recovery: recoveryBuf.toString('base64'),
-                    email
-                })
-            }, keyPair))
+            body: JSON.stringify({
+                id,
+                xpub: bip32.toPublic().toString(),
+                recovery: recoveryBuf.toString('base64'),
+                email
+            })
         });
         if (!resp.ok)
             throw http_errors_1.default(resp.status, resp.statusText);

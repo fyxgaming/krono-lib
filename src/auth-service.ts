@@ -47,34 +47,31 @@ export class AuthService {
         reg.sig = sig.toString();
 
         const resp = await fetch(`${this.apiUrl}/accounts/${id}`, {
-            method: 'POST', 
-            headers: {'Content-type': 'application/json'},
-            body: JSON.stringify(new SignedMessage({
-                subject: 'Register',
-                payload: JSON.stringify({
-                    id,
-                    xpub: bip32.toPublic().toString(),
-                    recovery: recoveryBuf.toString('base64'),
-                    email
-                })
-            }, keyPair))
+            method: 'POST',
+            headers: { 'Content-type': 'application/json' },
+            body: JSON.stringify({
+                id,
+                xpub: bip32.toPublic().toString(),
+                recovery: recoveryBuf.toString('base64'),
+                email
+            })
         });
-        if(!resp.ok) throw createError(resp.status, resp.statusText)
+        if (!resp.ok) throw createError(resp.status, resp.statusText)
 
         return keyPair;
     }
 
     async recover(id: string, keyPair: KeyPair) {
         const resp = await fetch(`${this.apiUrl}/accounts`, {
-            method: 'POST', 
-            headers: {'Content-type': 'application/json'},
+            method: 'POST',
+            headers: { 'Content-type': 'application/json' },
             body: JSON.stringify(new SignedMessage({
                 subject: 'Recover'
             }, keyPair))
         });
-        if(!resp.ok) throw createError(resp.status, resp.statusText);
-        const {path, recovery} = await resp.json();
-        
+        if (!resp.ok) throw createError(resp.status, resp.statusText);
+        const { path, recovery } = await resp.json();
+
         const recoveryBuf = Ecies.bitcoreDecrypt(
             Buffer.from(recovery, 'base64'),
             keyPair.privKey
@@ -86,7 +83,7 @@ export class AuthService {
     public async isIdAvailable(id: string) {
         try {
             const resp = await fetch(`${this.apiUrl}/accounts/${id}`);
-            if(!resp.ok && resp.status  !== 404) throw createError(resp.status, resp.statusText);
+            if (!resp.ok && resp.status !== 404) throw createError(resp.status, resp.statusText);
             return resp.status === 404;
         } catch (e) {
             throw e;
