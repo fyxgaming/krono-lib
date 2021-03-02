@@ -13,5 +13,5 @@ export declare class SignedMessage {
     get id(): any;
     get payloadObj(): any;
     sign(userId: string, keyPair: KeyPair): void;
-    verify(pubkey: PubKey): Promise<any>;
+    verify(pubkey: PubKey | string): Promise<any>;
 }

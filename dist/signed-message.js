@@ -47,6 +47,9 @@ class SignedMessage {
         this.sig = bsv_1.Ecdsa.sign(this.hash, keyPair).toString();
     }
     async verify(pubkey) {
+        if (typeof pubkey === 'string') {
+            pubkey = bsv_1.PubKey.from(pubkey);
+        }
         return bsv_1.Ecdsa.asyncVerify(this.hash, bsv_1.Sig.fromString(this.sig), pubkey);
     }
 }
