@@ -88,10 +88,8 @@ class AuthService {
             throw http_errors_1.default(resp.status, resp.statusText);
         const { path, recovery } = await resp.json();
         const recoveryBuf = bsv_1.Ecies.bitcoreDecrypt(buffer_1.Buffer.from(recovery, 'base64'), keyPair.privKey);
-        return {
-            xpriv: recoveryBuf.toString(),
-            path
-        };
+        const xpriv = recoveryBuf.toString();
+        return bsv_1.Bip32.fromString(xpriv);
     }
     async isIdAvailable(id) {
         try {

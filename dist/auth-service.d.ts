@@ -5,9 +5,6 @@ export declare class AuthService {
     constructor(apiUrl: string, network: string);
     generateKeyPair(id: string, password: string): KeyPair;
     register(id: string, password: string, email: string): Promise<string>;
-    recover(id: string, keyPair: KeyPair): Promise<{
-        xpriv: any;
-        path: any;
-    }>;
+    recover(id: string, keyPair: KeyPair): Promise<any>;
     isIdAvailable(id: string): Promise<boolean>;
 }

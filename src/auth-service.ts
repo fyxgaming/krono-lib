@@ -74,10 +74,8 @@ export class AuthService {
             Buffer.from(recovery, 'base64'),
             keyPair.privKey
         );
-        return {
-            xpriv: recoveryBuf.toString(),
-            path
-        };
+        const xpriv = recoveryBuf.toString();
+        return Bip32.fromString(xpriv);
     }
 
     public async isIdAvailable(id: string) {
