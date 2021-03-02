@@ -46,7 +46,7 @@ export class AuthService {
         const sig = Ecdsa.sign(msgHash, keyPair);
         reg.sig = sig.toString();
 
-        const resp = await fetch(`${this.apiUrl}/accounts`, {
+        const resp = await fetch(`${this.apiUrl}/accounts/${id}`, {
             method: 'POST', 
             headers: {'Content-type': 'application/json'},
             body: JSON.stringify(new SignedMessage({
