@@ -47,12 +47,9 @@ class Wallet extends events_1.EventEmitter {
         console.log('JIGS:', jigs.length);
         return jigs;
     }
-    buildMessage(messageData, sign = true) {
+    buildMessage(messageData) {
         messageData.ts = Date.now();
-        // messageData.from = this.keyPair.pubKey.toString();
-        const message = new signed_message_1.SignedMessage(messageData);
-        if (sign)
-            message.sign(this.handle, this.keyPair);
+        const message = new signed_message_1.SignedMessage(messageData, this.handle, this.keyPair);
         return message;
     }
     async encrypt(pubkey) {

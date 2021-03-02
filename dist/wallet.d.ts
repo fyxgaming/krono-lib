@@ -23,7 +23,7 @@ export declare class Wallet extends EventEmitter {
     loadJigIndex(query?: IJigQuery): Promise<any>;
     loadJig(loc: string): Promise<IJig | void>;
     loadJigs(): Promise<[unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]>;
-    buildMessage(messageData: Partial<SignedMessage>, sign?: boolean): SignedMessage;
+    buildMessage(messageData: Partial<SignedMessage>): SignedMessage;
     encrypt(pubkey: string): Promise<void>;
     decrypt(value: any): Promise<void>;
     verifySig(sig: any, hash: any, pubkey: any): Promise<boolean>;

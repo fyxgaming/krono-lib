@@ -62,7 +62,7 @@ export class AuthService {
             headers: { 'Content-type': 'application/json' },
             body: JSON.stringify(new SignedMessage({
                 subject: 'Recover'
-            }, keyPair))
+            }, id, keyPair))
         });
         if (!resp.ok) throw createError(resp.status, resp.statusText);
         const { path, recovery } = await resp.json();

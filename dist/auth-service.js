@@ -78,7 +78,7 @@ class AuthService {
             headers: { 'Content-type': 'application/json' },
             body: JSON.stringify(new signed_message_1.SignedMessage({
                 subject: 'Recover'
-            }, keyPair))
+            }, id, keyPair))
         });
         if (!resp.ok)
             throw http_errors_1.default(resp.status, resp.statusText);

@@ -68,11 +68,9 @@ export class Wallet extends EventEmitter {
         return jigs;
     }
 
-    buildMessage(messageData: Partial<SignedMessage>, sign = true): SignedMessage {
+    buildMessage(messageData: Partial<SignedMessage>): SignedMessage {
         messageData.ts = Date.now();
-        // messageData.from = this.keyPair.pubKey.toString();
-        const message = new SignedMessage(messageData);
-        if (sign) message.sign(this.handle, this.keyPair);
+        const message = new SignedMessage(messageData, this.handle, this.keyPair);
         return message;
     }
 
