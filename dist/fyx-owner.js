@@ -8,11 +8,10 @@ const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
 const signed_message_1 = require("./signed-message");
 class FyxOwner {
-    constructor(apiUrl, bip32, fyxId, derivation = 'm') {
+    constructor(apiUrl, bip32, fyxId) {
         this.apiUrl = apiUrl;
         this.bip32 = bip32;
         this.fyxId = fyxId;
-        this.derivation = derivation;
         this.derivations = [];
     }
     async nextOwner() {
@@ -22,7 +21,7 @@ class FyxOwner {
             body: JSON.stringify(new signed_message_1.SignedMessage({
                 subject: 'RequestPaymentAddress',
                 payload: JSON.stringify({ fyxId: this.fyxId })
-            }, bsv_1.KeyPair.fromPrivKey(this.bip32.derive(this.derivation).privKey)))
+            }, bsv_1.KeyPair.fromPrivKey(this.bip32.privKey)))
         });
         if (!resp.ok)
             throw http_errors_1.default(resp.status, resp.statusText);

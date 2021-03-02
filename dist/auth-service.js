@@ -47,12 +47,11 @@ class AuthService {
         //     Buffer.from([1]) // compressed flag
         // ]);
         const bip39 = bsv_1.Bip39.fromEntropy(buffer_1.Buffer.from(hash));
-        const bip32 = bsv_1.Bip32.fromSeed(bip39.toSeed());
-        return bsv_1.KeyPair.fromPrivKey(bip32.privKey);
+        return bsv_1.Bip32.fromSeed(bip39.toSeed());
     }
     async register(id, password, email) {
-        const keyPair = await this.generateKeyPair(id, password);
-        const bip32 = bsv_1.Bip32.fromRandom();
+        const bip32 = await this.generateKeyPair(id, password);
+        const keyPair = bsv_1.KeyPair.fromPrivKey(bip32.privKey);
         const recoveryBuf = bsv_1.Ecies.bitcoreEncrypt(buffer_1.Buffer.from(bip32.toString()), keyPair.pubKey, keyPair);
         const reg = {
             pubkey: keyPair.pubKey.toString(),
@@ -75,7 +74,7 @@ class AuthService {
         });
         if (!resp.ok)
             throw http_errors_1.default(resp.status, resp.statusText);
-        return keyPair;
+        return bip32;
     }
     // async recover(id: string, keyPair: KeyPair) {
     //     const resp = await fetch(`${this.apiUrl}/accounts`, {

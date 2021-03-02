@@ -23,13 +23,12 @@ export class AuthService {
         // ]);
 
         const bip39 = Bip39.fromEntropy(Buffer.from(hash));
-        const bip32 = Bip32.fromSeed(bip39.toSeed());
-        return KeyPair.fromPrivKey(bip32.privKey);
+        return Bip32.fromSeed(bip39.toSeed());
     }
 
     async register(id: string, password: string, email: string): Promise<string> {
-        const keyPair = await this.generateKeyPair(id, password);
-        const bip32 = Bip32.fromRandom();
+        const bip32 = await this.generateKeyPair(id, password);
+        const keyPair = KeyPair.fromPrivKey(bip32.privKey);
 
         const recoveryBuf = Ecies.bitcoreEncrypt(
             Buffer.from(bip32.toString()),
@@ -58,7 +57,7 @@ export class AuthService {
         });
         if(!resp.ok) throw createError(resp.status, resp.statusText)
 
-        return keyPair;
+        return bip32;
     }
 
     // async recover(id: string, keyPair: KeyPair) {
