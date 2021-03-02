@@ -12,6 +12,7 @@
     "**/*"
   ],
   "dependencies": {
+    "argon2-browser": "^1.15.3",
     "bsv": "^2.0.4",
     "events": "^3.2.0",
     "http-errors": "^1.8.0"
