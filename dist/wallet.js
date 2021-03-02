@@ -13,7 +13,7 @@ class Wallet extends events_1.EventEmitter {
         this.timeouts = new Map();
         this.intervals = new Map();
         this.blockchain = run.blockchain;
-        this.ownerPair = bsv_1.KeyPair.fromPrivKey(bsv_1.PrivKey.fromString(run.owner.privkey));
+        // this.ownerPair = KeyPair.fromPrivKey(PrivKey.fromString(run.owner.privkey));
         this.pubkey = keyPair.pubKey.toHex();
         this.address = run.owner.address;
         this.purse = run.purse.address;

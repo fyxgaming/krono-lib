@@ -38,20 +38,20 @@ class AuthService {
         const salt = bsv_1.Hash.sha256(buffer_1.Buffer.from(id));
         const pass = bsv_1.Hash.sha256(buffer_1.Buffer.from(password.normalize('NFKC')));
         const { hash } = await argon2.hash({ pass, salt, time: 100, mem: 1024, hashLen: 32 });
-        // const versionByteNum = this.network === 'main' ?
-        //     Constants.Mainnet.PrivKey.versionByteNum :
-        //     Constants.Testnet.PrivKey.versionByteNum;
-        // const keybuf = Buffer.concat([
-        //     Buffer.from([versionByteNum]),
-        //     Buffer.from(hash),
-        //     Buffer.from([1]) // compressed flag
-        // ]);
-        const bip39 = bsv_1.Bip39.fromEntropy(buffer_1.Buffer.from(hash));
-        return bsv_1.Bip32.fromSeed(bip39.toSeed());
+        const versionByteNum = this.network === 'main' ?
+            bsv_1.Constants.Mainnet.PrivKey.versionByteNum :
+            bsv_1.Constants.Testnet.PrivKey.versionByteNum;
+        const keybuf = buffer_1.Buffer.concat([
+            buffer_1.Buffer.from([versionByteNum]),
+            buffer_1.Buffer.from(hash),
+            buffer_1.Buffer.from([1]) // compressed flag
+        ]);
+        const privKey = bsv_1.PrivKey.fromBuffer(keybuf);
+        return bsv_1.KeyPair.fromPrivKey(privKey);
     }
     async register(id, password, email) {
-        const bip32 = await this.generateKeyPair(id, password);
-        const keyPair = bsv_1.KeyPair.fromPrivKey(bip32.privKey);
+        const keyPair = await this.generateKeyPair(id, password);
+        const bip32 = bsv_1.Bip32.fromRandom();
         const recoveryBuf = bsv_1.Ecies.bitcoreEncrypt(buffer_1.Buffer.from(bip32.toString()), keyPair.pubKey, keyPair);
         const reg = {
             pubkey: keyPair.pubKey.toString(),
@@ -74,27 +74,25 @@ class AuthService {
         });
         if (!resp.ok)
             throw http_errors_1.default(resp.status, resp.statusText);
-        return bip32;
+        return keyPair;
     }
-    // async recover(id: string, keyPair: KeyPair) {
-    //     const resp = await fetch(`${this.apiUrl}/accounts`, {
-    //         method: 'POST', 
-    //         headers: {'Content-type': 'application/json'},
-    //         body: JSON.stringify(new SignedMessage({
-    //             subject: 'Recover'
-    //         }, keyPair))
-    //     });
-    //     if(!resp.ok) throw createError(resp.status, resp.statusText);
-    //     const {path, recovery} = await resp.json();
-    //     const recoveryBuf = Ecies.bitcoreDecrypt(
-    //         Buffer.from(recovery, 'base64'),
-    //         keyPair.privKey
-    //     );
-    //     return {
-    //         xpriv: recoveryBuf.toString(),
-    //         path
-    //     };
-    // }
+    async recover(id, keyPair) {
+        const resp = await fetch(`${this.apiUrl}/accounts`, {
+            method: 'POST',
+            headers: { 'Content-type': 'application/json' },
+            body: JSON.stringify(new signed_message_1.SignedMessage({
+                subject: 'Recover'
+            }, keyPair))
+        });
+        if (!resp.ok)
+            throw http_errors_1.default(resp.status, resp.statusText);
+        const { path, recovery } = await resp.json();
+        const recoveryBuf = bsv_1.Ecies.bitcoreDecrypt(buffer_1.Buffer.from(recovery, 'base64'), keyPair.privKey);
+        return {
+            xpriv: recoveryBuf.toString(),
+            path
+        };
+    }
     async isIdAvailable(id) {
         try {
             const resp = await fetch(`${this.apiUrl}/accounts/${id}`);

@@ -28,7 +28,7 @@ export class Wallet extends EventEmitter {
     ) {
         super();
         this.blockchain = run.blockchain;
-        this.ownerPair = KeyPair.fromPrivKey(PrivKey.fromString(run.owner.privkey));
+        // this.ownerPair = KeyPair.fromPrivKey(PrivKey.fromString(run.owner.privkey));
         this.pubkey = keyPair.pubKey.toHex();
         this.address = run.owner.address;
         this.purse = run.purse.address;
