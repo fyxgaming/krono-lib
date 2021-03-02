@@ -1,5 +1,5 @@
 import * as argon2 from 'argon2-browser';
-import { Bip32, Constants, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
+import { Bip32, Constants, Ecdsa, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
 import createError from 'http-errors';
@@ -40,6 +40,11 @@ export class AuthService {
             recovery: recoveryBuf.toString('base64'),
             email
         };
+
+        const msgBuf = Buffer.from(`${id}|${reg.xpub}|${reg.recovery}|${email}`);
+        const msgHash = await Hash.asyncSha256(msgBuf);
+        const sig = Ecdsa.sign(msgHash, keyPair);
+        reg.sig = sig.toString();
 
         const resp = await fetch(`${this.apiUrl}/accounts`, {
             method: 'POST', 

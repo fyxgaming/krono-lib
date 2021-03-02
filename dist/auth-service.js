@@ -59,6 +59,10 @@ class AuthService {
             recovery: recoveryBuf.toString('base64'),
             email
         };
+        const msgBuf = buffer_1.Buffer.from(`${id}|${reg.xpub}|${reg.recovery}|${email}`);
+        const msgHash = await bsv_1.Hash.asyncSha256(msgBuf);
+        const sig = bsv_1.Ecdsa.sign(msgHash, keyPair);
+        reg.sig = sig.toString();
         const resp = await fetch(`${this.apiUrl}/accounts`, {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
