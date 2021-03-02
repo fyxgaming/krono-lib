@@ -3,7 +3,6 @@ import { Bip32, Constants, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
 import createError from 'http-errors';
-import fetch from 'node-fetch';
 
 export class AuthService {
     constructor(private apiUrl: string, private network: string) { }

@@ -28,7 +28,6 @@ const bsv_1 = require("bsv");
 const signed_message_1 = require("./signed-message");
 const buffer_1 = require("buffer");
 const http_errors_1 = __importDefault(require("http-errors"));
-const node_fetch_1 = __importDefault(require("node-fetch"));
 class AuthService {
     constructor(apiUrl, network) {
         this.apiUrl = apiUrl;
@@ -60,7 +59,7 @@ class AuthService {
             recovery: recoveryBuf.toString('base64'),
             email
         };
-        const resp = await node_fetch_1.default(`${this.apiUrl}/accounts`, {
+        const resp = await fetch(`${this.apiUrl}/accounts`, {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
             body: JSON.stringify(new signed_message_1.SignedMessage({
@@ -78,7 +77,7 @@ class AuthService {
         return keyPair;
     }
     async recover(id, keyPair) {
-        const resp = await node_fetch_1.default(`${this.apiUrl}/accounts`, {
+        const resp = await fetch(`${this.apiUrl}/accounts`, {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
             body: JSON.stringify(new signed_message_1.SignedMessage({
@@ -96,7 +95,7 @@ class AuthService {
     }
     async isIdAvailable(id) {
         try {
-            const resp = await node_fetch_1.default(`${this.apiUrl}/accounts/${id}`);
+            const resp = await fetch(`${this.apiUrl}/accounts/${id}`);
             if (!resp.ok && resp.status !== 404)
                 throw http_errors_1.default(resp.status, resp.statusText);
             return resp.status === 404;
