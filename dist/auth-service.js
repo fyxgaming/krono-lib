@@ -18,16 +18,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const argon2 = __importStar(require("argon2-browser"));
 const bsv_1 = require("bsv");
 const signed_message_1 = require("./signed-message");
 const buffer_1 = require("buffer");
-const http_errors_1 = __importDefault(require("http-errors"));
+const http_error_1 = require("./http-error");
 class AuthService {
     constructor(apiUrl, network) {
         this.apiUrl = apiUrl;
@@ -69,7 +66,7 @@ class AuthService {
             body: JSON.stringify(reg)
         });
         if (!resp.ok)
-            throw http_errors_1.default(resp.status, resp.statusText);
+            throw new http_error_1.HttpError(resp.status, resp.statusText);
         return keyPair;
     }
     async recover(id, keyPair) {
@@ -81,7 +78,7 @@ class AuthService {
             }, id, keyPair))
         });
         if (!resp.ok)
-            throw http_errors_1.default(resp.status, resp.statusText);
+            throw new http_error_1.HttpError(resp.status, resp.statusText);
         const { path, recovery } = await resp.json();
         const recoveryBuf = bsv_1.Ecies.bitcoreDecrypt(buffer_1.Buffer.from(recovery, 'base64'), keyPair.privKey);
         const xpriv = recoveryBuf.toString();
@@ -91,7 +88,7 @@ class AuthService {
         try {
             const resp = await fetch(`${this.apiUrl}/accounts/${id}`);
             if (!resp.ok && resp.status !== 404)
-                throw http_errors_1.default(resp.status, resp.statusText);
+                throw new http_error_1.HttpError(resp.status, resp.statusText);
             return resp.status === 404;
         }
         catch (e) {

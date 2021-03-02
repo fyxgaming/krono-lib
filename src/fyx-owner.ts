@@ -1,5 +1,5 @@
 import { Address, Bn, KeyPair, Script, Tx, TxOut } from 'bsv';
-import createError from 'http-errors';
+import { HttpError } from './http-error';
 import { SignedMessage } from './signed-message';
 
 export class FyxOwner {
@@ -16,7 +16,7 @@ export class FyxOwner {
                 payload: JSON.stringify({ fyxId: this.fyxId })
             }, this.userId, KeyPair.fromPrivKey(this.bip32.privKey)))
         });
-        if(!resp.ok) throw createError(resp.status, resp.statusText);
+        if(!resp.ok) throw new HttpError(resp.status, resp.statusText);
         const {address} = await resp.json();
         return address;
     }

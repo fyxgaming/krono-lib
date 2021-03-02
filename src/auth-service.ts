@@ -2,7 +2,7 @@ import * as argon2 from 'argon2-browser';
 import { Bip32, Constants, Ecdsa, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
-import createError from 'http-errors';
+import { HttpError } from './http-error';
 
 export class AuthService {
     constructor(private apiUrl: string, private network: string) { }
@@ -51,7 +51,7 @@ export class AuthService {
             headers: { 'Content-type': 'application/json' },
             body: JSON.stringify(reg)
         });
-        if (!resp.ok) throw createError(resp.status, resp.statusText)
+        if (!resp.ok) throw new HttpError(resp.status, resp.statusText)
 
         return keyPair;
     }
@@ -64,7 +64,7 @@ export class AuthService {
                 subject: 'Recover'
             }, id, keyPair))
         });
-        if (!resp.ok) throw createError(resp.status, resp.statusText);
+        if (!resp.ok) throw new HttpError(resp.status, resp.statusText);
         const { path, recovery } = await resp.json();
 
         const recoveryBuf = Ecies.bitcoreDecrypt(
@@ -78,7 +78,7 @@ export class AuthService {
     public async isIdAvailable(id: string) {
         try {
             const resp = await fetch(`${this.apiUrl}/accounts/${id}`);
-            if (!resp.ok && resp.status !== 404) throw createError(resp.status, resp.statusText);
+            if (!resp.ok && resp.status !== 404) throw new HttpError(resp.status, resp.statusText);
             return resp.status === 404;
         } catch (e) {
             throw e;

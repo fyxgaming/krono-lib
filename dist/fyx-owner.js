@@ -1,11 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FyxOwner = void 0;
 const bsv_1 = require("bsv");
-const http_errors_1 = __importDefault(require("http-errors"));
+const http_error_1 = require("./http-error");
 const signed_message_1 = require("./signed-message");
 class FyxOwner {
     constructor(apiUrl, userId, bip32, fyxId) {
@@ -25,7 +22,7 @@ class FyxOwner {
             }, this.userId, bsv_1.KeyPair.fromPrivKey(this.bip32.privKey)))
         });
         if (!resp.ok)
-            throw http_errors_1.default(resp.status, resp.statusText);
+            throw new http_error_1.HttpError(resp.status, resp.statusText);
         const { address } = await resp.json();
         return address;
     }
