@@ -49,12 +49,7 @@ export class AuthService {
         const resp = await fetch(`${this.apiUrl}/accounts/${id}`, {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify({
-                id,
-                xpub: bip32.toPublic().toString(),
-                recovery: recoveryBuf.toString('base64'),
-                email
-            })
+            body: JSON.stringify(reg)
         });
         if (!resp.ok) throw createError(resp.status, resp.statusText)
 
