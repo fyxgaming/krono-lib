@@ -50,8 +50,8 @@ export class SignedMessage {
         this.sig = Ecdsa.sign(this.hash, keyPair).toString();
     }
 
-    async verify() {
-        return Ecdsa.asyncVerify(this.hash, Sig.fromString(this.sig), PubKey.fromString(this.from));
+    async verify(pubkey: PubKey) {
+        return Ecdsa.asyncVerify(this.hash, Sig.fromString(this.sig), pubkey);
     }
     
 }

@@ -46,8 +46,8 @@ class SignedMessage {
         this.ts = Date.now();
         this.sig = bsv_1.Ecdsa.sign(this.hash, keyPair).toString();
     }
-    async verify() {
-        return bsv_1.Ecdsa.asyncVerify(this.hash, bsv_1.Sig.fromString(this.sig), bsv_1.PubKey.fromString(this.from));
+    async verify(pubkey) {
+        return bsv_1.Ecdsa.asyncVerify(this.hash, bsv_1.Sig.fromString(this.sig), pubkey);
     }
 }
 exports.SignedMessage = SignedMessage;

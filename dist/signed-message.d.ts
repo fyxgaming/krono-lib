@@ -1,4 +1,4 @@
-import { KeyPair } from 'bsv';
+import { KeyPair, PubKey } from 'bsv';
 export declare class SignedMessage {
     from: string;
     to: string[];
@@ -13,5 +13,5 @@ export declare class SignedMessage {
     get id(): any;
     get payloadObj(): any;
     sign(userId: string, keyPair: KeyPair): void;
-    verify(): Promise<any>;
+    verify(pubkey: PubKey): Promise<any>;
 }
