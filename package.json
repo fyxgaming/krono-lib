@@ -12,7 +12,7 @@
     "**/*"
   ],
   "dependencies": {
-    "bsv": "github:kronoverse-inc/bsv#164061f98db3da6f5a94146edd599e8ad40e859a",
+    "bsv": "^2.0.4",
     "events": "^3.2.0",
     "http-errors": "^1.8.0"
   },
