@@ -4,8 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FyxOwner = void 0;
-const axios_1 = __importDefault(require("axios"));
 const bsv_1 = require("bsv");
+const http_errors_1 = __importDefault(require("http-errors"));
 const signed_message_1 = require("./signed-message");
 class FyxOwner {
     constructor(apiUrl, bip32, fyxId, derivation = 'm') {
@@ -16,10 +16,17 @@ class FyxOwner {
         this.derivations = [];
     }
     async nextOwner() {
-        const { data: address } = await axios_1.default.post(`${this.apiUrl}/accounts`, new signed_message_1.SignedMessage({
-            subject: 'RequestPaymentAddress',
-            payload: JSON.stringify({ fyxId: this.fyxId })
-        }, bsv_1.KeyPair.fromPrivKey(this.bip32.derive(this.derivation).privKey)));
+        const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
+            method: 'POST',
+            headers: { 'Content-type': 'application/json' },
+            body: JSON.stringify(new signed_message_1.SignedMessage({
+                subject: 'RequestPaymentAddress',
+                payload: JSON.stringify({ fyxId: this.fyxId })
+            }, bsv_1.KeyPair.fromPrivKey(this.bip32.derive(this.derivation).privKey)))
+        });
+        if (!resp.ok)
+            throw http_errors_1.default(resp.status, resp.statusText);
+        const { address } = await resp.json();
         return address;
     }
     async sign(rawtx, parents, locks) {

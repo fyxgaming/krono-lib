@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { Address, Bn, KeyPair, Script, Tx, TxOut } from 'bsv';
+import createError from 'http-errors';
 import { SignedMessage } from './signed-message';
 
 export class FyxOwner {
@@ -8,10 +8,16 @@ export class FyxOwner {
     constructor(public apiUrl: string, private bip32, public fyxId: string, private derivation: string = 'm') { }
 
     async nextOwner() {
-        const { data: address } = await axios.post(`${this.apiUrl}/accounts`, new SignedMessage({
-            subject: 'RequestPaymentAddress',
-            payload: JSON.stringify({ fyxId: this.fyxId })
-        }, KeyPair.fromPrivKey(this.bip32.derive(this.derivation).privKey)));
+        const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
+            method: 'POST',
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify(new SignedMessage({
+                subject: 'RequestPaymentAddress',
+                payload: JSON.stringify({ fyxId: this.fyxId })
+            }, KeyPair.fromPrivKey(this.bip32.derive(this.derivation).privKey)))
+        });
+        if(!resp.ok) throw createError(resp.status, resp.statusText);
+        const {address} = await resp.json();
         return address;
     }
 
