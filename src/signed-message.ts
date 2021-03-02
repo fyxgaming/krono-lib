@@ -13,9 +13,9 @@ export class SignedMessage {
     ts: number = Date.now();
     sig?: string;
 
-    constructor(message: Partial<SignedMessage>, keyPair?: KeyPair) {
+    constructor(message: Partial<SignedMessage>, userId?: string, keyPair?: KeyPair) {
         Object.assign(this, message);
-        if(keyPair) this.sign(keyPair);
+        if(keyPair) this.sign(userId, keyPair);
     }
 
     get hash() {
@@ -44,8 +44,8 @@ export class SignedMessage {
         return this.payload && JSON.parse(this.payload);
     }
 
-    sign(keyPair: KeyPair) {
-        this.from = keyPair.pubKey.toString();
+    sign(userId: string, keyPair: KeyPair) {
+        this.from = userId;
         this.ts = Date.now();
         this.sig = Ecdsa.sign(this.hash, keyPair).toString();
     }

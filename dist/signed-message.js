@@ -6,7 +6,7 @@ const buffer_1 = require("buffer");
 const MAGIC_BYTES = buffer_1.Buffer.from('Bitcoin Signed Message:\n');
 const MAGIC_BYTES_PREFIX = bsv_1.Bw.varIntBufNum(MAGIC_BYTES.length);
 class SignedMessage {
-    constructor(message, keyPair) {
+    constructor(message, userId, keyPair) {
         this.from = '';
         this.to = [];
         this.reply = '';
@@ -16,7 +16,7 @@ class SignedMessage {
         this.ts = Date.now();
         Object.assign(this, message);
         if (keyPair)
-            this.sign(keyPair);
+            this.sign(userId, keyPair);
     }
     get hash() {
         const payloadBuf = buffer_1.Buffer.concat([
@@ -41,8 +41,8 @@ class SignedMessage {
     get payloadObj() {
         return this.payload && JSON.parse(this.payload);
     }
-    sign(keyPair) {
-        this.from = keyPair.pubKey.toString();
+    sign(userId, keyPair) {
+        this.from = userId;
         this.ts = Date.now();
         this.sig = bsv_1.Ecdsa.sign(this.hash, keyPair).toString();
     }

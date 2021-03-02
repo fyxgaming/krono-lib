@@ -8,10 +8,10 @@ export declare class SignedMessage {
     payload: string;
     ts: number;
     sig?: string;
-    constructor(message: Partial<SignedMessage>, keyPair?: KeyPair);
+    constructor(message: Partial<SignedMessage>, userId?: string, keyPair?: KeyPair);
     get hash(): any;
     get id(): any;
     get payloadObj(): any;
-    sign(keyPair: KeyPair): void;
+    sign(userId: string, keyPair: KeyPair): void;
     verify(): Promise<any>;
 }

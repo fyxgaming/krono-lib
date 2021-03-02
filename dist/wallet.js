@@ -49,10 +49,10 @@ class Wallet extends events_1.EventEmitter {
     }
     buildMessage(messageData, sign = true) {
         messageData.ts = Date.now();
-        messageData.from = this.keyPair.pubKey.toString();
+        // messageData.from = this.keyPair.pubKey.toString();
         const message = new signed_message_1.SignedMessage(messageData);
         if (sign)
-            message.sign(this.keyPair);
+            message.sign(this.handle, this.keyPair);
         return message;
     }
     async encrypt(pubkey) {
