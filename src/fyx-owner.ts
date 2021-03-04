@@ -41,6 +41,7 @@ export class FyxOwner {
 
     async addDerivations(derivations: string[]) {
         derivations.forEach((d) => {
+            if(!d) return;
             let keyPair = KeyPair.fromPrivKey(this.bip32.derive(d).privKey);
             const script = Address.fromPubKey(keyPair.pubKey).toTxOutScript().toHex();
             this.keyPairs.set(script, keyPair)
