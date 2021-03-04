@@ -9,7 +9,7 @@ class FyxOwner {
         this.apiUrl = apiUrl;
         this.bip32 = bip32;
         this.fyxId = fyxId;
-        this.derivations = [];
+        this.keyPairs = new Map();
     }
     async nextOwner() {
         // const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
@@ -27,17 +27,11 @@ class FyxOwner {
         return address;
     }
     async sign(rawtx, parents, locks) {
-        const keyPairs = new Map();
-        this.derivations.forEach((acc, d) => {
-            let keyPair = bsv_1.KeyPair.fromPrivKey(this.bip32.derive(d).privKey);
-            const script = bsv_1.Address.fromPubKey(keyPair.pubKey).toTxOutScript().toHex();
-            keyPairs.set(script, keyPair);
-        });
         const tx = bsv_1.Tx.fromHex(rawtx);
         await Promise.all(tx.txIns.map(async (txIn, i) => {
             const txOut = bsv_1.TxOut.fromProperties(bsv_1.Bn(parents[i].satoshis), bsv_1.Script.fromHex(parents[i].script));
             if (txOut.script.isPubKeyHashOut()) {
-                const keyPair = keyPairs.get(txOut.script.toHex());
+                const keyPair = this.keyPairs.get(txOut.script.toHex());
                 if (!keyPair)
                     return;
                 const sig = await tx.asyncSign(keyPair, undefined, i, txOut.script, txOut.valueBn);
@@ -45,6 +39,13 @@ class FyxOwner {
             }
         }));
         return tx.toHex();
+    }
+    async addDerivations(derivations) {
+        derivations.forEach((acc, d) => {
+            let keyPair = bsv_1.KeyPair.fromPrivKey(this.bip32.derive(d).privKey);
+            const script = bsv_1.Address.fromPubKey(keyPair.pubKey).toTxOutScript().toHex();
+            this.keyPairs.set(script, keyPair);
+        });
     }
 }
 exports.FyxOwner = FyxOwner;
