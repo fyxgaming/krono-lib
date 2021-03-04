@@ -2,29 +2,28 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FyxOwner = void 0;
 const bsv_1 = require("bsv");
-const http_error_1 = require("./http-error");
-const signed_message_1 = require("./signed-message");
+// import { HttpError } from './http-error';
+// import { SignedMessage } from './signed-message';
 class FyxOwner {
-    constructor(apiUrl, userId, keyPair, bip32, fyxId) {
+    constructor(apiUrl, bip32, fyxId) {
         this.apiUrl = apiUrl;
-        this.userId = userId;
-        this.keyPair = keyPair;
         this.bip32 = bip32;
         this.fyxId = fyxId;
         this.derivations = [];
     }
     async nextOwner() {
-        const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
-            method: 'POST',
-            headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify(new signed_message_1.SignedMessage({
-                subject: 'RequestPaymentAddress',
-                payload: JSON.stringify({ fyxId: this.fyxId })
-            }, this.userId, bsv_1.KeyPair.fromPrivKey(this.keyPair.privKey)))
-        });
-        if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, resp.statusText);
-        const { address } = await resp.json();
+        // const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
+        //     method: 'POST',
+        //     headers: {'Content-type': 'application/json'},
+        //     body: JSON.stringify(new SignedMessage({
+        //         subject: 'RequestPaymentAddress',
+        //         payload: JSON.stringify({ fyxId: this.fyxId })
+        //     }, this.userId, KeyPair.fromPrivKey(this.keyPair.privKey)))
+        // });
+        // if(!resp.ok) throw new HttpError(resp.status, resp.statusText);
+        // const {address} = await resp.json();
+        // return address;
+        const address = bsv_1.Address.fromPubKey(this.bip32.derive('m/1/0').pubKey).toString();
         return address;
     }
     async sign(rawtx, parents, locks) {
