@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import { RestBlockchain } from './rest-blockchain';
 import { IJig, IJigQuery } from './interfaces';
 import { SignedMessage } from './signed-message';
+import { HttpError } from './http-error';
 import { Buffer } from 'buffer';
 
 export class Wallet extends EventEmitter {
@@ -49,10 +50,15 @@ export class Wallet extends EventEmitter {
     }
 
     async loadJigIndex(query?: IJigQuery) {
-        const message = new SignedMessage({
-            payload: JSON.stringify(query)
-        }, this.handle, this.keyPair);
-        return this.blockchain.sendMessage(message, `/jigs/${this.handle}`);
+        const resp = await fetch(`/jigs/${this.handle}`, {
+            method: 'POST',
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify(new SignedMessage({
+                payload: JSON.stringify(query)
+            }, this.handle, this.keyPair))
+        });
+        if(!resp.ok) throw new HttpError(resp.status, resp.statusText);
+        return resp.json();
     }
 
     async loadJig(loc: string): Promise<IJig | void> {

@@ -4,6 +4,7 @@ exports.Wallet = void 0;
 const bsv_1 = require("bsv");
 const events_1 = require("events");
 const signed_message_1 = require("./signed-message");
+const http_error_1 = require("./http-error");
 const buffer_1 = require("buffer");
 class Wallet extends events_1.EventEmitter {
     constructor(handle, keyPair, run) {
@@ -30,10 +31,16 @@ class Wallet extends events_1.EventEmitter {
         return Date.now();
     }
     async loadJigIndex(query) {
-        const message = new signed_message_1.SignedMessage({
-            payload: JSON.stringify(query)
-        }, this.handle, this.keyPair);
-        return this.blockchain.sendMessage(message, `/jigs/${this.handle}`);
+        const resp = await fetch(`/jigs/${this.handle}`, {
+            method: 'POST',
+            headers: { 'Content-type': 'application/json' },
+            body: JSON.stringify(new signed_message_1.SignedMessage({
+                payload: JSON.stringify(query)
+            }, this.handle, this.keyPair))
+        });
+        if (!resp.ok)
+            throw new http_error_1.HttpError(resp.status, resp.statusText);
+        return resp.json();
     }
     async loadJig(loc) {
         const jig = await this.load(loc).catch((e) => {

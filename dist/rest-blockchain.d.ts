@@ -1,9 +1,9 @@
-import { IJigQuery, IUTXO } from './interfaces';
+import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
 import { Tx } from 'bsv';
 export declare class RestBlockchain {
     protected fetchLib: any;
-    protected apiUrl: string;
+    apiUrl: string;
     network: string;
     cache: {
         get: (key: string) => any;
@@ -22,7 +22,6 @@ export declare class RestBlockchain {
     time(txid: string): Promise<number>;
     spends(txid: string, vout: number): Promise<string | null>;
     utxos(script: string, limit?: number): Promise<IUTXO[]>;
-    jigIndex(address: string, query: IJigQuery, type?: 'address' | 'script'): Promise<any>;
     loadJigData(loc: string, unspent?: boolean): Promise<any>;
     jigQuery(query: any): Promise<any>;
     fund(address: string, satoshis?: number): Promise<any>;
