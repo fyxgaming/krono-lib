@@ -30,7 +30,10 @@ class Wallet extends events_1.EventEmitter {
         return Date.now();
     }
     async loadJigIndex(query) {
-        return this.blockchain.jigIndex(this.address, query);
+        const message = new signed_message_1.SignedMessage({
+            payload: JSON.stringify(query)
+        }, this.handle, this.keyPair);
+        return this.blockchain.sendMessage(message, '/jigs/by-user');
     }
     async loadJig(loc) {
         const jig = await this.load(loc).catch((e) => {

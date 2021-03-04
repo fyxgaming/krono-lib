@@ -49,7 +49,10 @@ export class Wallet extends EventEmitter {
     }
 
     async loadJigIndex(query?: IJigQuery) {
-        return this.blockchain.jigIndex(this.address, query);
+        const message = new SignedMessage({
+            payload: JSON.stringify(query)
+        }, this.handle, this.keyPair);
+        return this.blockchain.sendMessage(message, '/jigs/by-user')
     }
 
     async loadJig(loc: string): Promise<IJig | void> {
