@@ -5,7 +5,7 @@ import { SignedMessage } from './signed-message';
 export class FyxOwner {
     public derivations: string[] = [];
 
-    constructor(public apiUrl: string, private userId: string, private bip32, public fyxId: string) { }
+    constructor(public apiUrl: string, private userId: string, private keyPair: KeyPair, private bip32, public fyxId: string) { }
 
     async nextOwner() {
         const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
@@ -14,7 +14,7 @@ export class FyxOwner {
             body: JSON.stringify(new SignedMessage({
                 subject: 'RequestPaymentAddress',
                 payload: JSON.stringify({ fyxId: this.fyxId })
-            }, this.userId, KeyPair.fromPrivKey(this.bip32.privKey)))
+            }, this.userId, KeyPair.fromPrivKey(this.keyPair.privKey)))
         });
         if(!resp.ok) throw new HttpError(resp.status, resp.statusText);
         const {address} = await resp.json();
