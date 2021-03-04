@@ -4,7 +4,7 @@ import { Address, Bn, KeyPair, Script, Tx, TxOut } from 'bsv';
 
 
 export class FyxOwner {
-    private keyPairs = new Map<string, KeyPair>();
+    public keyPairs = new Map<string, KeyPair>();
 
     constructor(public apiUrl: string, private bip32, public fyxId: string) { }
 
