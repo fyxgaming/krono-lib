@@ -52,7 +52,7 @@ export class SignedMessage {
 
     async verify(pubkey: PubKey | string) {
         if(typeof pubkey === 'string') {
-            pubkey = PubKey.from(pubkey);
+            pubkey = PubKey.fromString(pubkey);
         }
         return Ecdsa.asyncVerify(this.hash, Sig.fromString(this.sig), pubkey);
     }

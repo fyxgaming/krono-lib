@@ -48,7 +48,7 @@ class SignedMessage {
     }
     async verify(pubkey) {
         if (typeof pubkey === 'string') {
-            pubkey = bsv_1.PubKey.from(pubkey);
+            pubkey = bsv_1.PubKey.fromString(pubkey);
         }
         return bsv_1.Ecdsa.asyncVerify(this.hash, bsv_1.Sig.fromString(this.sig), pubkey);
     }
