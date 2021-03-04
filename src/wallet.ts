@@ -1,4 +1,4 @@
-import { Address, Ecdsa, Hash, KeyPair, PrivKey, PubKey, Random, Script, Sig, Tx, TxOut } from 'bsv';
+import { Ecdsa, Hash, KeyPair, PubKey, Random, Sig } from 'bsv';
 import { EventEmitter } from 'events';
 import { RestBlockchain } from './rest-blockchain';
 import { IJig, IJigQuery } from './interfaces';
@@ -52,7 +52,7 @@ export class Wallet extends EventEmitter {
         const message = new SignedMessage({
             payload: JSON.stringify(query)
         }, this.handle, this.keyPair);
-        return this.blockchain.sendMessage(message, '/jigs/by-user')
+        return this.blockchain.sendMessage(message, `/jigs/${this.handle}`);
     }
 
     async loadJig(loc: string): Promise<IJig | void> {
