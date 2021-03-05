@@ -38,6 +38,7 @@ class FyxOwner {
                 txIn.setScript(new bsv_1.Script().writeBuffer(sig.toTxFormat()).writeBuffer(keyPair.pubKey.toBuffer()));
             }
         }));
+        console.log('Signed TX:', tx.toString());
         return tx.toHex();
     }
     async addDerivations(derivations) {

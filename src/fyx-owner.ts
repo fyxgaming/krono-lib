@@ -36,6 +36,7 @@ export class FyxOwner {
             }
         }));
 
+        console.log('Signed TX:', tx.toString());
         return tx.toHex();
     }
 
