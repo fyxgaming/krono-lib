@@ -1,4 +1,4 @@
-import { Address, Bn, KeyPair, Script, Tx, TxOut } from 'bsv';
+import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
 // import { HttpError } from './http-error';
 // import { SignedMessage } from './signed-message';
 
@@ -31,7 +31,7 @@ export class FyxOwner {
             if (txOut.script.isPubKeyHashOut()) {
                 const keyPair = this.keyPairs.get(txOut.script.toHex());
                 if(!keyPair) return;
-                const sig = await tx.asyncSign(keyPair, undefined, i, txOut.script, txOut.valueBn);
+                const sig = await tx.asyncSign(keyPair, Sig.SIGHASH_ALL | Sig.SIGHASH_FORKID, i, txOut.script, txOut.valueBn);
                 txIn.setScript(new Script().writeBuffer(sig.toTxFormat()).writeBuffer(keyPair.pubKey.toBuffer()));
             }
         }));

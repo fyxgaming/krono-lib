@@ -34,7 +34,7 @@ class FyxOwner {
                 const keyPair = this.keyPairs.get(txOut.script.toHex());
                 if (!keyPair)
                     return;
-                const sig = await tx.asyncSign(keyPair, undefined, i, txOut.script, txOut.valueBn);
+                const sig = await tx.asyncSign(keyPair, bsv_1.Sig.SIGHASH_ALL | bsv_1.Sig.SIGHASH_FORKID, i, txOut.script, txOut.valueBn);
                 txIn.setScript(new bsv_1.Script().writeBuffer(sig.toTxFormat()).writeBuffer(keyPair.pubKey.toBuffer()));
             }
         }));
