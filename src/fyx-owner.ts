@@ -6,7 +6,11 @@ import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
 export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();
 
-    constructor(public apiUrl: string, private bip32, public fyxId: string) { }
+    constructor(public apiUrl: string, private bip32, public fyxId: string) { 
+        let keyPair = KeyPair.fromPrivKey(this.bip32.derive('m/1/0').privKey);
+        const script = Address.fromPubKey(keyPair.pubKey).toTxOutScript().toHex();
+        this.keyPairs.set(script, keyPair)
+    }
 
     async nextOwner() {
         // const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
@@ -21,7 +25,7 @@ export class FyxOwner {
         // const {address} = await resp.json();
         // return address;
         const address = Address.fromPubKey(this.bip32.derive('m/1/0').pubKey).toString();
-        return address;   
+        return address;
     }
 
     async sign(rawtx: string, parents: { satoshis: number, script: string }[], locks: any[]): Promise<string> {

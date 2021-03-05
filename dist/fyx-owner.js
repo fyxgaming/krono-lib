@@ -10,6 +10,9 @@ class FyxOwner {
         this.bip32 = bip32;
         this.fyxId = fyxId;
         this.keyPairs = new Map();
+        let keyPair = bsv_1.KeyPair.fromPrivKey(this.bip32.derive('m/1/0').privKey);
+        const script = bsv_1.Address.fromPubKey(keyPair.pubKey).toTxOutScript().toHex();
+        this.keyPairs.set(script, keyPair);
     }
     async nextOwner() {
         // const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
