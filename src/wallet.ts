@@ -50,7 +50,7 @@ export class Wallet extends EventEmitter {
     }
 
     async loadJigIndex(query?: IJigQuery) {
-        const resp = await fetch(`/jigs/${this.handle}`, {
+        const resp = await fetch(`${this.blockchain.apiUrl}/jigs/${this.handle}`, {
             method: 'POST',
             headers: {'Content-type': 'application/json'},
             body: JSON.stringify(new SignedMessage({
