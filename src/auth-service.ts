@@ -26,6 +26,7 @@ export class AuthService {
     }
 
     async register(id: string, password: string, email: string): Promise<string> {
+        id = id.toLowerCase().normalize('NFKC');
         const keyPair = await this.generateKeyPair(id, password);
         const bip32 = Bip32.fromRandom();
 
@@ -57,6 +58,7 @@ export class AuthService {
     }
 
     async recover(id: string, keyPair: KeyPair) {
+        id = id.toLowerCase().normalize('NFKC');
         const resp = await fetch(`${this.apiUrl}/accounts`, {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
@@ -76,6 +78,7 @@ export class AuthService {
     }
 
     public async isIdAvailable(id: string) {
+        id = id.toLowerCase().normalize('NFKC');
         try {
             const resp = await fetch(`${this.apiUrl}/accounts/${id}`);
             if (!resp.ok && resp.status !== 404) throw new HttpError(resp.status, resp.statusText);

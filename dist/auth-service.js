@@ -47,6 +47,7 @@ class AuthService {
         return bsv_1.KeyPair.fromPrivKey(privKey);
     }
     async register(id, password, email) {
+        id = id.toLowerCase().normalize('NFKC');
         const keyPair = await this.generateKeyPair(id, password);
         const bip32 = bsv_1.Bip32.fromRandom();
         const recoveryBuf = bsv_1.Ecies.bitcoreEncrypt(buffer_1.Buffer.from(bip32.toString()), keyPair.pubKey, keyPair);
@@ -70,6 +71,7 @@ class AuthService {
         return keyPair;
     }
     async recover(id, keyPair) {
+        id = id.toLowerCase().normalize('NFKC');
         const resp = await fetch(`${this.apiUrl}/accounts`, {
             method: 'POST',
             headers: { 'Content-type': 'application/json' },
@@ -85,6 +87,7 @@ class AuthService {
         return bsv_1.Bip32.fromString(xpriv);
     }
     async isIdAvailable(id) {
+        id = id.toLowerCase().normalize('NFKC');
         try {
             const resp = await fetch(`${this.apiUrl}/accounts/${id}`);
             if (!resp.ok && resp.status !== 404)
