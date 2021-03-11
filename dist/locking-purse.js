@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LockingPurse = void 0;
 const bsv_1 = require("bsv");
 const ADDITIONAL_INPUT_BYTES = 225;
+const DUST_LIMIT = 273;
 class LockingPurse {
     constructor(keyPair, blockchain, redis, changeAddress, satsPerByte = 0.5, recycleThreashold = 50000) {
         this.keyPair = keyPair;
@@ -42,11 +43,13 @@ class LockingPurse {
         tx.addTxIn(Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, bsv_1.Script.fromString('OP_0 OP_0'), bsv_1.TxIn.SEQUENCE_FINAL);
         totalIn += utxo.satoshis;
         const change = totalIn - totalOut - fee;
-        const changeScript = (!this.changeAddress || change > this.recycleThreashold) ?
-            this.script :
-            bsv_1.Address.fromString(this.changeAddress).toTxOutScript();
-        tx.addTxOut(bsv_1.Bn(change), changeScript);
-        const sig = await tx.asyncSign(this.keyPair, undefined, tx.txIns.length - 1, bsv_1.Script.fromString(utxo.script), bsv_1.Bn(utxo.satoshis));
+        if (change > DUST_LIMIT) {
+            const changeScript = (!this.changeAddress || change > this.recycleThreashold) ?
+                this.script :
+                bsv_1.Address.fromString(this.changeAddress).toTxOutScript();
+            tx.addTxOut(bsv_1.Bn(change), changeScript);
+        }
+        const sig = await tx.asyncSign(this.keyPair, bsv_1.Sig.SIGHASH_ALL | bsv_1.Sig.SIGHASH_FORKID, tx.txIns.length - 1, bsv_1.Script.fromString(utxo.script), bsv_1.Bn(utxo.satoshis));
         const sigScript = new bsv_1.Script()
             .writeBuffer(sig.toTxFormat())
             .writeBuffer(this.keyPair.pubKey.toBuffer());

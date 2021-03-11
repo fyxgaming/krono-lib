@@ -1,7 +1,8 @@
-import { Address, Bn, KeyPair, Script, Tx, TxIn } from 'bsv';
+import { Address, Bn, KeyPair, Script, Sig, Tx, TxIn } from 'bsv';
 import { RestBlockchain } from './rest-blockchain';
 
 const ADDITIONAL_INPUT_BYTES = 225;
+const DUST_LIMIT = 273;
 export class LockingPurse {
     address: string;
     private script: Script;
@@ -50,15 +51,17 @@ export class LockingPurse {
         totalIn += utxo.satoshis;
         
         const change = totalIn - totalOut - fee;
-        const changeScript = (!this.changeAddress || change > this.recycleThreashold) ?
-            this.script :
-            Address.fromString(this.changeAddress).toTxOutScript();
-        tx.addTxOut(
-            Bn(change),
-            changeScript
-        );
+        if(change > DUST_LIMIT) {
+            const changeScript = (!this.changeAddress || change > this.recycleThreashold) ?
+                this.script :
+                Address.fromString(this.changeAddress).toTxOutScript();
+            tx.addTxOut(
+                Bn(change),
+                changeScript
+            );
+        }
         
-        const sig = await tx.asyncSign(this.keyPair, undefined, tx.txIns.length - 1, Script.fromString(utxo.script), Bn(utxo.satoshis));
+        const sig = await tx.asyncSign(this.keyPair, Sig.SIGHASH_ALL | Sig.SIGHASH_FORKID, tx.txIns.length - 1, Script.fromString(utxo.script), Bn(utxo.satoshis));
         const sigScript = new Script()
             .writeBuffer(sig.toTxFormat())
             .writeBuffer(this.keyPair.pubKey.toBuffer());
