@@ -20,7 +20,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
-const argon2 = __importStar(require("argon2-browser"));
+const argon2 = __importStar(require("argon2-wasm-pro"));
 const bsv_1 = require("bsv");
 const signed_message_1 = require("./signed-message");
 const buffer_1 = require("buffer");
