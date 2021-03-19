@@ -1,4 +1,4 @@
-import * as argon2 from 'argon2-wasm-pro';
+import * as argon2 from 'argon2-browser';
 import { Bip32, Bip39, Constants, Ecdsa, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
