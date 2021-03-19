@@ -1,5 +1,5 @@
 import * as argon2 from 'argon2-wasm-pro';
-import { Bip32, Constants, Ecdsa, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
+import { Bip32, Bip39, Constants, Ecdsa, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
 import { HttpError } from './http-error';
@@ -28,10 +28,11 @@ export class AuthService {
     async register(id: string, password: string, email: string): Promise<string> {
         id = id.toLowerCase().normalize('NFKC');
         const keyPair = await this.generateKeyPair(id, password);
-        const bip32 = Bip32.fromRandom();
+        const bip39 = Bip39.fromRandom();
+        const bip32 = Bip32.fromSeed(bip39.toSeed());
 
         const recoveryBuf = Ecies.bitcoreEncrypt(
-            Buffer.from(bip32.toString()),
+            bip39.toBuffer(),
             keyPair.pubKey,
             keyPair
         );
@@ -73,8 +74,8 @@ export class AuthService {
             Buffer.from(recovery, 'base64'),
             keyPair.privKey
         );
-        const xpriv = recoveryBuf.toString();
-        return Bip32.fromString(xpriv);
+        const bip39 = Bip39.fromBuffer(recoveryBuf);
+        return Bip32.fromSeed(bip39.toSeed());
     }
 
     public async isIdAvailable(id: string) {

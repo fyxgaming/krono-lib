@@ -49,8 +49,9 @@ class AuthService {
     async register(id, password, email) {
         id = id.toLowerCase().normalize('NFKC');
         const keyPair = await this.generateKeyPair(id, password);
-        const bip32 = bsv_1.Bip32.fromRandom();
-        const recoveryBuf = bsv_1.Ecies.bitcoreEncrypt(buffer_1.Buffer.from(bip32.toString()), keyPair.pubKey, keyPair);
+        const bip39 = bsv_1.Bip39.fromRandom();
+        const bip32 = bsv_1.Bip32.fromSeed(bip39.toSeed());
+        const recoveryBuf = bsv_1.Ecies.bitcoreEncrypt(bip39.toBuffer(), keyPair.pubKey, keyPair);
         const reg = {
             pubkey: keyPair.pubKey.toString(),
             xpub: bip32.toPublic().toString(),
@@ -83,8 +84,8 @@ class AuthService {
             throw new http_error_1.HttpError(resp.status, resp.statusText);
         const { path, recovery } = await resp.json();
         const recoveryBuf = bsv_1.Ecies.bitcoreDecrypt(buffer_1.Buffer.from(recovery, 'base64'), keyPair.privKey);
-        const xpriv = recoveryBuf.toString();
-        return bsv_1.Bip32.fromString(xpriv);
+        const bip39 = bsv_1.Bip39.fromBuffer(recoveryBuf);
+        return bsv_1.Bip32.fromSeed(bip39.toSeed());
     }
     async isIdAvailable(id) {
         id = id.toLowerCase().normalize('NFKC');
