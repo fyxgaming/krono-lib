@@ -1,11 +1,8 @@
+import axios from './fyx-axios';
 import { IStorage } from './interfaces';
-
-import {HttpError} from './http-error';
-
 export class RestStateCache implements IStorage<any> {
     private requests = new Map<string, Promise<any>>();
     constructor(
-        private fetch,
         private apiUrl: string,
         public cache: {get: (key: string) => any, set: (key: string, value: any) => any} = new Map<string, any>(),
         private debug = false
@@ -21,20 +18,18 @@ export class RestStateCache implements IStorage<any> {
 
         if (!this.requests.has(key)) {
             const request = (async () => {
-                const resp = await this.fetch(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
-                if (!resp.ok) {
-                    if (resp.status === 404) {
-                        if(this.debug) console.log('Remote Miss:', key);
-                        return;
-                    }
-                    throw new HttpError(resp.status, resp.statusText);
+                let value;
+                try {
+                    const resp = await axios(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
+                    value = resp.data;
+                    if(this.debug) console.log('Remote Hit:', key);
+                    await this.cache.set(key, value);
+                } catch (e) {
+                    if(e.status !== 404) throw e;
+                    if(this.debug) console.log('Remote Miss:', key);
                 }
-                if(this.debug) console.log('Remote Hit:', key);
-                value = await resp.json();
-                await this.cache.set(key, value);
                 this.requests.delete(key);
                 return value;
-
             })();
             this.requests.set(key, request);
         }

@@ -1,10 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RestStateCache = void 0;
-const http_error_1 = require("./http-error");
+const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 class RestStateCache {
-    constructor(fetch, apiUrl, cache = new Map(), debug = false) {
-        this.fetch = fetch;
+    constructor(apiUrl, cache = new Map(), debug = false) {
         this.apiUrl = apiUrl;
         this.cache = cache;
         this.debug = debug;
@@ -21,19 +23,20 @@ class RestStateCache {
         }
         if (!this.requests.has(key)) {
             const request = (async () => {
-                const resp = await this.fetch(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
-                if (!resp.ok) {
-                    if (resp.status === 404) {
-                        if (this.debug)
-                            console.log('Remote Miss:', key);
-                        return;
-                    }
-                    throw new http_error_1.HttpError(resp.status, resp.statusText);
+                let value;
+                try {
+                    const resp = await fyx_axios_1.default(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
+                    value = resp.data;
+                    if (this.debug)
+                        console.log('Remote Hit:', key);
+                    await this.cache.set(key, value);
                 }
-                if (this.debug)
-                    console.log('Remote Hit:', key);
-                value = await resp.json();
-                await this.cache.set(key, value);
+                catch (e) {
+                    if (e.status !== 404)
+                        throw e;
+                    if (this.debug)
+                        console.log('Remote Miss:', key);
+                }
                 this.requests.delete(key);
                 return value;
             })();

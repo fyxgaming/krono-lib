@@ -18,13 +18,16 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const argon2 = __importStar(require("argon2-browser"));
 const bsv_1 = require("bsv");
+const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const signed_message_1 = require("./signed-message");
 const buffer_1 = require("buffer");
-const http_error_1 = require("./http-error");
 class AuthService {
     constructor(apiUrl, network) {
         this.apiUrl = apiUrl;
@@ -62,27 +65,12 @@ class AuthService {
         const msgHash = await bsv_1.Hash.asyncSha256(msgBuf);
         const sig = bsv_1.Ecdsa.sign(msgHash, keyPair);
         reg.sig = sig.toString();
-        const resp = await fetch(`${this.apiUrl}/accounts/${id}`, {
-            method: 'POST',
-            headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify(reg)
-        });
-        if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, resp.statusText);
+        await fyx_axios_1.default.post(`${this.apiUrl}/accounts/${id}`, reg);
         return keyPair;
     }
     async recover(id, keyPair) {
         id = id.toLowerCase().normalize('NFKC');
-        const resp = await fetch(`${this.apiUrl}/accounts`, {
-            method: 'POST',
-            headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify(new signed_message_1.SignedMessage({
-                subject: 'Recover'
-            }, id, keyPair))
-        });
-        if (!resp.ok)
-            throw new http_error_1.HttpError(resp.status, resp.statusText);
-        const { path, recovery } = await resp.json();
+        const { data: { path, recovery } } = await fyx_axios_1.default.post(`${this.apiUrl}/accounts`, new signed_message_1.SignedMessage({ subject: 'Recover' }, id, keyPair));
         const recoveryBuf = bsv_1.Ecies.bitcoreDecrypt(buffer_1.Buffer.from(recovery, 'base64'), keyPair.privKey);
         const bip39 = bsv_1.Bip39.fromBuffer(recoveryBuf);
         return bsv_1.Bip32.fromSeed(bip39.toSeed());
@@ -90,10 +78,13 @@ class AuthService {
     async isIdAvailable(id) {
         id = id.toLowerCase().normalize('NFKC');
         try {
-            const resp = await fetch(`${this.apiUrl}/accounts/${id}`);
-            if (!resp.ok && resp.status !== 404)
-                throw new http_error_1.HttpError(resp.status, resp.statusText);
-            return resp.status === 404;
+            await fyx_axios_1.default(`${this.apiUrl}/accounts/${id}`)
+                .then(() => false)
+                .catch(e => {
+                if (e.status === 404)
+                    return true;
+                throw e;
+            });
         }
         catch (e) {
             throw e;

@@ -1,8 +1,8 @@
 import * as argon2 from 'argon2-browser';
 import { Bip32, Bip39, Constants, Ecdsa, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
+import axios from './fyx-axios';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
-import { HttpError } from './http-error';
 
 export class AuthService {
     constructor(private apiUrl: string, private network: string) { }
@@ -48,27 +48,16 @@ export class AuthService {
         const sig = Ecdsa.sign(msgHash, keyPair);
         reg.sig = sig.toString();
 
-        const resp = await fetch(`${this.apiUrl}/accounts/${id}`, {
-            method: 'POST',
-            headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify(reg)
-        });
-        if (!resp.ok) throw new HttpError(resp.status, resp.statusText)
-
+        await axios.post(`${this.apiUrl}/accounts/${id}`, reg);
         return keyPair;
     }
 
     async recover(id: string, keyPair: KeyPair) {
         id = id.toLowerCase().normalize('NFKC');
-        const resp = await fetch(`${this.apiUrl}/accounts`, {
-            method: 'POST',
-            headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify(new SignedMessage({
-                subject: 'Recover'
-            }, id, keyPair))
-        });
-        if (!resp.ok) throw new HttpError(resp.status, resp.statusText);
-        const { path, recovery } = await resp.json();
+        const { data: { path, recovery }} = await axios.post(
+            `${this.apiUrl}/accounts`, 
+            new SignedMessage({subject: 'Recover'}, id, keyPair)
+        );
 
         const recoveryBuf = Ecies.bitcoreDecrypt(
             Buffer.from(recovery, 'base64'),
@@ -81,9 +70,12 @@ export class AuthService {
     public async isIdAvailable(id: string) {
         id = id.toLowerCase().normalize('NFKC');
         try {
-            const resp = await fetch(`${this.apiUrl}/accounts/${id}`);
-            if (!resp.ok && resp.status !== 404) throw new HttpError(resp.status, resp.statusText);
-            return resp.status === 404;
+            await axios(`${this.apiUrl}/accounts/${id}`)
+                .then(() => false)
+                .catch(e => {
+                    if(e.status === 404) return true;
+                    throw e;
+                });
         } catch (e) {
             throw e;
         }

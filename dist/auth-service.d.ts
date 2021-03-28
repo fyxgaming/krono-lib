@@ -6,5 +6,5 @@ export declare class AuthService {
     generateKeyPair(id: string, password: string): KeyPair;
     register(id: string, password: string, email: string): Promise<string>;
     recover(id: string, keyPair: KeyPair): Promise<any>;
-    isIdAvailable(id: string): Promise<boolean>;
+    isIdAvailable(id: string): Promise<void>;
 }

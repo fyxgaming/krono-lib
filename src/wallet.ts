@@ -1,9 +1,9 @@
+import axios from './fyx-axios';
 import { Ecdsa, Hash, KeyPair, PubKey, Random, Sig } from 'bsv';
 import { EventEmitter } from 'events';
 import { RestBlockchain } from './rest-blockchain';
 import { IJig, IJigQuery } from './interfaces';
 import { SignedMessage } from './signed-message';
-import { HttpError } from './http-error';
 import { Buffer } from 'buffer';
 
 export class Wallet extends EventEmitter {
@@ -34,7 +34,7 @@ export class Wallet extends EventEmitter {
         this.address = run.owner.address;
         this.purse = run.purse.address;
 
-        
+
         this.load = run.load.bind(run);
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx: string) => run.import(rawtx);
@@ -50,15 +50,11 @@ export class Wallet extends EventEmitter {
     }
 
     async loadJigIndex(query?: IJigQuery) {
-        const resp = await fetch(`${this.blockchain.apiUrl}/jigs/${this.handle}`, {
-            method: 'POST',
-            headers: {'Content-type': 'application/json'},
-            body: JSON.stringify(new SignedMessage({
-                payload: JSON.stringify(query)
-            }, this.handle, this.keyPair))
-        });
-        if(!resp.ok) throw new HttpError(resp.status, resp.statusText);
-        return resp.json();
+        const { data } = await axios.post(
+            `${this.blockchain.apiUrl}/jigs/${this.handle}`,
+            new SignedMessage({ payload: JSON.stringify(query) }, this.handle, this.keyPair)
+        );
+        return data;
     }
 
     async loadJig(loc: string): Promise<IJig | void> {

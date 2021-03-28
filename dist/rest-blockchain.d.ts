@@ -1,8 +1,7 @@
+import { Tx } from 'bsv';
 import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
-import { Tx } from 'bsv';
 export declare class RestBlockchain {
-    protected fetchLib: any;
     apiUrl: string;
     network: string;
     cache: {
@@ -11,7 +10,7 @@ export declare class RestBlockchain {
     };
     protected debug: boolean;
     private requests;
-    constructor(fetchLib: any, apiUrl: string, network: string, cache?: {
+    constructor(apiUrl: string, network: string, cache?: {
         get: (key: string) => any;
         set: (key: string, value: any) => any;
     }, debug?: boolean);
@@ -25,6 +24,5 @@ export declare class RestBlockchain {
     loadJigData(loc: string, unspent?: boolean): Promise<any>;
     jigQuery(query: any): Promise<any>;
     fund(address: string, satoshis?: number): Promise<any>;
-    loadMessage(messageId: any): Promise<SignedMessage>;
     sendMessage(message: SignedMessage, postTo?: string): Promise<any>;
 }

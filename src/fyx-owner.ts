@@ -1,8 +1,4 @@
 import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
-// import { HttpError } from './http-error';
-// import { SignedMessage } from './signed-message';
-
-
 export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();
 
@@ -13,17 +9,6 @@ export class FyxOwner {
     }
 
     async nextOwner() {
-        // const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
-        //     method: 'POST',
-        //     headers: {'Content-type': 'application/json'},
-        //     body: JSON.stringify(new SignedMessage({
-        //         subject: 'RequestPaymentAddress',
-        //         payload: JSON.stringify({ fyxId: this.fyxId })
-        //     }, this.userId, KeyPair.fromPrivKey(this.keyPair.privKey)))
-        // });
-        // if(!resp.ok) throw new HttpError(resp.status, resp.statusText);
-        // const {address} = await resp.json();
-        // return address;
         const address = Address.fromPubKey(this.bip32.derive('m/1/0').pubKey).toString();
         return address;
     }

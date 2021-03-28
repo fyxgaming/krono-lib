@@ -1,16 +1,13 @@
-import { IJigQuery, IUTXO } from './interfaces';
-import { SignedMessage } from './signed-message';
 import { Br, Tx } from 'bsv';
-
-import {HttpError} from './http-error';
-
+import axios from './fyx-axios';
+import { IUTXO } from './interfaces';
+import { SignedMessage } from './signed-message';
 export class RestBlockchain {
     private requests = new Map<string, Promise<any>>();
     constructor(
-        protected fetchLib,
         public apiUrl: string,
         public network: string,
-        public cache: {get: (key: string) => any, set: (key: string, value: any) => any} = new Map<string, any>(),
+        public cache: { get: (key: string) => any, set: (key: string, value: any) => any } = new Map<string, any>(),
         protected debug = false
     ) { }
 
@@ -26,14 +23,8 @@ export class RestBlockchain {
     }
 
     async broadcast(rawtx) {
-        if(this.debug) console.log('BROADCAST:', rawtx);
-        const resp = await this.fetchLib(`${this.apiUrl}/broadcast`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rawtx })
-        });
-        if (!resp.ok) throw new HttpError(resp.status, await resp.text());
-        const txid = await resp.text();
+        if (this.debug) console.log('BROADCAST:', rawtx);
+        const { data: { txid } } = await axios.post(`${this.apiUrl}/broadcast`, { rawtx })
         this.debug && console.log('Broadcast:', txid);
         await this.cache.set(`tx://${txid}`, rawtx);
         return txid;
@@ -51,15 +42,12 @@ export class RestBlockchain {
     }
 
     async fetch(txid: string) {
-        if(this.debug) console.log('FETCH:', txid);
+        if (this.debug) console.log('FETCH:', txid);
         let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx) return rawtx;
         if (!this.requests.has(txid)) {
             const request = Promise.resolve().then(async () => {
-                const resp = await this.fetchLib(`${this.apiUrl}/tx/${txid}`);
-                if (!resp.ok)
-                    throw new HttpError(resp.status, await resp.text());
-                rawtx = await resp.text();
+                const { data: { rawtx } } = await axios(`${this.apiUrl}/tx/${txid}`);
                 await this.cache.set(`tx://${txid}`, rawtx);
                 this.requests.delete(txid);
                 return rawtx;
@@ -70,28 +58,21 @@ export class RestBlockchain {
     };
 
     async time(txid: string): Promise<number> {
-        return Date.now();
-        // const resp = await this.fetchLib(`${this.apiUrl}/tx/${txid}`);
-        // if (resp.ok) {
-        //     const {time} = await resp.json();
-        //     await this.cache.set(`tx://${txid}`, rawtx);
-        //     break;
-        // }
+        const { data: { time } } = await axios(`${this.apiUrl}/tx/${txid}`);
+        return time;
     }
 
     async spends(txid: string, vout: number): Promise<string | null> {
-        if(this.debug) console.log('SPENDS:', txid, vout);
+        if (this.debug) console.log('SPENDS:', txid, vout);
         const cacheKey = `spend://${txid}_${vout}`;
         let spend = await this.cache.get(cacheKey);
         if (spend) return spend;
         if (!this.requests.has(cacheKey)) {
             const request = (async () => {
-                const resp = await this.fetchLib(`${this.apiUrl}/spends/${txid}_o${vout}`);
-                if (!resp.ok) throw new HttpError(resp.status, await resp.text());
-                spend = (await resp.text()) || null;
-                if(spend) await this.cache.set(cacheKey, spend);
+                const { data: { spendTxId } } = await axios(`${this.apiUrl}/spends/${txid}_o${vout}`);
+                if (spendTxId) await this.cache.set(cacheKey, spendTxId);
                 this.requests.delete(cacheKey);
-                return spend;
+                return spendTxId;
             })();
             this.requests.set(cacheKey, request);
         }
@@ -99,49 +80,31 @@ export class RestBlockchain {
     }
 
     async utxos(script: string, limit: number = 1000): Promise<IUTXO[]> {
-        if(this.debug) console.log('UTXOS:', script);
-        const resp = await this.fetchLib(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
-        if (!resp.ok) throw new Error(await resp.text());
-        return resp.json();
+        if (this.debug) console.log('UTXOS:', script);
+        const { data } = await axios(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
+        return data;
     };
 
     async loadJigData(loc: string, unspent = false) {
-        const resp = await this.fetchLib(`${this.apiUrl}/jigs/${loc}?unspent=${unspent ? 'true' : ''}`);
-        if (!resp.ok) throw new Error(`${resp.status} ${resp.statusText}`);
-        return resp.json();
+        const { data } = await axios(`${this.apiUrl}/jigs/${loc}?unspent=${unspent ? 'true' : ''}`);
+        return data;
     }
 
     async jigQuery(query: any) {
-        const resp = await this.fetchLib(`${this.apiUrl}/jigs`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(query)
-        });
-        if (!resp.ok) throw new HttpError(resp.status, await resp.text());
-        return resp.json();
+        const { data } = await axios.post(`${this.apiUrl}/jigs`, query);
+        return data;
     }
 
     async fund(address: string, satoshis?: number) {
-        const resp = await this.fetchLib(`${this.apiUrl}/fund/${address}${satoshis ? `?satoshis=${satoshis}` : ''}`);
-        if (!resp.ok) throw new HttpError(resp.status, await resp.text());
-        return resp.text();
-    }
-
-    async loadMessage(messageId): Promise<SignedMessage> {
-        const resp = await this.fetchLib(`${this.apiUrl}/messages/${messageId}`);
-        if (!resp.ok) throw new HttpError(resp.status, await resp.text());
-        return new SignedMessage(await resp.json());
+        const { data } = await axios(`${this.apiUrl}/fund/${address}${satoshis ? `?satoshis=${satoshis}` : ''}`);
+        return data;
     }
 
     async sendMessage(message: SignedMessage, postTo?: string): Promise<any> {
         const url = postTo || `${this.apiUrl}/messages`;
         console.log('Post TO:', url);
-        const resp = await this.fetchLib(url, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(message)
-        });
-        if (!resp.ok) throw new HttpError(resp.status, await resp.text());
-        return resp.json();
+        
+        const { data } = await axios.post(url, message);
+        return data;
     }
 }

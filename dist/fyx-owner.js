@@ -2,8 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FyxOwner = void 0;
 const bsv_1 = require("bsv");
-// import { HttpError } from './http-error';
-// import { SignedMessage } from './signed-message';
 class FyxOwner {
     constructor(apiUrl, bip32, fyxId) {
         this.apiUrl = apiUrl;
@@ -15,17 +13,6 @@ class FyxOwner {
         this.keyPairs.set(script, keyPair);
     }
     async nextOwner() {
-        // const resp = await globalThis.fetch(`${this.apiUrl}/accounts`, {
-        //     method: 'POST',
-        //     headers: {'Content-type': 'application/json'},
-        //     body: JSON.stringify(new SignedMessage({
-        //         subject: 'RequestPaymentAddress',
-        //         payload: JSON.stringify({ fyxId: this.fyxId })
-        //     }, this.userId, KeyPair.fromPrivKey(this.keyPair.privKey)))
-        // });
-        // if(!resp.ok) throw new HttpError(resp.status, resp.statusText);
-        // const {address} = await resp.json();
-        // return address;
         const address = bsv_1.Address.fromPubKey(this.bip32.derive('m/1/0').pubKey).toString();
         return address;
     }
