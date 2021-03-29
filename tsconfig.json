@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2017",
+    "module": "es6",
+    "target": "es2018",
     "allowJs": false,
     "declaration": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
     "sourceMap": true,
     "lib": [
-      "es2017", "dom"
+      "es2018", "dom"
     ],
     "outDir": "dist"
   },

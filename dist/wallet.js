@@ -1,15 +1,9 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Wallet = void 0;
-const fyx_axios_1 = __importDefault(require("./fyx-axios"));
-const bsv_1 = require("bsv");
-const events_1 = require("events");
-const signed_message_1 = require("./signed-message");
-const buffer_1 = require("buffer");
-class Wallet extends events_1.EventEmitter {
+import axios from './fyx-axios';
+import { Ecdsa, Hash, PubKey, Random, Sig } from 'bsv';
+import { EventEmitter } from 'events';
+import { SignedMessage } from './signed-message';
+import { Buffer } from 'buffer';
+export class Wallet extends EventEmitter {
     constructor(handle, keyPair, run) {
         super();
         this.handle = handle;
@@ -34,7 +28,7 @@ class Wallet extends events_1.EventEmitter {
         return Date.now();
     }
     async loadJigIndex(query) {
-        const { data } = await fyx_axios_1.default.post(`${this.blockchain.apiUrl}/jigs/${this.handle}`, new signed_message_1.SignedMessage({ payload: JSON.stringify(query) }, this.handle, this.keyPair));
+        const { data } = await axios.post(`${this.blockchain.apiUrl}/jigs/${this.handle}`, new SignedMessage({ payload: JSON.stringify(query) }, this.handle, this.keyPair));
         return data;
     }
     async loadJig(loc) {
@@ -54,7 +48,7 @@ class Wallet extends events_1.EventEmitter {
     }
     buildMessage(messageData) {
         messageData.ts = Date.now();
-        const message = new signed_message_1.SignedMessage(messageData, this.handle, this.keyPair);
+        const message = new SignedMessage(messageData, this.handle, this.keyPair);
         return message;
     }
     async encrypt(pubkey) {
@@ -62,8 +56,8 @@ class Wallet extends events_1.EventEmitter {
     async decrypt(value) {
     }
     async verifySig(sig, hash, pubkey) {
-        const msgHash = await bsv_1.Hash.asyncSha256(buffer_1.Buffer.from(hash));
-        const verified = bsv_1.Ecdsa.verify(msgHash, bsv_1.Sig.fromString(sig), bsv_1.PubKey.fromString(pubkey));
+        const msgHash = await Hash.asyncSha256(Buffer.from(hash));
+        const verified = Ecdsa.verify(msgHash, Sig.fromString(sig), PubKey.fromString(pubkey));
         console.log('SIG:', verified, sig, hash, pubkey);
         return verified;
     }
@@ -71,7 +65,7 @@ class Wallet extends events_1.EventEmitter {
         return Math.floor(Math.random() * (max || Number.MAX_SAFE_INTEGER));
     }
     randomBytes(size) {
-        return bsv_1.Random.getRandomBuffer(size).toString('hex');
+        return Random.getRandomBuffer(size).toString('hex');
     }
     setTimeout(cb, ms) {
         const timeoutId = Date.now();
@@ -94,5 +88,4 @@ class Wallet extends events_1.EventEmitter {
         }
     }
 }
-exports.Wallet = Wallet;
 //# sourceMappingURL=wallet.js.map

@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WSClient = void 0;
-const events_1 = require("events");
-class WSClient extends events_1.EventEmitter {
+import { EventEmitter } from "events";
+export class WSClient extends EventEmitter {
     constructor(client, url, channels = []) {
         super();
         this.client = client;
@@ -52,5 +49,4 @@ class WSClient extends events_1.EventEmitter {
         this.socket.close();
     }
 }
-exports.WSClient = WSClient;
 //# sourceMappingURL=ws-client.js.map
