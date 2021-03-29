@@ -52,7 +52,7 @@ export class AuthService {
         return keyPair;
     }
 
-    async recover(id: string, keyPair: KeyPair) {
+    async recover(id: string, keyPair: KeyPair): Promise<Bip32> {
         id = id.toLowerCase().normalize('NFKC');
         const { data: { path, recovery }} = await axios.post(
             `${this.apiUrl}/accounts`, 
@@ -67,16 +67,13 @@ export class AuthService {
         return Bip32.fromSeed(bip39.toSeed());
     }
 
-    public async isIdAvailable(id: string) {
+    public async isIdAvailable(id: string): Promise<boolean> {
         id = id.toLowerCase().normalize('NFKC');
         try {
-            await axios(`${this.apiUrl}/accounts/${id}`)
-                .then(() => false)
-                .catch(e => {
-                    if(e.status === 404) return true;
-                    throw e;
-                });
+            const user = await axios(`${this.apiUrl}/accounts/${id}`);
+            return false;;
         } catch (e) {
+            if(e.status === 404) return true;
             throw e;
         }
     }

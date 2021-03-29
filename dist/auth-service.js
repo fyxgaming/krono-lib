@@ -53,15 +53,13 @@ export class AuthService {
     async isIdAvailable(id) {
         id = id.toLowerCase().normalize('NFKC');
         try {
-            await axios(`${this.apiUrl}/accounts/${id}`)
-                .then(() => false)
-                .catch(e => {
-                if (e.status === 404)
-                    return true;
-                throw e;
-            });
+            const user = await axios(`${this.apiUrl}/accounts/${id}`);
+            return false;
+            ;
         }
         catch (e) {
+            if (e.status === 404)
+                return true;
             throw e;
         }
     }
