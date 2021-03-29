@@ -1,5 +1,5 @@
 import axios from 'axios';
-import rax from 'retry-axios';
+import * as rax from 'retry-axios';
 
 import {HttpError} from './http-error';
 
