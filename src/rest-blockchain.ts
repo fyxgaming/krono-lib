@@ -1,4 +1,4 @@
-import { Br, Tx } from 'bsv';
+import { Br, Tx } from '@ts-bitcoin/core';
 import axios from './fyx-axios';
 import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
@@ -36,7 +36,7 @@ export class RestBlockchain {
             const outTx = Tx.fromHex(await this.fetch(txid));
             return {
                 location: `${txid}_o${txIn.txOutNum}`,
-                script: outTx.toOuts[txIn.txOutNum].script.toString(),
+                script: outTx.txOuts[txIn.txOutNum].script.toString(),
             };
         }));
     }

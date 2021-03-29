@@ -1,4 +1,4 @@
-import { Bw, Ecdsa, Hash, PubKey, Sig } from 'bsv';
+import { Bw, Ecdsa, Hash, PubKey, Sig } from '@ts-bitcoin/core';
 import { Buffer } from 'buffer';
 const MAGIC_BYTES = Buffer.from('Bitcoin Signed Message:\n');
 const MAGIC_BYTES_PREFIX = Bw.varIntBufNum(MAGIC_BYTES.length);

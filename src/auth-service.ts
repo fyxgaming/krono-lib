@@ -1,5 +1,5 @@
 import * as argon2 from 'argon2-browser';
-import { Bip32, Bip39, Constants, Ecdsa, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
+import { Bip32, Bip39, Constants, Ecdsa, Ecies, Hash, KeyPair, PrivKey } from '@ts-bitcoin/core';
 import axios from './fyx-axios';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
@@ -7,7 +7,7 @@ import { Buffer } from 'buffer';
 export class AuthService {
     constructor(private apiUrl: string, private network: string) { }
 
-    async generateKeyPair(id: string, password: string): KeyPair {
+    async generateKeyPair(id: string, password: string): Promise<KeyPair> {
         id = id.toLowerCase().normalize('NFKC');
         const salt = Hash.sha256(Buffer.from(id));
         const pass = Hash.sha256(Buffer.from(password.normalize('NFKC')));
@@ -25,7 +25,7 @@ export class AuthService {
         return KeyPair.fromPrivKey(privKey);
     }
 
-    async register(id: string, password: string, email: string): Promise<string> {
+    async register(id: string, password: string, email: string): Promise<KeyPair> {
         id = id.toLowerCase().normalize('NFKC');
         const keyPair = await this.generateKeyPair(id, password);
         const bip39 = Bip39.fromRandom();

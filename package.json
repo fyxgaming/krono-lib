@@ -12,10 +12,10 @@
     "**/*"
   ],
   "dependencies": {
+    "@ts-bitcoin/core": "^2.0.0",
     "argon2-browser": "^1.15.3",
     "argon2-wasm-pro": "^1.1.0",
     "axios": "^0.21.1",
-    "bsv": "^2.0.4",
     "events": "^3.2.0",
     "isomorphic-fetch": "^3.0.0",
     "retry-axios": "^2.4.0"

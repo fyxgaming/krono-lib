@@ -1,4 +1,4 @@
-import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
+import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from '@ts-bitcoin/core';
 export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();
 
@@ -16,7 +16,7 @@ export class FyxOwner {
     async sign(rawtx: string, parents: { satoshis: number, script: string }[], locks: any[]): Promise<string> {
         const tx = Tx.fromHex(rawtx);
         await Promise.all(tx.txIns.map(async (txIn, i) => {
-            const txOut = TxOut.fromProperties(Bn(parents[i].satoshis), Script.fromHex(parents[i].script));
+            const txOut = TxOut.fromProperties(new Bn(parents[i].satoshis), Script.fromHex(parents[i].script));
             if (txOut.script.isPubKeyHashOut()) {
                 const keyPair = this.keyPairs.get(txOut.script.toHex());
                 if(!keyPair) return;

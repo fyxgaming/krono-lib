@@ -1,4 +1,4 @@
-import { KeyPair } from 'bsv';
+import { KeyPair } from '@ts-bitcoin/core';
 import { RestBlockchain } from './rest-blockchain';
 export declare class LockingPurse {
     private keyPair;
@@ -13,5 +13,5 @@ export declare class LockingPurse {
     pay(rawtx: string, parents: {
         satoshis: number;
         script: string;
-    }[]): Promise<any>;
+    }[]): Promise<string>;
 }
