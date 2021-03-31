@@ -1,7 +1,10 @@
-import { Address, Bn, Script, Sig, Tx, TxIn } from 'bsv';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LockingPurse = void 0;
+const bsv_1 = require("bsv");
 const ADDITIONAL_INPUT_BYTES = 225;
 const DUST_LIMIT = 273;
-export class LockingPurse {
+class LockingPurse {
     constructor(keyPair, blockchain, redis, changeAddress, satsPerByte = 0.5, recycleThreashold = 50000) {
         this.keyPair = keyPair;
         this.blockchain = blockchain;
@@ -9,12 +12,12 @@ export class LockingPurse {
         this.changeAddress = changeAddress;
         this.satsPerByte = satsPerByte;
         this.recycleThreashold = recycleThreashold;
-        const address = Address.fromPrivKey(keyPair.privKey);
+        const address = bsv_1.Address.fromPrivKey(keyPair.privKey);
         this.script = address.toTxOutScript();
         this.address = address.toString();
     }
     async pay(rawtx, parents) {
-        const tx = Tx.fromHex(rawtx);
+        const tx = bsv_1.Tx.fromHex(rawtx);
         let fee = Math.ceil(rawtx.length / 2 * this.satsPerByte);
         let totalIn = parents.reduce((a, { satoshis }) => a + satoshis, 0);
         const totalOut = tx.txOuts.reduce((a, { valueBn }) => a + valueBn.toNumber(), 0);
@@ -37,21 +40,22 @@ export class LockingPurse {
         }
         if (!utxo)
             throw new Error(`No UTXOs found for purse: ${this.address}`);
-        tx.addTxIn(Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, Script.fromString('OP_0 OP_0'), TxIn.SEQUENCE_FINAL);
+        tx.addTxIn(Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, bsv_1.Script.fromString('OP_0 OP_0'), bsv_1.TxIn.SEQUENCE_FINAL);
         totalIn += utxo.satoshis;
         const change = totalIn - totalOut - fee;
         if (change > DUST_LIMIT) {
             const changeScript = (!this.changeAddress || change > this.recycleThreashold) ?
                 this.script :
-                Address.fromString(this.changeAddress).toTxOutScript();
-            tx.addTxOut(new Bn(change), changeScript);
+                bsv_1.Address.fromString(this.changeAddress).toTxOutScript();
+            tx.addTxOut(new bsv_1.Bn(change), changeScript);
         }
-        const sig = await tx.asyncSign(this.keyPair, Sig.SIGHASH_ALL | Sig.SIGHASH_FORKID, tx.txIns.length - 1, Script.fromString(utxo.script), new Bn(utxo.satoshis));
-        const sigScript = new Script()
+        const sig = await tx.asyncSign(this.keyPair, bsv_1.Sig.SIGHASH_ALL | bsv_1.Sig.SIGHASH_FORKID, tx.txIns.length - 1, bsv_1.Script.fromString(utxo.script), new bsv_1.Bn(utxo.satoshis));
+        const sigScript = new bsv_1.Script()
             .writeBuffer(sig.toTxFormat())
             .writeBuffer(this.keyPair.pubKey.toBuffer());
         tx.txIns[tx.txIns.length - 1].setScript(sigScript);
         return tx.toHex();
     }
 }
+exports.LockingPurse = LockingPurse;
 //# sourceMappingURL=locking-purse.js.map

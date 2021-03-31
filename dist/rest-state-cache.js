@@ -1,5 +1,11 @@
-import axios from './fyx-axios';
-export class RestStateCache {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RestStateCache = void 0;
+const fyx_axios_1 = __importDefault(require("./fyx-axios"));
+class RestStateCache {
     constructor(apiUrl, cache = new Map(), debug = false) {
         this.apiUrl = apiUrl;
         this.cache = cache;
@@ -19,7 +25,7 @@ export class RestStateCache {
             const request = (async () => {
                 let value;
                 try {
-                    const resp = await axios(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
+                    const resp = await fyx_axios_1.default(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
                     value = resp.data;
                     if (this.debug)
                         console.log('Remote Hit:', key);
@@ -42,4 +48,5 @@ export class RestStateCache {
         await this.cache.set(key, value);
     }
 }
+exports.RestStateCache = RestStateCache;
 //# sourceMappingURL=rest-state-cache.js.map
