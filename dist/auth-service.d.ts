@@ -1,4 +1,4 @@
-import { Bip32, KeyPair } from '@ts-bitcoin/core';
+import { Bip32, KeyPair } from 'bsv';
 export declare class AuthService {
     private apiUrl;
     private network;

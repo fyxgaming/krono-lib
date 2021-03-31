@@ -1,5 +1,4 @@
-/// <reference types="node" />
-import { KeyPair, PubKey } from '@ts-bitcoin/core';
+import { KeyPair, PubKey } from 'bsv';
 export declare class SignedMessage {
     from: string;
     to: string[];
@@ -10,9 +9,9 @@ export declare class SignedMessage {
     ts: number;
     sig?: string;
     constructor(message: Partial<SignedMessage>, userId?: string, keyPair?: KeyPair);
-    get hash(): Buffer;
-    get id(): string;
+    get hash(): any;
+    get id(): any;
     get payloadObj(): any;
     sign(userId: string, keyPair: KeyPair): void;
-    verify(pubkey: PubKey | string): Promise<boolean>;
+    verify(pubkey: PubKey | string): Promise<any>;
 }

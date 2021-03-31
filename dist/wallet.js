@@ -1,5 +1,5 @@
 import axios from './fyx-axios';
-import { Ecdsa, Hash, PubKey, Random, Sig } from '@ts-bitcoin/core';
+import { Ecdsa, Hash, PubKey, Random, Sig } from 'bsv';
 import { EventEmitter } from 'events';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';

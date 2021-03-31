@@ -1,4 +1,4 @@
-import { Br, Tx } from '@ts-bitcoin/core';
+import { Br, Tx } from 'bsv';
 import axios from './fyx-axios';
 export class RestBlockchain {
     constructor(apiUrl, network, cache = new Map(), debug = false) {

@@ -1,4 +1,4 @@
-import { Tx } from '@ts-bitcoin/core';
+import { Tx } from 'bsv';
 import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
 export declare class RestBlockchain {
@@ -16,10 +16,7 @@ export declare class RestBlockchain {
     }, debug?: boolean);
     get bsvNetwork(): string;
     broadcast(rawtx: any): Promise<any>;
-    retrieveOutputs(tx: Tx): Promise<{
-        location: string;
-        script: string;
-    }[]>;
+    retrieveOutputs(tx: Tx): Promise<[unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]>;
     fetch(txid: string): Promise<any>;
     time(txid: string): Promise<number>;
     spends(txid: string, vout: number): Promise<string | null>;

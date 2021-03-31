@@ -1,4 +1,4 @@
-import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from '@ts-bitcoin/core';
+import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
 export class FyxOwner {
     constructor(apiUrl, bip32, fyxId) {
         this.apiUrl = apiUrl;

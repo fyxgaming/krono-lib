@@ -1,4 +1,4 @@
-import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from '@ts-bitcoin/core';
+import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
 export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();
 

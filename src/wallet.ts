@@ -1,5 +1,5 @@
 import axios from './fyx-axios';
-import { Ecdsa, Hash, KeyPair, PubKey, Random, Sig } from '@ts-bitcoin/core';
+import { Ecdsa, Hash, KeyPair, PubKey, Random, Sig } from 'bsv';
 import { EventEmitter } from 'events';
 import { RestBlockchain } from './rest-blockchain';
 import { IJig, IJigQuery } from './interfaces';

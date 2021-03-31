@@ -1,4 +1,4 @@
-import { Br, Tx } from '@ts-bitcoin/core';
+import { Br, Tx } from 'bsv';
 import axios from './fyx-axios';
 import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';

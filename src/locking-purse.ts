@@ -1,4 +1,4 @@
-import { Address, Bn, KeyPair, Script, Sig, Tx, TxIn } from '@ts-bitcoin/core';
+import { Address, Bn, KeyPair, Script, Sig, Tx, TxIn } from 'bsv';
 import { RestBlockchain } from './rest-blockchain';
 
 const ADDITIONAL_INPUT_BYTES = 225;

@@ -1,4 +1,4 @@
-import { Address, Bn, Script, Sig, Tx, TxIn } from '@ts-bitcoin/core';
+import { Address, Bn, Script, Sig, Tx, TxIn } from 'bsv';
 const ADDITIONAL_INPUT_BYTES = 225;
 const DUST_LIMIT = 273;
 export class LockingPurse {

@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { KeyPair } from '@ts-bitcoin/core';
+import { KeyPair } from 'bsv';
 import { EventEmitter } from 'events';
 import { IJig, IJigQuery } from './interfaces';
 import { SignedMessage } from './signed-message';
