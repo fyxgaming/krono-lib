@@ -1,6 +1,6 @@
 {
   "name": "@kronoverse/lib",
-  "version": "4.0.4",
+  "version": "5.0.0",
   "description": "kronoverse library",
   "private": false,
   "main": "index.js",
