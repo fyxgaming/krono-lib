@@ -27,7 +27,7 @@ const rax = __importStar(require("retry-axios"));
 const http_error_1 = require("./http-error");
 rax.attach();
 axios_1.default.interceptors.response.use((r) => r, (e) => {
-    if (!e.response)
+    if (e.response)
         throw new http_error_1.HttpError(e.response.status, e.response.data);
     throw e;
 });
