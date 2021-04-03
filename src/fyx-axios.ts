@@ -1,11 +1,10 @@
 import axios from 'axios';
 import * as rax from 'retry-axios';
-
-import {HttpError} from './http-error';
+import * as createError from 'http-errors';
 
 rax.attach();
 axios.interceptors.response.use((r) => r, (e) => {
-    if(e.response) throw new HttpError(e.response.status, e.response.data)
+    if(e.response) throw createError(e.response.status, e.response.data)
     throw e;
 });
 
