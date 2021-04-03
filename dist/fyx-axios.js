@@ -24,11 +24,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const rax = __importStar(require("retry-axios"));
-const createError = __importStar(require("http-errors"));
+const http_errors_1 = __importDefault(require("http-errors"));
 rax.attach();
 axios_1.default.interceptors.response.use((r) => r, (e) => {
     if (e.response)
-        throw createError(e.response.status, e.response.data);
+        throw http_errors_1.default(e.response.status, e.response.data);
     throw e;
 });
 exports.default = axios_1.default;

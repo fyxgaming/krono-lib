@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as rax from 'retry-axios';
-import * as createError from 'http-errors';
+import createError from 'http-errors';
 
 rax.attach();
 axios.interceptors.response.use((r) => r, (e) => {
