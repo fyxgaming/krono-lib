@@ -25,7 +25,7 @@ export class AuthService {
         return KeyPair.fromPrivKey(privKey);
     }
 
-    async register(id: string, password: string, email: string): Promise<KeyPair> {
+    async register(id: string, password: string, email: string, firstName = '', lastName = ''): Promise<KeyPair> {
         id = id.toLowerCase().normalize('NFKC');
         const keyPair = await this.generateKeyPair(id, password);
         const bip39 = Bip39.fromRandom();
@@ -40,10 +40,14 @@ export class AuthService {
             pubkey: keyPair.pubKey.toString(),
             xpub: bip32.toPublic().toString(),
             recovery: recoveryBuf.toString('base64'),
+            firstName,
+            lastName,
             email
         };
 
-        const msgBuf = Buffer.from(`${id}|${reg.xpub}|${reg.recovery}|${email}`);
+        let msgBuf = Buffer.from(`${id}|${reg.xpub}|${reg.recovery}|${email}`);
+        if(firstName) msgBuf = Buffer.concat([msgBuf, Buffer.from(`|${firstName}`)]);
+        if(lastName) msgBuf = Buffer.concat([msgBuf, Buffer.from(`|${lastName}`)]);
         const msgHash = await Hash.asyncSha256(msgBuf);
         const sig = Ecdsa.sign(msgHash, keyPair);
         reg.sig = sig.toString();

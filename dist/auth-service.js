@@ -49,7 +49,7 @@ class AuthService {
         const privKey = bsv_1.PrivKey.fromBuffer(keybuf);
         return bsv_1.KeyPair.fromPrivKey(privKey);
     }
-    async register(id, password, email) {
+    async register(id, password, email, firstName = '', lastName = '') {
         id = id.toLowerCase().normalize('NFKC');
         const keyPair = await this.generateKeyPair(id, password);
         const bip39 = bsv_1.Bip39.fromRandom();
@@ -59,9 +59,15 @@ class AuthService {
             pubkey: keyPair.pubKey.toString(),
             xpub: bip32.toPublic().toString(),
             recovery: recoveryBuf.toString('base64'),
+            firstName,
+            lastName,
             email
         };
-        const msgBuf = buffer_1.Buffer.from(`${id}|${reg.xpub}|${reg.recovery}|${email}`);
+        let msgBuf = buffer_1.Buffer.from(`${id}|${reg.xpub}|${reg.recovery}|${email}`);
+        if (firstName)
+            msgBuf = buffer_1.Buffer.concat([msgBuf, buffer_1.Buffer.from(`|${firstName}`)]);
+        if (lastName)
+            msgBuf = buffer_1.Buffer.concat([msgBuf, buffer_1.Buffer.from(`|${lastName}`)]);
         const msgHash = await bsv_1.Hash.asyncSha256(msgBuf);
         const sig = bsv_1.Ecdsa.sign(msgHash, keyPair);
         reg.sig = sig.toString();
