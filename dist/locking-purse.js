@@ -47,8 +47,8 @@ class LockingPurse {
                     console.log('UTXO locked:', lockKey);
                 }
             }
-            if (!utxo)
-                throw new Error(`No UTXOs found for purse: ${this.address}`);
+            if (totalIn < totalOut + (size * this.satsPerByte))
+                throw new Error(`Inadequate UTXOs for purse: ${this.address}`);
         }
         const change = totalIn - totalOut - ((size + OUTPUT_SIZE) * this.satsPerByte);
         if (change > DUST_LIMIT) {
