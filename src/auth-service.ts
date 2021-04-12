@@ -9,7 +9,7 @@ export class AuthService {
 
     async generateKeyPair(id: string, password: string): Promise<KeyPair> {
         id = id.toLowerCase().normalize('NFKC');
-        const salt = Hash.sha256(Buffer.from(id));
+        const salt = Hash.sha256(Buffer.concat([Buffer.from(this.network), Buffer.from(id)]));
         const pass = Hash.sha256(Buffer.from(password.normalize('NFKC')));
         const { hash } = await argon2.hash({ pass, salt, time: 100, mem: 1024, hashLen: 32 });
 

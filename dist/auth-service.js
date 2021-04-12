@@ -35,7 +35,7 @@ class AuthService {
     }
     async generateKeyPair(id, password) {
         id = id.toLowerCase().normalize('NFKC');
-        const salt = bsv_1.Hash.sha256(buffer_1.Buffer.from(id));
+        const salt = bsv_1.Hash.sha256(buffer_1.Buffer.concat([buffer_1.Buffer.from(this.network), buffer_1.Buffer.from(id)]));
         const pass = bsv_1.Hash.sha256(buffer_1.Buffer.from(password.normalize('NFKC')));
         const { hash } = await argon2.hash({ pass, salt, time: 100, mem: 1024, hashLen: 32 });
         const versionByteNum = this.network === 'main' ?
