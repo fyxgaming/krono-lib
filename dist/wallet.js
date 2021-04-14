@@ -25,6 +25,7 @@ class Wallet extends events_1.EventEmitter {
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx) => run.import(rawtx);
         this.getTxPayload = (rawtx) => run.payload(rawtx);
+        this.balance = run.purse.balance.bind(run.purse);
         console.log(`HANDLE: ${handle}`);
         console.log(`PUBKEY: ${keyPair.pubKey.toString()}`);
         console.log(`ADDRESS: ${this.address}`);

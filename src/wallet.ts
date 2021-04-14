@@ -39,6 +39,7 @@ export class Wallet extends EventEmitter {
         this.createTransaction = () => new run.constructor.Transaction();
         this.loadTransaction = (rawtx: string) => run.import(rawtx);
         this.getTxPayload = (rawtx: string) => run.payload(rawtx);
+        this.balance = run.purse.balance.bind(run.purse);
         console.log(`HANDLE: ${handle}`);
         console.log(`PUBKEY: ${keyPair.pubKey.toString()}`);
         console.log(`ADDRESS: ${this.address}`);
