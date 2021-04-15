@@ -31,7 +31,7 @@ const buffer_1 = require("buffer");
 class AuthService {
     constructor(apiUrl, network) {
         this.apiUrl = apiUrl;
-        this.network = network;
+        this.network = network.slice(0, 4);
     }
     async generateKeyPair(id, password) {
         id = id.toLowerCase().normalize('NFKC');

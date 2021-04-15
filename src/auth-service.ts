@@ -5,7 +5,10 @@ import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
 
 export class AuthService {
-    constructor(private apiUrl: string, private network: string) { }
+    private network: string;
+    constructor(private apiUrl: string, network: string) { 
+        this.network = network.slice(0, 4);
+    }
 
     async generateKeyPair(id: string, password: string): Promise<KeyPair> {
         id = id.toLowerCase().normalize('NFKC');
