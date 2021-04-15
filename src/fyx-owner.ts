@@ -19,12 +19,11 @@ export class FyxOwner {
 
         await Promise.all(tx.txIns.map(async (txIn, i) => {
             const txOut = TxOut.fromProperties(new Bn(parents[i].satoshis), Script.fromHex(parents[i].script));
-            if (txOut.script.isPubKeyHashOut()) {
-                const keyPair = this.keyPairs.get(txOut.script.toHex());
-                if (!keyPair) return;
-                const sig = await tx.asyncSign(keyPair, Sig.SIGHASH_ALL | Sig.SIGHASH_FORKID, i, txOut.script, txOut.valueBn);
-                txIn.setScript(new Script().writeBuffer(sig.toTxFormat()).writeBuffer(keyPair.pubKey.toBuffer()));
-            }
+            
+            const keyPair = this.keyPairs.get(txOut.script.toHex());
+            if (!keyPair) return;
+            const sig = await tx.asyncSign(keyPair, Sig.SIGHASH_ALL | Sig.SIGHASH_FORKID, i, txOut.script, txOut.valueBn);
+            txIn.setScript(new Script().writeBuffer(sig.toTxFormat()).writeBuffer(keyPair.pubKey.toBuffer()));
         }));
 
         console.log('Signed TX:', tx.toString());
@@ -41,13 +40,13 @@ export class FyxOwner {
     }
     
     async loadDerivations() {
-        const { data: paths } = await axios.post(
+        const { data: derivations } = await axios.post(
             `${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/derivations`,
             new SignedMessage({}, this.userId, this.keyPair)
         )
-        for (const [script, path] of Object.entries(paths)) {
-            if (this.keyPairs.has(script)) continue;
-            this.keyPairs.set(script, KeyPair.fromPrivKey(this.bip32.derive(path).privKey));
-        }
+        derivations.forEach(d => {
+            if (this.keyPairs.has(d.script)) return;
+            this.keyPairs.set(d.script, KeyPair.fromPrivKey(this.bip32.derive(d.path).privKey));
+        })
     }
 }
