@@ -6,7 +6,7 @@ const buffer_1 = require("buffer");
 const MAGIC_BYTES = buffer_1.Buffer.from('Bitcoin Signed Message:\n');
 const MAGIC_BYTES_PREFIX = bsv_1.Bw.varIntBufNum(MAGIC_BYTES.length);
 class SignedMessage {
-    constructor(message, userId, keyPair) {
+    constructor(message = {}, userId, keyPair) {
         this.from = '';
         this.to = [];
         this.reply = '';

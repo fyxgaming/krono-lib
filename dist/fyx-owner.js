@@ -1,19 +1,23 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FyxOwner = void 0;
+const axios_1 = __importDefault(require("axios"));
 const bsv_1 = require("bsv");
+const signed_message_1 = require("./signed-message");
 class FyxOwner {
-    constructor(apiUrl, bip32, fyxId) {
+    constructor(apiUrl, bip32, fyxId, userId, keyPair) {
         this.apiUrl = apiUrl;
         this.bip32 = bip32;
         this.fyxId = fyxId;
+        this.userId = userId;
+        this.keyPair = keyPair;
         this.keyPairs = new Map();
-        let keyPair = bsv_1.KeyPair.fromPrivKey(this.bip32.derive('m/1/0').privKey);
-        const script = bsv_1.Address.fromPubKey(keyPair.pubKey).toTxOutScript().toHex();
-        this.keyPairs.set(script, keyPair);
     }
     async nextOwner() {
-        const address = bsv_1.Address.fromPubKey(this.bip32.derive('m/1/0').pubKey).toString();
+        const { data: { address } } = await axios_1.default.post(`${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/payment-destination`, new signed_message_1.SignedMessage({}, this.userId, this.keyPair));
         return address;
     }
     async sign(rawtx, parents, locks) {
@@ -39,6 +43,14 @@ class FyxOwner {
             const script = bsv_1.Address.fromPubKey(keyPair.pubKey).toTxOutScript().toHex();
             this.keyPairs.set(script, keyPair);
         });
+    }
+    async loadDerivations() {
+        const { data: paths } = await axios_1.default.post(`${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/derivations`, new signed_message_1.SignedMessage({}, this.userId, this.keyPair));
+        for (const [script, path] of Object.entries(paths)) {
+            if (this.keyPairs.has(script))
+                continue;
+            this.keyPairs.set(script, bsv_1.KeyPair.fromPrivKey(this.bip32.derive(path).privKey));
+        }
     }
 }
 exports.FyxOwner = FyxOwner;

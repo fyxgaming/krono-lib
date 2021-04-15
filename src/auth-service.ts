@@ -59,8 +59,8 @@ export class AuthService {
     async recover(id: string, keyPair: KeyPair): Promise<Bip32> {
         id = id.toLowerCase().normalize('NFKC');
         const { data: { path, recovery }} = await axios.post(
-            `${this.apiUrl}/accounts`, 
-            new SignedMessage({subject: 'Recover'}, id, keyPair)
+            `${this.apiUrl}/accounts/${id}/recover`, 
+            new SignedMessage({subject: 'recover'}, id, keyPair)
         );
 
         const recoveryBuf = Ecies.bitcoreDecrypt(

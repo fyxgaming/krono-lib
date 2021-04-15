@@ -13,7 +13,7 @@ export class SignedMessage {
     ts: number = Date.now();
     sig?: string;
 
-    constructor(message: Partial<SignedMessage>, userId?: string, keyPair?: KeyPair) {
+    constructor(message: Partial<SignedMessage> = {}, userId?: string, keyPair?: KeyPair) {
         Object.assign(this, message);
         if(keyPair) this.sign(userId, keyPair);
     }

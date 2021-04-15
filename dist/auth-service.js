@@ -76,7 +76,7 @@ class AuthService {
     }
     async recover(id, keyPair) {
         id = id.toLowerCase().normalize('NFKC');
-        const { data: { path, recovery } } = await fyx_axios_1.default.post(`${this.apiUrl}/accounts`, new signed_message_1.SignedMessage({ subject: 'Recover' }, id, keyPair));
+        const { data: { path, recovery } } = await fyx_axios_1.default.post(`${this.apiUrl}/accounts/${id}/recover`, new signed_message_1.SignedMessage({ subject: 'recover' }, id, keyPair));
         const recoveryBuf = bsv_1.Ecies.bitcoreDecrypt(buffer_1.Buffer.from(recovery, 'base64'), keyPair.privKey);
         const bip39 = bsv_1.Bip39.fromBuffer(recoveryBuf);
         return bsv_1.Bip32.fromSeed(bip39.toSeed());
