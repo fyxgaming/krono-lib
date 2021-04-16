@@ -34,11 +34,10 @@ export class LockingPurse {
         const inputsToSign = new Map<number, any>();
         if(totalIn < totalOut + (size * this.satsPerByte)) {
             const utxos = await this.blockchain.utxos(this.script.toHex(), 50);
-            let utxo;
-            let i = 0;
             while(totalIn < totalOut + (size * this.satsPerByte)) {
                 size += INPUT_SIZE;
-                const utxo = utxos[i++];
+                const utxo = utxos.pop();
+                if(!utxo) break;
                 const lockKey = `lock:${utxo.txid}_o${utxo.vout}`;
                 if (await this.redis.setnx(lockKey, Date.now())) {
                     await this.redis.expire(lockKey, 60);
