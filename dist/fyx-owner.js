@@ -64,12 +64,12 @@ class FyxOwner {
     }
     getListingBase() {
         const tx = new bsv_1.Tx();
-        tx.addOutputs(new bsv_1.Bn(546), this._batonAddress.toTxOutScript());
+        tx.addTxOut(new bsv_1.Bn(546), this._batonAddress.toTxOutScript());
         return tx.toHex();
     }
     getCancelBase() {
         const tx = new bsv_1.Tx();
-        tx.addOutputs(new bsv_1.Bn(546), this._batonAddress.toTxOutScript());
+        tx.addTxOut(new bsv_1.Bn(546), this._batonAddress.toTxOutScript());
         return tx.toHex();
     }
     signOrderLock(rawtx, lockRawTx, isCancel = false) {

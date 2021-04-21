@@ -70,13 +70,13 @@ export class FyxOwner {
 
     getListingBase(): string {
         const tx = new Tx();
-        tx.addOutputs(new Bn(546), this._batonAddress.toTxOutScript());
+        tx.addTxOut(new Bn(546), this._batonAddress.toTxOutScript());
         return tx.toHex();
     }
 
     getCancelBase() {
         const tx = new Tx();
-        tx.addOutputs(new Bn(546), this._batonAddress.toTxOutScript());
+        tx.addTxOut(new Bn(546), this._batonAddress.toTxOutScript());
         return tx.toHex();
     }
 

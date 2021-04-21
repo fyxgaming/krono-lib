@@ -26,7 +26,7 @@ export class LockingPurse {
 
         const orderUnlockVout = parents[0].script.match(orderLockRegex);
         if(orderUnlockVout) {
-            tx.addInput(tx.txIns[0].txHashBuf, 0, Script.fromString('OP_0 OP_0'), 2**32-1);
+            tx.addTxIn(tx.txIns[0].txHashBuf, 0, Script.fromString('OP_0 OP_0'), 2**32-1);
             return tx.toHex();
         };
         let size = tx.toBuffer().length;
