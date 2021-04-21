@@ -5,6 +5,7 @@
   "private": false,
   "main": "index.js",
   "scripts": {
+    "test": "echo no tests",
     "build": "tsc -p .",
     "prepare": "npm run build"
   },

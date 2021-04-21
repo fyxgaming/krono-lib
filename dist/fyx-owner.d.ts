@@ -6,12 +6,21 @@ export declare class FyxOwner {
     userId: string;
     private keyPair;
     keyPairs: Map<string, any>;
+    private _batonAddress;
+    private _batonKeyPair;
+    private _paymentAddress;
     constructor(apiUrl: string, bip32: any, fyxId: string, userId: string, keyPair: KeyPair);
+    get batonAddress(): any;
+    get paymentAddress(): any;
     nextOwner(): Promise<any>;
+    addDerivations(derivations: string[]): Promise<void>;
+    loadDerivations(): Promise<void>;
     sign(rawtx: string, parents: {
         satoshis: number;
         script: string;
     }[], locks: any[]): Promise<string>;
-    addDerivations(derivations: string[]): Promise<void>;
-    loadDerivations(): Promise<void>;
+    getListingBase(): string;
+    getPurchaseBase(payee: string, satoshis: number): any;
+    getCancelBase(): any;
+    signOrderLock(rawtx: any, lockRawTx: any, isCancel: any): void;
 }
