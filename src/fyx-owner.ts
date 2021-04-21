@@ -57,7 +57,7 @@ export class FyxOwner {
 
         await Promise.all(tx.txIns.map(async (txIn, i) => {
             const lockScript = Script.fromHex(parents[i].script)
-            const txOut = TxOut.fromProperties(new Bn(parents[i].satoshis), lockScript);            
+            const txOut = TxOut.fromProperties(new Bn(parents[i].satoshis), lockScript);
             const keyPair = this.keyPairs.get(txOut.script.toHex());
             if (!keyPair) return;
             const sig = await tx.asyncSign(keyPair, Sig.SIGHASH_ALL | Sig.SIGHASH_FORKID, i, txOut.script, txOut.valueBn);
@@ -68,15 +68,9 @@ export class FyxOwner {
         return tx.toHex();
     }
 
-    getListingBase(): string{
+    getListingBase(): string {
         const tx = new Tx();
         tx.addOutputs(new Bn(546), this._batonAddress.toTxOutScript());
-        return tx.toHex();
-    }
-
-    getPurchaseBase(payee: string, satoshis: number) {
-        const tx = new Tx();
-        tx.addOutputs(new Bn(satoshis), Address.fromString(payee).toTxOutScript());
         return tx.toHex();
     }
 
@@ -85,11 +79,11 @@ export class FyxOwner {
         tx.addOutputs(new Bn(546), this._batonAddress.toTxOutScript());
         return tx.toHex();
     }
-    
-    signOrderLock(rawtx, lockRawTx, isCancel) {
+
+    signOrderLock(rawtx, lockRawTx, isCancel = false) {
         const tx = Tx.fromHex(rawtx);
         const vout = tx.txOuts.findIndex(o => o.script.toHex().match(orderLockRegex));
-        if(vout === -1) return;
+        if (vout === -1) return;
         const lockTx = Tx.fromHex(lockRawTx);
         const preimage = tx.sighashPreimage(
             Sig.SIGHASH_FORKID | (isCancel ? Sig.SIGHASH_NONE : (Sig.SIGHASH_SINGLE | Sig.SIGHASH_ANYONECANPAY)),
@@ -100,10 +94,10 @@ export class FyxOwner {
         );
 
         let asm: string;
-        if(isCancel) {
+        if (isCancel) {
             const bw = new Bw();
             tx.txIns.forEach((txIn, i) => {
-                if(i < 2) return;
+                if (i < 2) return;
                 bw.write(txIn.txHashBuf); // outpoint (1/2)
                 bw.writeUInt32LE(txIn.txOutNum); // outpoint (2/2)  
             });
@@ -114,5 +108,7 @@ export class FyxOwner {
         }
 
         tx.txIns[2].setScript(Script.fromAsmString(asm));
+
+        return tx.toHex();
     }
 }

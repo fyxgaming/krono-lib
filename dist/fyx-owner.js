@@ -67,17 +67,12 @@ class FyxOwner {
         tx.addOutputs(new bsv_1.Bn(546), this._batonAddress.toTxOutScript());
         return tx.toHex();
     }
-    getPurchaseBase(payee, satoshis) {
-        const tx = new bsv_1.Tx();
-        tx.addOutputs(new bsv_1.Bn(satoshis), bsv_1.Address.fromString(payee).toTxOutScript());
-        return tx.toHex();
-    }
     getCancelBase() {
         const tx = new bsv_1.Tx();
         tx.addOutputs(new bsv_1.Bn(546), this._batonAddress.toTxOutScript());
         return tx.toHex();
     }
-    signOrderLock(rawtx, lockRawTx, isCancel) {
+    signOrderLock(rawtx, lockRawTx, isCancel = false) {
         const tx = bsv_1.Tx.fromHex(rawtx);
         const vout = tx.txOuts.findIndex(o => o.script.toHex().match(order_lock_regex_1.default));
         if (vout === -1)
@@ -100,6 +95,7 @@ class FyxOwner {
             asm = `${preimage.toString('hex')} 00 OP_FALSE`;
         }
         tx.txIns[2].setScript(bsv_1.Script.fromAsmString(asm));
+        return tx.toHex();
     }
 }
 exports.FyxOwner = FyxOwner;
