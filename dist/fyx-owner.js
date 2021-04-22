@@ -17,9 +17,9 @@ class FyxOwner {
         this.keyPair = keyPair;
         this.keyPairs = new Map();
         this._paymentAddress = bsv_1.Address.fromPrivKey(bip32.derive('m/0/0').privKey);
-        this._batonKeyPair = bip32.derive('m/1/0').privKey;
-        this._batonAddress = bsv_1.Address.fromPrivKey(this._batonKeyPair);
-        this.keyPairs.set(this._batonAddress.toTxOutScript().toHex(), this._batonKeyPair);
+        const batonPrivKey = bip32.derive('m/1/0').privKey;
+        this._batonAddress = bsv_1.Address.fromPrivKey(batonPrivKey);
+        this.keyPairs.set(this._batonAddress.toTxOutScript().toHex(), bsv_1.KeyPair.fromPrivKey(batonPrivKey));
     }
     get batonAddress() {
         return this._batonAddress.toString();

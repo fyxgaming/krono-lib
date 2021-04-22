@@ -6,14 +6,13 @@ import orderLockRegex from './order-lock-regex';
 export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();
     private _batonAddress: Address;
-    private _batonKeyPair: KeyPair;
     private _paymentAddress: Address;
 
     constructor(public apiUrl: string, private bip32, public fyxId: string, public userId: string, private keyPair: KeyPair) {
         this._paymentAddress = Address.fromPrivKey(bip32.derive('m/0/0').privKey);
-        this._batonKeyPair = bip32.derive('m/1/0').privKey;
-        this._batonAddress = Address.fromPrivKey(this._batonKeyPair);
-        this.keyPairs.set(this._batonAddress.toTxOutScript().toHex(), this._batonKeyPair);
+        const batonPrivKey = bip32.derive('m/1/0').privKey
+        this._batonAddress = Address.fromPrivKey(batonPrivKey);
+        this.keyPairs.set(this._batonAddress.toTxOutScript().toHex(), KeyPair.fromPrivKey(batonPrivKey));
     }
 
     get batonAddress() {
