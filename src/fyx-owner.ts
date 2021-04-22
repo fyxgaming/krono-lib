@@ -13,7 +13,7 @@ export class FyxOwner {
         this._paymentAddress = Address.fromPrivKey(bip32.derive('m/0/0').privKey);
         this._batonKeyPair = bip32.derive('m/1/0').privKey;
         this._batonAddress = Address.fromPrivKey(this._batonKeyPair);
-        this.keyPairs.set(this._batonAddress.toTxOutScript(), this._batonKeyPair);
+        this.keyPairs.set(this._batonAddress.toTxOutScript().toHex(), this._batonKeyPair);
     }
 
     get batonAddress() {
@@ -74,12 +74,6 @@ export class FyxOwner {
         return tx.toHex();
     }
 
-    getCancelBase() {
-        const tx = new Tx();
-        tx.addTxOut(new Bn(546), this._batonAddress.toTxOutScript());
-        return tx.toHex();
-    }
-
     signOrderLock(rawtx, lockRawTx, isCancel = false) {
         const tx = Tx.fromHex(rawtx);
         const vout = tx.txOuts.findIndex(o => o.script.toHex().match(orderLockRegex));
@@ -107,7 +101,7 @@ export class FyxOwner {
             asm = `${preimage.toString('hex')} 00 OP_FALSE`;
         }
 
-        tx.txIns[2].setScript(Script.fromAsmString(asm));
+        tx.txIns[vout].setScript(Script.fromAsmString(asm));
 
         return tx.toHex();
     }

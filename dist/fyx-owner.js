@@ -19,7 +19,7 @@ class FyxOwner {
         this._paymentAddress = bsv_1.Address.fromPrivKey(bip32.derive('m/0/0').privKey);
         this._batonKeyPair = bip32.derive('m/1/0').privKey;
         this._batonAddress = bsv_1.Address.fromPrivKey(this._batonKeyPair);
-        this.keyPairs.set(this._batonAddress.toTxOutScript(), this._batonKeyPair);
+        this.keyPairs.set(this._batonAddress.toTxOutScript().toHex(), this._batonKeyPair);
     }
     get batonAddress() {
         return this._batonAddress.toString();
@@ -67,11 +67,6 @@ class FyxOwner {
         tx.addTxOut(new bsv_1.Bn(546), this._batonAddress.toTxOutScript());
         return tx.toHex();
     }
-    getCancelBase() {
-        const tx = new bsv_1.Tx();
-        tx.addTxOut(new bsv_1.Bn(546), this._batonAddress.toTxOutScript());
-        return tx.toHex();
-    }
     signOrderLock(rawtx, lockRawTx, isCancel = false) {
         const tx = bsv_1.Tx.fromHex(rawtx);
         const vout = tx.txOuts.findIndex(o => o.script.toHex().match(order_lock_regex_1.default));
@@ -94,7 +89,7 @@ class FyxOwner {
         else {
             asm = `${preimage.toString('hex')} 00 OP_FALSE`;
         }
-        tx.txIns[2].setScript(bsv_1.Script.fromAsmString(asm));
+        tx.txIns[vout].setScript(bsv_1.Script.fromAsmString(asm));
         return tx.toHex();
     }
 }
