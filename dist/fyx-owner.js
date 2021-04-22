@@ -69,10 +69,10 @@ class FyxOwner {
     }
     signOrderLock(rawtx, lockRawTx, isCancel = false) {
         const tx = bsv_1.Tx.fromHex(rawtx);
-        const vout = tx.txOuts.findIndex(o => o.script.toHex().match(order_lock_regex_1.default));
+        const lockTx = bsv_1.Tx.fromHex(lockRawTx);
+        const vout = lockTx.txOuts.findIndex(o => o.script.toHex().match(order_lock_regex_1.default));
         if (vout === -1)
             return;
-        const lockTx = bsv_1.Tx.fromHex(lockRawTx);
         const preimage = tx.sighashPreimage(bsv_1.Sig.SIGHASH_FORKID | (isCancel ? bsv_1.Sig.SIGHASH_NONE : (bsv_1.Sig.SIGHASH_SINGLE | bsv_1.Sig.SIGHASH_ANYONECANPAY)), 0, lockTx.txOuts[vout].script, lockTx.txOuts[vout].valueBn, bsv_1.Tx.SCRIPT_ENABLE_SIGHASH_FORKID);
         let asm;
         if (isCancel) {
@@ -89,7 +89,7 @@ class FyxOwner {
         else {
             asm = `${preimage.toString('hex')} 00 OP_FALSE`;
         }
-        tx.txIns[vout].setScript(bsv_1.Script.fromAsmString(asm));
+        tx.txIns[0].setScript(bsv_1.Script.fromAsmString(asm));
         return tx.toHex();
     }
 }

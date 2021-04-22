@@ -75,9 +75,9 @@ export class FyxOwner {
 
     signOrderLock(rawtx, lockRawTx, isCancel = false) {
         const tx = Tx.fromHex(rawtx);
-        const vout = tx.txOuts.findIndex(o => o.script.toHex().match(orderLockRegex));
-        if (vout === -1) return;
         const lockTx = Tx.fromHex(lockRawTx);
+        const vout = lockTx.txOuts.findIndex(o => o.script.toHex().match(orderLockRegex));
+        if (vout === -1) return;
         const preimage = tx.sighashPreimage(
             Sig.SIGHASH_FORKID | (isCancel ? Sig.SIGHASH_NONE : (Sig.SIGHASH_SINGLE | Sig.SIGHASH_ANYONECANPAY)),
             0,
@@ -100,7 +100,7 @@ export class FyxOwner {
             asm = `${preimage.toString('hex')} 00 OP_FALSE`;
         }
 
-        tx.txIns[vout].setScript(Script.fromAsmString(asm));
+        tx.txIns[0].setScript(Script.fromAsmString(asm));
 
         return tx.toHex();
     }
