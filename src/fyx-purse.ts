@@ -7,7 +7,7 @@ const SIG_SIZE = 114;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
 
-export class LockingPurse {
+export class FyxPurse {
     address: string;
     private script: Script;
     constructor(
@@ -17,7 +17,7 @@ export class LockingPurse {
         public debug = true,
     ) {
         const address = Address.fromPrivKey(keyPair.privKey);
-        this.script = address.toTxOutScript();
+        this.script = address.toTxOutScript().toHex();
         this.address = address.toString();
     }
 
@@ -74,5 +74,10 @@ export class LockingPurse {
         }));
 
         return tx.toHex();
+    }
+
+    async balance() {
+        const utxos = await this.blockchain.utxos(this.script);
+        return utxos.reduce((a, u) => a + u.satoshis, 0);
     }
 }

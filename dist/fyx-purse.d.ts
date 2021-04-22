@@ -1,6 +1,6 @@
 import { KeyPair } from 'bsv';
 import { RestBlockchain } from './rest-blockchain';
-export declare class LockingPurse {
+export declare class FyxPurse {
     private keyPair;
     private blockchain;
     satsPerByte: number;
@@ -12,4 +12,5 @@ export declare class LockingPurse {
         satoshis: number;
         script: string;
     }[]): Promise<any>;
+    balance(): Promise<number>;
 }

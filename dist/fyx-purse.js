@@ -3,21 +3,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LockingPurse = void 0;
+exports.FyxPurse = void 0;
 const bsv_1 = require("bsv");
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
 const DUST_LIMIT = 273;
 const SIG_SIZE = 114;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
-class LockingPurse {
+class FyxPurse {
     constructor(keyPair, blockchain, satsPerByte = 0.5, debug = true) {
         this.keyPair = keyPair;
         this.blockchain = blockchain;
         this.satsPerByte = satsPerByte;
         this.debug = debug;
         const address = bsv_1.Address.fromPrivKey(keyPair.privKey);
-        this.script = address.toTxOutScript();
+        this.script = address.toTxOutScript().toHex();
         this.address = address.toString();
     }
     async pay(rawtx, parents) {
@@ -67,6 +67,10 @@ class LockingPurse {
         }));
         return tx.toHex();
     }
+    async balance() {
+        const utxos = await this.blockchain.utxos(this.script);
+        return utxos.reduce((a, u) => a + u.satoshis, 0);
+    }
 }
-exports.LockingPurse = LockingPurse;
+exports.FyxPurse = FyxPurse;
 //# sourceMappingURL=fyx-purse.js.map
