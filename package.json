@@ -15,7 +15,7 @@
   "dependencies": {
     "argon2-browser": "^1.15.3",
     "axios": "^0.21.1",
-    "bsv": "github:kronoverse-inc/bsv",
+    "bsv": "^2.0.7",
     "events": "^3.2.0",
     "http-errors": "^1.8.0",
     "isomorphic-fetch": "^3.0.0",
