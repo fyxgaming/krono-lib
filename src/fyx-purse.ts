@@ -17,7 +17,7 @@ export class FyxPurse {
         public debug = true,
     ) {
         const address = Address.fromPrivKey(keyPair.privKey);
-        this.script = address.toTxOutScript().toHex();
+        this.script = address.toTxOutScript();
         this.address = address.toString();
     }
 
@@ -77,7 +77,7 @@ export class FyxPurse {
     }
 
     async balance() {
-        const utxos = await this.blockchain.utxos(this.script);
+        const utxos = await this.blockchain.utxos(this.script.toHex());
         return utxos.reduce((a, u) => a + u.satoshis, 0);
     }
 }
