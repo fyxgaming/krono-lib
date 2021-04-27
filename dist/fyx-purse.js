@@ -14,7 +14,15 @@ class FyxPurse extends run_sdk_1.default.plugins.LocalPurse {
         const orderUnlockVout = (_a = parents[0]) === null || _a === void 0 ? void 0 : _a.script.match(order_lock_regex_1.default);
         if (orderUnlockVout) {
             tx.addTxIn(tx.txIns[0].txHashBuf, 0, bsv_1.Script.fromString('OP_0 OP_0'), 2 ** 32 - 1);
-            return tx.toHex();
+            const txid = Buffer.from(tx.txIns[0].txHashBuf).reverse().toString('hex');
+            const lockRawTx = await this.blockchain.fetch(txid);
+            const lockTx = bsv_1.Tx.fromString(lockRawTx);
+            rawtx = tx.toHex();
+            parents.push({
+                script: lockTx.txOuts[0].script.toHex(),
+                satoshis: lockTx.txOuts[0].valueBn.toNumber()
+            });
+            // return tx.toHex();
         }
         ;
         return super.pay(rawtx, parents);
