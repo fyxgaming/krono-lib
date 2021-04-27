@@ -19,5 +19,9 @@ export declare class FyxOwner {
         script: string;
     }[], locks: any[]): Promise<string>;
     getListingBase(): string;
+    getPurchaseBase({ address, satoshis }: {
+        address: any;
+        satoshis: any;
+    }): string;
     signOrderLock(rawtx: any, lockRawTx: any, isCancel?: boolean): any;
 }

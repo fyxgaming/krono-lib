@@ -74,6 +74,12 @@ export class FyxOwner {
         return tx.toHex();
     }
 
+    getPurchaseBase({address, satoshis}): string {
+        const tx = new Tx();
+        tx.addTxOut(new Bn(satoshis), Address.fromString(address));
+        return tx.toHex();
+    }
+
     signOrderLock(rawtx, lockRawTx, isCancel = false) {
         const tx = Tx.fromHex(rawtx);
         const lockTx = Tx.fromHex(lockRawTx);

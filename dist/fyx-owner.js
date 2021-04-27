@@ -68,6 +68,11 @@ class FyxOwner {
         tx.addTxOut(new bsv_1.Bn(546), this._batonAddress.toTxOutScript());
         return tx.toHex();
     }
+    getPurchaseBase({ address, satoshis }) {
+        const tx = new bsv_1.Tx();
+        tx.addTxOut(new bsv_1.Bn(satoshis), bsv_1.Address.fromString(address));
+        return tx.toHex();
+    }
     signOrderLock(rawtx, lockRawTx, isCancel = false) {
         const tx = bsv_1.Tx.fromHex(rawtx);
         const lockTx = bsv_1.Tx.fromHex(lockRawTx);
