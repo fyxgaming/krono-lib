@@ -70,7 +70,7 @@ class FyxOwner {
     }
     getPurchaseBase({ address, satoshis }) {
         const tx = new bsv_1.Tx();
-        tx.addTxOut(new bsv_1.Bn(satoshis), bsv_1.Address.fromString(address));
+        tx.addTxOut(new bsv_1.Bn(satoshis), bsv_1.Address.fromString(address).toTxOutScript());
         return tx.toHex();
     }
     signOrderLock(rawtx, lockRawTx, isCancel = false) {

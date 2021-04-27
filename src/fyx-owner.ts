@@ -76,7 +76,7 @@ export class FyxOwner {
 
     getPurchaseBase({address, satoshis}): string {
         const tx = new Tx();
-        tx.addTxOut(new Bn(satoshis), Address.fromString(address));
+        tx.addTxOut(new Bn(satoshis), Address.fromString(address).toTxOutScript());
         return tx.toHex();
     }
 
