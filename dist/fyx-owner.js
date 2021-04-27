@@ -50,6 +50,7 @@ class FyxOwner {
     }
     async sign(rawtx, parents, locks) {
         const tx = bsv_1.Tx.fromHex(rawtx);
+        await this.loadDerivations();
         await Promise.all(tx.txIns.map(async (txIn, i) => {
             const lockScript = bsv_1.Script.fromHex(parents[i].script);
             const txOut = bsv_1.TxOut.fromProperties(new bsv_1.Bn(parents[i].satoshis), lockScript);

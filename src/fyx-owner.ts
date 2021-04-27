@@ -53,6 +53,7 @@ export class FyxOwner {
 
     async sign(rawtx: string, parents: { satoshis: number, script: string }[], locks: any[]): Promise<string> {
         const tx = Tx.fromHex(rawtx);
+        await this.loadDerivations();
 
         await Promise.all(tx.txIns.map(async (txIn, i) => {
             const lockScript = Script.fromHex(parents[i].script)
