@@ -9,8 +9,9 @@ const run_sdk_1 = __importDefault(require("run-sdk"));
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
 class FyxPurse extends run_sdk_1.default.plugins.LocalPurse {
     async pay(rawtx, parents) {
+        var _a;
         const tx = bsv_1.Tx.fromHex(rawtx);
-        const orderUnlockVout = parents[0].script.match(order_lock_regex_1.default);
+        const orderUnlockVout = (_a = parents[0]) === null || _a === void 0 ? void 0 : _a.script.match(order_lock_regex_1.default);
         if (orderUnlockVout) {
             tx.addTxIn(tx.txIns[0].txHashBuf, 0, bsv_1.Script.fromString('OP_0 OP_0'), 2 ** 32 - 1);
             return tx.toHex();
