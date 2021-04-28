@@ -87,7 +87,12 @@ class RestBlockchain {
         if (this.debug)
             console.log('UTXOS:', script);
         const { data } = await fyx_axios_1.default(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
-        return data;
+        return data.map(u => ({
+            txid: u.txid,
+            vout: u.vout,
+            script: u.script,
+            satoshis: u.satoshis
+        }));
     }
     ;
     async loadJigData(loc, unspent = false) {
