@@ -11,10 +11,10 @@ class FyxPurse extends run_sdk_1.default.plugins.LocalPurse {
     async pay(rawtx, parents) {
         var _a;
         const tx = bsv_1.Tx.fromHex(rawtx);
-        tx.txIns[0].setScript(bsv_1.Script.fromHex(order_lock_regex_1.default.toString().slice(1, -1)));
+        tx.txIns[0].setScript(bsv_1.Script.fromBuffer(Buffer.from(new Array(1568).fill(0))));
         const orderUnlockVout = (_a = parents[0]) === null || _a === void 0 ? void 0 : _a.script.match(order_lock_regex_1.default);
         if (orderUnlockVout) {
-            tx.addTxIn(tx.txIns[0].txHashBuf, 0, bsv_1.Script.fromString('OP_0 OP_0'), 2 ** 32 - 1);
+            tx.addTxIn(tx.txIns[0].txHashBuf, 0, bsv_1.Script.fromBuffer(Buffer.from(new Array(25).fill(0))), 2 ** 32 - 1);
             if (tx.txOuts[0].script.isSafeDataOut())
                 return tx.toHex();
             const txid = Buffer.from(tx.txIns[0].txHashBuf).reverse().toString('hex');
