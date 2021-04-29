@@ -23,5 +23,5 @@ export declare class FyxOwner {
         address: any;
         satoshis: any;
     }): string;
-    signOrderLock(rawtx: any, lockRawTx: any, isCancel?: boolean): any;
+    signOrderLock(tx: any, script: any, valueBn: any): any;
 }

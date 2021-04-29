@@ -53,6 +53,10 @@ class FyxOwner {
         await this.loadDerivations();
         await Promise.all(tx.txIns.map(async (txIn, i) => {
             const lockScript = bsv_1.Script.fromHex(parents[i].script);
+            if (!i && parents[0].script.match(order_lock_regex_1.default)) {
+                const script = this.signOrderLock(tx, lockScript, new bsv_1.Bn(parents[i].satoshis));
+                txIn.setScript(script);
+            }
             const txOut = bsv_1.TxOut.fromProperties(new bsv_1.Bn(parents[i].satoshis), lockScript);
             const keyPair = this.keyPairs.get(txOut.script.toHex());
             if (!keyPair)
@@ -73,13 +77,13 @@ class FyxOwner {
         tx.addTxOut(new bsv_1.Bn(satoshis), bsv_1.Address.fromString(address).toTxOutScript());
         return tx.toHex();
     }
-    signOrderLock(rawtx, lockRawTx, isCancel = false) {
-        const tx = bsv_1.Tx.fromHex(rawtx);
-        const lockTx = bsv_1.Tx.fromHex(lockRawTx);
-        const vout = lockTx.txOuts.findIndex(o => o.script.toHex().match(order_lock_regex_1.default));
-        if (vout === -1)
-            return;
-        const preimage = tx.sighashPreimage(bsv_1.Sig.SIGHASH_FORKID | (isCancel ? bsv_1.Sig.SIGHASH_NONE : (bsv_1.Sig.SIGHASH_SINGLE | bsv_1.Sig.SIGHASH_ANYONECANPAY)), 0, lockTx.txOuts[vout].script, lockTx.txOuts[vout].valueBn, bsv_1.Tx.SCRIPT_ENABLE_SIGHASH_FORKID);
+    signOrderLock(tx, script, valueBn) {
+        // const tx = Tx.fromHex(rawtx);
+        // const lockTx = Tx.fromHex(lockRawTx);
+        // const vout = lockTx.txOuts.findIndex(o => o.script.toHex().match(orderLockRegex));
+        // if (vout === -1) return;
+        const isCancel = tx.txOuts[0].script.isSafeDataOut();
+        const preimage = tx.sighashPreimage(bsv_1.Sig.SIGHASH_FORKID | (isCancel ? bsv_1.Sig.SIGHASH_NONE : (bsv_1.Sig.SIGHASH_SINGLE | bsv_1.Sig.SIGHASH_ANYONECANPAY)), 0, script, valueBn, bsv_1.Tx.SCRIPT_ENABLE_SIGHASH_FORKID);
         let asm;
         if (isCancel) {
             const bw = new bsv_1.Bw();
@@ -95,8 +99,9 @@ class FyxOwner {
         else {
             asm = `${preimage.toString('hex')} 00 OP_FALSE`;
         }
-        tx.txIns[0].setScript(bsv_1.Script.fromAsmString(asm));
-        return tx.toHex();
+        return bsv_1.Script.fromAsmString(asm);
+        // tx.txIns[0].setScript(Script.fromAsmString(asm));
+        // return tx.toHex();
     }
 }
 exports.FyxOwner = FyxOwner;

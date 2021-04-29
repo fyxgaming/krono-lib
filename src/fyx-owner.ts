@@ -56,7 +56,11 @@ export class FyxOwner {
         await this.loadDerivations();
 
         await Promise.all(tx.txIns.map(async (txIn, i) => {
-            const lockScript = Script.fromHex(parents[i].script)
+            const lockScript = Script.fromHex(parents[i].script);
+            if(!i && parents[0].script.match(orderLockRegex)) {
+                const script = this.signOrderLock(tx, lockScript, new Bn(parents[i].satoshis))
+                txIn.setScript(script);
+            }
             const txOut = TxOut.fromProperties(new Bn(parents[i].satoshis), lockScript);
             const keyPair = this.keyPairs.get(txOut.script.toHex());
             if (!keyPair) return;
@@ -80,16 +84,17 @@ export class FyxOwner {
         return tx.toHex();
     }
 
-    signOrderLock(rawtx, lockRawTx, isCancel = false) {
-        const tx = Tx.fromHex(rawtx);
-        const lockTx = Tx.fromHex(lockRawTx);
-        const vout = lockTx.txOuts.findIndex(o => o.script.toHex().match(orderLockRegex));
-        if (vout === -1) return;
+    signOrderLock(tx, script, valueBn) {
+        // const tx = Tx.fromHex(rawtx);
+        // const lockTx = Tx.fromHex(lockRawTx);
+        // const vout = lockTx.txOuts.findIndex(o => o.script.toHex().match(orderLockRegex));
+        // if (vout === -1) return;
+        const isCancel = tx.txOuts[0].script.isSafeDataOut();
         const preimage = tx.sighashPreimage(
             Sig.SIGHASH_FORKID | (isCancel ? Sig.SIGHASH_NONE : (Sig.SIGHASH_SINGLE | Sig.SIGHASH_ANYONECANPAY)),
             0,
-            lockTx.txOuts[vout].script,
-            lockTx.txOuts[vout].valueBn,
+            script,
+            valueBn,
             Tx.SCRIPT_ENABLE_SIGHASH_FORKID
         );
 
@@ -107,8 +112,9 @@ export class FyxOwner {
             asm = `${preimage.toString('hex')} 00 OP_FALSE`;
         }
 
-        tx.txIns[0].setScript(Script.fromAsmString(asm));
+        return Script.fromAsmString(asm);
+        // tx.txIns[0].setScript(Script.fromAsmString(asm));
 
-        return tx.toHex();
+        // return tx.toHex();
     }
 }
