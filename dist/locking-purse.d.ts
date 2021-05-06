@@ -1,9 +1,9 @@
 import { KeyPair } from 'bsv';
 import { RestBlockchain } from './rest-blockchain';
 export declare class LockingPurse {
-    protected keyPair: KeyPair;
-    protected blockchain: RestBlockchain;
-    protected redis: any;
+    keyPair: KeyPair;
+    blockchain: RestBlockchain;
+    redis: any;
     satsPerByte: number;
     address: string;
     private script;
@@ -12,4 +12,5 @@ export declare class LockingPurse {
         satoshis: number;
         script: string;
     }[]): Promise<any>;
+    utxos(): Promise<import("./interfaces").IUTXO[]>;
 }

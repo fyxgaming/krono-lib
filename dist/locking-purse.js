@@ -63,6 +63,9 @@ class LockingPurse {
         }));
         return tx.toHex();
     }
+    async utxos() {
+        return this.blockchain.utxos(this.script.toHex());
+    }
 }
 exports.LockingPurse = LockingPurse;
 //# sourceMappingURL=locking-purse.js.map

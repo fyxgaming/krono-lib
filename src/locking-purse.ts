@@ -10,9 +10,9 @@ export class LockingPurse {
     address: string;
     private script: Script;
     constructor(
-        protected keyPair: KeyPair, 
-        protected blockchain: RestBlockchain, 
-        protected redis: any, 
+        public keyPair: KeyPair, 
+        public blockchain: RestBlockchain, 
+        public redis: any, 
         public satsPerByte = 0.5
     ) {
         const address = Address.fromPrivKey(keyPair.privKey);
@@ -73,5 +73,9 @@ export class LockingPurse {
         }));
 
         return tx.toHex();
+    }
+
+    async utxos() {
+        return this.blockchain.utxos(this.script.toHex());
     }
 }
