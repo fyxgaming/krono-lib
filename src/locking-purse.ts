@@ -1,5 +1,4 @@
 import { Address, Bn, KeyPair, Script, Sig, Tx, TxIn } from 'bsv';
-import { IUTXO } from './interfaces';
 import { RestBlockchain } from './rest-blockchain';
 
 const DUST_LIMIT = 273;
