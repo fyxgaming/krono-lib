@@ -12,5 +12,6 @@ export declare class LockingPurse {
         satoshis: number;
         script: string;
     }[]): Promise<any>;
-    utxos(): Promise<import("./interfaces").IUTXO[]>;
+    utxos(): Promise<any>;
+    balance(): Promise<number>;
 }

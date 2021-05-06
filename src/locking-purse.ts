@@ -1,4 +1,5 @@
 import { Address, Bn, KeyPair, Script, Sig, Tx, TxIn } from 'bsv';
+import { IUTXO } from './interfaces';
 import { RestBlockchain } from './rest-blockchain';
 
 const DUST_LIMIT = 273;
@@ -75,7 +76,12 @@ export class LockingPurse {
         return tx.toHex();
     }
 
-    async utxos() {
+    async utxos(): Promise<any> {
         return this.blockchain.utxos(this.script.toHex());
+    }
+
+    async balance(): Promise<number> {
+        const utxos = await this.utxos();
+        return utxos.reduce((acc, u) => acc + u.satoshis, 0)
     }
 }

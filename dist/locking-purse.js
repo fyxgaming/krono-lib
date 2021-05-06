@@ -66,6 +66,10 @@ class LockingPurse {
     async utxos() {
         return this.blockchain.utxos(this.script.toHex());
     }
+    async balance() {
+        const utxos = await this.utxos();
+        return utxos.reduce((acc, u) => acc + u.satoshis, 0);
+    }
 }
 exports.LockingPurse = LockingPurse;
 //# sourceMappingURL=locking-purse.js.map
