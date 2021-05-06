@@ -10,9 +10,9 @@ export class LockingPurse {
     address: string;
     private script: Script;
     constructor(
-        private keyPair: KeyPair, 
-        private blockchain: RestBlockchain, 
-        private redis: any, 
+        protected keyPair: KeyPair, 
+        protected blockchain: RestBlockchain, 
+        protected redis: any, 
         public satsPerByte = 0.5
     ) {
         const address = Address.fromPrivKey(keyPair.privKey);

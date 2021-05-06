@@ -5,9 +5,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FyxPurse = void 0;
 const bsv_1 = require("bsv");
-const run_sdk_1 = __importDefault(require("run-sdk"));
+// import Run from 'run-sdk'
+const locking_purse_1 = require("./locking-purse");
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
-class FyxPurse extends run_sdk_1.default.plugins.LocalPurse {
+// export class FyxPurse extends Run.plugins.LocalPurse {
+class FyxPurse extends locking_purse_1.LockingPurse {
+    constructor(keyPair, blockchain, satsPerByte = 0.5) {
+        super(keyPair, blockchain, {
+            setnx(key, value) {
+                if (this.locks.has(key))
+                    return 0;
+                this.locks.set(key, value);
+                return 1;
+            },
+            expire(key, seconds) {
+                setTimeout(() => this.locks.delete(key), seconds * 1000);
+            }
+        }, satsPerByte);
+        this.locks = new Map();
+    }
     async pay(rawtx, parents) {
         var _a;
         const tx = bsv_1.Tx.fromHex(rawtx);
