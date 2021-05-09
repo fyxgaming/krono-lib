@@ -105,6 +105,11 @@ export class RestBlockchain {
         return data;
     }
 
+    async balance(script, scriptType = 'address'): Promise<number> {
+        const {data: {balance}} = await axios(`${this.apiUrl}/balance/${scriptType}/${script}`)
+        return balance;
+    }
+
     async sendMessage(message: SignedMessage, postTo?: string): Promise<any> {
         const url = postTo || `${this.apiUrl}/messages`;
         console.log('Post TO:', url);

@@ -80,7 +80,6 @@ export class LockingPurse {
     }
 
     async balance(): Promise<number> {
-        const utxos = await this.utxos();
-        return utxos.reduce((acc, u) => acc + u.satoshis, 0)
+        return this.blockchain.balance(this.address);
     }
 }

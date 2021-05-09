@@ -107,6 +107,10 @@ class RestBlockchain {
         const { data } = await fyx_axios_1.default(`${this.apiUrl}/fund/${address}${satoshis ? `?satoshis=${satoshis}` : ''}`);
         return data;
     }
+    async balance(script, scriptType = 'address') {
+        const { data: { balance } } = await fyx_axios_1.default(`${this.apiUrl}/balance/${scriptType}/${script}`);
+        return balance;
+    }
     async sendMessage(message, postTo) {
         const url = postTo || `${this.apiUrl}/messages`;
         console.log('Post TO:', url);
