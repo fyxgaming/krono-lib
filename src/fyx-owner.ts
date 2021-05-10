@@ -7,12 +7,14 @@ export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();
     private _batonAddress: Address;
     private _paymentAddress: Address;
+    public pubkey: string;
 
     constructor(public apiUrl: string, private bip32, public fyxId: string, public userId: string, private keyPair: KeyPair) {
         this._paymentAddress = Address.fromPrivKey(bip32.derive('m/0/0').privKey);
         const batonPrivKey = bip32.derive('m/1/0').privKey
         this._batonAddress = Address.fromPrivKey(batonPrivKey);
         this.keyPairs.set(this._batonAddress.toTxOutScript().toHex(), KeyPair.fromPrivKey(batonPrivKey));
+        this.pubkey = keyPair.pubKey.toString();
     }
 
     get batonAddress() {
