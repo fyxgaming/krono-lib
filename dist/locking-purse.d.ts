@@ -4,14 +4,19 @@ export declare class LockingPurse {
     keyPair: KeyPair;
     blockchain: RestBlockchain;
     redis: any;
+    changeKeyPair?: KeyPair;
+    changeThreashold: number;
     satsPerByte: number;
     address: string;
     private script;
-    constructor(keyPair: KeyPair, blockchain: RestBlockchain, redis: any, satsPerByte?: number);
+    changeAddress?: string;
+    private changeScript?;
+    constructor(keyPair: KeyPair, blockchain: RestBlockchain, redis: any, changeKeyPair?: KeyPair, changeThreashold?: number, satsPerByte?: number);
     pay(rawtx: string, parents: {
         satoshis: number;
         script: string;
     }[]): Promise<any>;
     utxos(): Promise<any>;
+    changeUtxos(): Promise<any>;
     balance(): Promise<number>;
 }

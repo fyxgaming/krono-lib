@@ -7,14 +7,21 @@ const SIG_SIZE = 114;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
 class LockingPurse {
-    constructor(keyPair, blockchain, redis, satsPerByte = 0.5) {
+    constructor(keyPair, blockchain, redis, changeKeyPair, changeThreashold = 10000, satsPerByte = 0.5) {
         this.keyPair = keyPair;
         this.blockchain = blockchain;
         this.redis = redis;
+        this.changeKeyPair = changeKeyPair;
+        this.changeThreashold = changeThreashold;
         this.satsPerByte = satsPerByte;
         const address = bsv_1.Address.fromPrivKey(keyPair.privKey);
         this.script = address.toTxOutScript();
         this.address = address.toString();
+        if (changeKeyPair) {
+            const changeAddress = bsv_1.Address.fromPrivKey(changeKeyPair.privKey);
+            this.changeAddress = changeAddress.toString();
+            this.changeScript = changeAddress.toTxOutScript();
+        }
     }
     async pay(rawtx, parents) {
         const tx = bsv_1.Tx.fromHex(rawtx);
@@ -52,7 +59,10 @@ class LockingPurse {
         }
         const change = totalIn - totalOut - ((size + OUTPUT_SIZE) * this.satsPerByte);
         if (change > DUST_LIMIT) {
-            tx.addTxOut(new bsv_1.Bn(change), this.script);
+            const script = this.changeScript && change < this.changeThreashold ?
+                this.changeScript :
+                this.script;
+            tx.addTxOut(new bsv_1.Bn(change), script);
         }
         await Promise.all([...inputsToSign.entries()].map(async ([vin, utxo]) => {
             const sig = await tx.asyncSign(this.keyPair, bsv_1.Sig.SIGHASH_ALL | bsv_1.Sig.SIGHASH_FORKID, vin, bsv_1.Script.fromString(utxo.script), new bsv_1.Bn(utxo.satoshis));
@@ -66,8 +76,15 @@ class LockingPurse {
     async utxos() {
         return this.blockchain.utxos(this.script.toHex());
     }
+    async changeUtxos() {
+        if (!this.changeScript)
+            return [];
+        return this.blockchain.utxos(this.changeScript.toHex());
+    }
     async balance() {
-        return this.blockchain.balance(this.address);
+        const balance = (await this.blockchain.balance(this.address)) +
+            (this.changeAddress ? await this.blockchain.balance(this.changeAddress) : 0);
+        return balance;
     }
 }
 exports.LockingPurse = LockingPurse;

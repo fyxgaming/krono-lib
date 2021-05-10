@@ -9,15 +9,24 @@ const OUTPUT_SIZE = 34;
 export class LockingPurse {
     address: string;
     private script: Script;
+    changeAddress?: string;
+    private changeScript?: Script;
     constructor(
         public keyPair: KeyPair, 
         public blockchain: RestBlockchain, 
-        public redis: any, 
+        public redis: any,
+        public changeKeyPair?: KeyPair,
+        public changeThreashold = 10000,
         public satsPerByte = 0.5
     ) {
         const address = Address.fromPrivKey(keyPair.privKey);
         this.script = address.toTxOutScript();
         this.address = address.toString();
+        if(changeKeyPair) {
+            const changeAddress = Address.fromPrivKey(changeKeyPair.privKey);
+            this.changeAddress = changeAddress.toString();
+            this.changeScript = changeAddress.toTxOutScript();
+        }
     }
 
     async pay (rawtx: string, parents: { satoshis: number, script: string }[]) {
@@ -61,7 +70,11 @@ export class LockingPurse {
         
         const change = totalIn - totalOut - ((size + OUTPUT_SIZE) * this.satsPerByte);
         if(change > DUST_LIMIT) {
-            tx.addTxOut(new Bn(change), this.script);
+            const script =  this.changeScript && change < this.changeThreashold ?
+                this.changeScript :
+                this.script;
+
+            tx.addTxOut(new Bn(change), script);
         }
         
         await Promise.all([...inputsToSign.entries()].map(async ([vin, utxo]) => {
@@ -79,7 +92,14 @@ export class LockingPurse {
         return this.blockchain.utxos(this.script.toHex());
     }
 
+    async changeUtxos(): Promise<any> {
+        if(!this.changeScript) return [];
+        return this.blockchain.utxos(this.changeScript.toHex());
+    }
+
     async balance(): Promise<number> {
-        return this.blockchain.balance(this.address);
+        const balance = (await this.blockchain.balance(this.address)) +
+            (this.changeAddress ? await this.blockchain.balance(this.changeAddress) : 0)
+        return balance;
     }
 }
