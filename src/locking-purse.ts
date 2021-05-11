@@ -1,5 +1,6 @@
 import { Address, Bn, KeyPair, Script, Sig, Tx, TxIn } from 'bsv';
 import { RestBlockchain } from './rest-blockchain';
+import { Buffer } from 'buffer';
 
 const DUST_LIMIT = 273;
 const SIG_SIZE = 114;

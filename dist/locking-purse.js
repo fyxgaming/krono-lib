@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LockingPurse = void 0;
 const bsv_1 = require("bsv");
+const buffer_1 = require("buffer");
 const DUST_LIMIT = 273;
 const SIG_SIZE = 114;
 const INPUT_SIZE = 148;
@@ -46,7 +47,7 @@ class LockingPurse {
                     await this.redis.expire(lockKey, 60);
                     console.log('UTXO Selected:', lockKey, utxo);
                     inputsToSign.set(tx.txIns.length, utxo);
-                    tx.addTxIn(Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, bsv_1.Script.fromString('OP_0 OP_0'), bsv_1.TxIn.SEQUENCE_FINAL);
+                    tx.addTxIn(buffer_1.Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, bsv_1.Script.fromString('OP_0 OP_0'), bsv_1.TxIn.SEQUENCE_FINAL);
                     totalIn += utxo.satoshis;
                     size += INPUT_SIZE;
                 }
