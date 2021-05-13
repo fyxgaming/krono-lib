@@ -8,6 +8,7 @@ export declare class FyxOwner {
     keyPairs: Map<string, any>;
     private _batonAddress;
     private _paymentAddress;
+    pubkey: string;
     constructor(apiUrl: string, bip32: any, fyxId: string, userId: string, keyPair: KeyPair);
     get batonAddress(): any;
     get paymentAddress(): any;

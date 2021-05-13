@@ -19,7 +19,6 @@ export class UtxoLock {
 
 }
 export class FyxPurse extends LockingPurse {
-    
     constructor(
         keyPair: KeyPair, 
         blockchain: RestBlockchain, 

@@ -20,6 +20,7 @@ class FyxOwner {
         const batonPrivKey = bip32.derive('m/1/0').privKey;
         this._batonAddress = bsv_1.Address.fromPrivKey(batonPrivKey);
         this.keyPairs.set(this._batonAddress.toTxOutScript().toHex(), bsv_1.KeyPair.fromPrivKey(batonPrivKey));
+        this.pubkey = keyPair.pubKey.toString();
     }
     get batonAddress() {
         return this._batonAddress.toString();
