@@ -19,4 +19,5 @@ export declare class LockingPurse {
     utxos(): Promise<any>;
     changeUtxos(): Promise<any>;
     balance(): Promise<number>;
+    rebalance(txOutValueTarget?: number): Promise<boolean>;
 }

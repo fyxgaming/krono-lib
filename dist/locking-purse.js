@@ -87,6 +87,55 @@ class LockingPurse {
             (this.changeAddress ? await this.blockchain.balance(this.changeAddress) : 0);
         return balance;
     }
+    async rebalance(txOutValueTarget = 100000) {
+        const SATS_PER_BYTE = this.satsPerByte;
+        const tx = new bsv_1.Tx();
+        let utxos = await this.changeUtxos();
+        if (utxos.length < 1) {
+            console.log(`Unable to rebalance if there are no utxos.`);
+            return false;
+        }
+        const totalIn = utxos.reduce((acc, utxo) => acc += utxo.satoshis, 0);
+        let txOutCountEstimate = Math.floor(totalIn / txOutValueTarget);
+        if (txOutCountEstimate < 2) {
+            console.log(`Unable to rebalance a low amount of value. Current value: ${totalIn}`);
+            return false;
+        }
+        let totalInSizeEst = utxos.length * (SIG_SIZE + INPUT_SIZE) * SATS_PER_BYTE;
+        let totalSizeEst = totalInSizeEst + txOutCountEstimate * txOutValueTarget + txOutCountEstimate * OUTPUT_SIZE * SATS_PER_BYTE;
+        while (totalSizeEst > totalIn) { // Reduce number of outputs to make sure there is enough change
+            txOutCountEstimate--;
+            totalSizeEst = totalInSizeEst + txOutCountEstimate * txOutValueTarget + txOutCountEstimate * OUTPUT_SIZE * SATS_PER_BYTE;
+        }
+        // ADD txIns from changeAddress UTXOs
+        const inputsToSign = utxos.reduce((acc, utxo) => {
+            acc.set(tx.txIns.length, utxo);
+            tx.addTxIn(buffer_1.Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, bsv_1.Script.fromString('OP_0 OP_0'), bsv_1.TxIn.SEQUENCE_FINAL);
+            return acc;
+        }, new Map());
+        // ADD txOuts BASED ON CALCULATED TARGETS
+        while (tx.txOuts.length < txOutCountEstimate) {
+            tx.addTxOut(new bsv_1.Bn(txOutValueTarget), this.script);
+        }
+        // ADD CHANGE
+        const change = totalIn - totalSizeEst;
+        if (change > DUST_LIMIT) {
+            const script = this.changeScript && change < this.changeThreashold ?
+                this.changeScript :
+                this.script;
+            tx.addTxOut(new bsv_1.Bn(change), script);
+        }
+        // SIGN INPUTS
+        await Promise.all([...inputsToSign.entries()].map(async ([vin, utxo]) => {
+            const sig = await tx.asyncSign(this.changeKeyPair, bsv_1.Sig.SIGHASH_ALL | bsv_1.Sig.SIGHASH_FORKID, vin, bsv_1.Script.fromString(utxo.script), new bsv_1.Bn(utxo.satoshis));
+            const sigScript = new bsv_1.Script()
+                .writeBuffer(sig.toTxFormat())
+                .writeBuffer(this.changeKeyPair.pubKey.toBuffer());
+            tx.txIns[vin].setScript(sigScript);
+        }));
+        await this.blockchain.broadcast(tx.toHex());
+        return true;
+    }
 }
 exports.LockingPurse = LockingPurse;
 //# sourceMappingURL=locking-purse.js.map
