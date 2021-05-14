@@ -8,14 +8,14 @@ const axios_1 = __importDefault(require("axios"));
 const bsv_1 = require("bsv");
 const signed_message_1 = require("./signed-message");
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
-const { FEE_ADDRESS } = process.env;
 class FyxOwner {
-    constructor(apiUrl, bip32, fyxId, userId, keyPair) {
+    constructor(apiUrl, bip32, fyxId, userId, keyPair, feeAddress) {
         this.apiUrl = apiUrl;
         this.bip32 = bip32;
         this.fyxId = fyxId;
         this.userId = userId;
         this.keyPair = keyPair;
+        this.feeAddress = feeAddress;
         this.keyPairs = new Map();
         this._paymentAddress = bsv_1.Address.fromPrivKey(bip32.derive('m/0/0').privKey);
         const batonPrivKey = bip32.derive('m/1/0').privKey;
@@ -77,7 +77,7 @@ class FyxOwner {
     getPurchaseBase({ address, satoshis }) {
         const tx = new bsv_1.Tx();
         tx.addTxOut(new bsv_1.Bn(satoshis), bsv_1.Address.fromString(address).toTxOutScript());
-        tx.addTxOut(new bsv_1.Bn(Math.floor(satoshis * 0.025)), bsv_1.Address.fromString(FEE_ADDRESS).toTxOutScript());
+        tx.addTxOut(new bsv_1.Bn(Math.floor(satoshis * 0.025)), bsv_1.Address.fromString(this.feeAddress).toTxOutScript());
         return tx.toHex();
     }
     signOrderLock(tx, script, valueBn) {
