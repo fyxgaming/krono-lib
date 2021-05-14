@@ -50,7 +50,7 @@ export class LockingPurse {
                 if(!utxo) break;
                 const lockKey = `lock:${utxo.txid}_o${utxo.vout}`;
                 if (await this.redis.setnx(lockKey, Date.now())) {
-                    await this.redis.expire(lockKey, 60);
+                    await this.redis.expire(lockKey, 120);
                     console.log('UTXO Selected:', lockKey, utxo);
                     inputsToSign.set(tx.txIns.length, utxo);
                     tx.addTxIn(
