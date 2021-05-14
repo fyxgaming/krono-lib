@@ -3,6 +3,7 @@ import { Address, Bn, Bw, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
 import { SignedMessage } from './signed-message';
 import orderLockRegex from './order-lock-regex';
 
+const { FEE_ADDRESS } = process.env;
 export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();
     private _batonAddress: Address;
@@ -83,6 +84,7 @@ export class FyxOwner {
     getPurchaseBase({address, satoshis}): string {
         const tx = new Tx();
         tx.addTxOut(new Bn(satoshis), Address.fromString(address).toTxOutScript());
+        tx.addTxOut(new Bn(Math.floor(satoshis * 0.025)), Address.fromString(FEE_ADDRESS).toTxOutScript());
         return tx.toHex();
     }
 
