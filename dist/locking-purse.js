@@ -30,7 +30,8 @@ class LockingPurse {
         let totalOut = tx.txOuts.reduce((a, { valueBn }) => a + valueBn.toNumber(), 0);
         const inputsToSign = new Map();
         const utxos = await this.blockchain.utxos(this.script.toHex());
-        let splits = Math.max(this.splits - utxos.length, 1);
+        const utxoCount = utxos.length;
+        let inputsAdded = 0;
         if (totalIn < totalOut + (size * this.satsPerByte)) {
             while (totalIn < totalOut + (size * this.satsPerByte)) {
                 size += INPUT_SIZE;
@@ -43,7 +44,7 @@ class LockingPurse {
                     console.log('UTXO Selected:', lockKey, utxo);
                     inputsToSign.set(tx.txIns.length, utxo);
                     tx.addTxIn(buffer_1.Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, bsv_1.Script.fromString('OP_0 OP_0'), bsv_1.TxIn.SEQUENCE_FINAL);
-                    splits++;
+                    inputsAdded++;
                     totalIn += utxo.satoshis;
                     size += INPUT_SIZE;
                 }
@@ -54,12 +55,21 @@ class LockingPurse {
             if (totalIn < totalOut + (size * this.satsPerByte))
                 throw new Error(`Inadequate UTXOs for purse: ${this.address}`);
         }
-        const change = totalIn - totalOut - (size * this.satsPerByte) - (splits * OUTPUT_SIZE * this.satsPerByte);
-        if (change > DUST_LIMIT) {
-            for (let i = 0; i < splits; i++) {
-                tx.addTxOut(new bsv_1.Bn(Math.floor(change / splits)), this.script);
+        console.log('UTXOS:', utxoCount);
+        let changeOutputs = Math.max(this.splits - utxoCount + inputsAdded, 1);
+        console.log('Change Outputs:', changeOutputs);
+        const change = totalIn - totalOut - (size * this.satsPerByte);
+        while (changeOutputs > 0) {
+            const outputValue = Math.floor((change / changeOutputs) - (OUTPUT_SIZE * this.satsPerByte));
+            if (outputValue > DUST_LIMIT) {
+                for (let i = 0; i < changeOutputs; i++) {
+                    tx.addTxOut(new bsv_1.Bn(outputValue), this.script);
+                }
+                break;
             }
+            changeOutputs--;
         }
+        console.log('Final Outputs:', changeOutputs);
         await Promise.all([...inputsToSign.entries()].map(async ([vin, utxo]) => {
             const sig = await tx.asyncSign(this.keyPair, bsv_1.Sig.SIGHASH_ALL | bsv_1.Sig.SIGHASH_FORKID, vin, bsv_1.Script.fromString(utxo.script), new bsv_1.Bn(utxo.satoshis));
             const sigScript = new bsv_1.Script()

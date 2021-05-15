@@ -35,7 +35,9 @@ export class LockingPurse {
         
         const inputsToSign = new Map<number, any>();
         const utxos = await this.blockchain.utxos(this.script.toHex());
-        let splits = Math.max(this.splits - utxos.length, 1);
+        const utxoCount = utxos.length;
+        let inputsAdded = 0;
+
         if(totalIn < totalOut + (size * this.satsPerByte)) {
             while(totalIn < totalOut + (size * this.satsPerByte)) {
                 size += INPUT_SIZE;
@@ -52,7 +54,7 @@ export class LockingPurse {
                         Script.fromString('OP_0 OP_0'),
                         TxIn.SEQUENCE_FINAL
                     );
-                    splits++;
+                    inputsAdded++;
                     totalIn += utxo.satoshis;
                     size += INPUT_SIZE;
                 } else {
@@ -63,13 +65,22 @@ export class LockingPurse {
                 throw new Error(`Inadequate UTXOs for purse: ${this.address}`);
         }
         
-        const change = totalIn - totalOut - (size * this.satsPerByte) - (splits * OUTPUT_SIZE * this.satsPerByte);
-        if(change > DUST_LIMIT) {
-            for(let i = 0; i < splits; i++) {
-                tx.addTxOut(new Bn(Math.floor(change / splits)), this.script);
+        console.log('UTXOS:', utxoCount);
+        let changeOutputs = Math.max(this.splits - utxoCount + inputsAdded, 1);
+        console.log('Change Outputs:', changeOutputs);
+        const change = totalIn - totalOut - (size * this.satsPerByte);
+        while(changeOutputs > 0) {
+            const outputValue = Math.floor((change / changeOutputs) - (OUTPUT_SIZE * this.satsPerByte));
+            if(outputValue > DUST_LIMIT) {
+                for(let i = 0; i < changeOutputs; i++) {
+                    tx.addTxOut(new Bn(outputValue), this.script);
+                }
+                break;    
             }
+            changeOutputs--;
         }
-        
+        console.log('Final Outputs:', changeOutputs);
+
         await Promise.all([...inputsToSign.entries()].map(async ([vin, utxo]) => {
             const sig = await tx.asyncSign(this.keyPair, Sig.SIGHASH_ALL | Sig.SIGHASH_FORKID, vin, Script.fromString(utxo.script), new Bn(utxo.satoshis));
             const sigScript = new Script()
