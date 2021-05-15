@@ -57,7 +57,7 @@ class LockingPurse {
         const change = totalIn - totalOut - (size * this.satsPerByte) - (splits * OUTPUT_SIZE * this.satsPerByte);
         if (change > DUST_LIMIT) {
             for (let i = 0; i < splits; i++) {
-                tx.addTxOut(new bsv_1.Bn(change), this.script);
+                tx.addTxOut(new bsv_1.Bn(Math.floor(change / splits)), this.script);
             }
         }
         await Promise.all([...inputsToSign.entries()].map(async ([vin, utxo]) => {

@@ -66,7 +66,7 @@ export class LockingPurse {
         const change = totalIn - totalOut - (size * this.satsPerByte) - (splits * OUTPUT_SIZE * this.satsPerByte);
         if(change > DUST_LIMIT) {
             for(let i = 0; i < splits; i++) {
-                tx.addTxOut(new Bn(change), this.script);
+                tx.addTxOut(new Bn(Math.floor(change / splits)), this.script);
             }
         }
         
