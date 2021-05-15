@@ -2,13 +2,16 @@ import axios from 'axios';
 import { Address, Bn, Bw, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
 import { SignedMessage } from './signed-message';
 import orderLockRegex from './order-lock-regex';
+
+const FEE_RATE = 0.025;
 export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();
     private _batonAddress: Address;
     private _paymentAddress: Address;
     public pubkey: string;
+    public feeRate = FEE_RATE;
 
-    constructor(public apiUrl: string, private bip32, public fyxId: string, public userId: string, private keyPair: KeyPair, protected feeAddress) {
+    constructor(public apiUrl: string, private bip32, public fyxId: string, public userId: string, private keyPair: KeyPair, protected feeAddress?: string) {
         this._paymentAddress = Address.fromPrivKey(bip32.derive('m/0/0').privKey);
         const batonPrivKey = bip32.derive('m/1/0').privKey
         this._batonAddress = Address.fromPrivKey(batonPrivKey);
@@ -82,7 +85,7 @@ export class FyxOwner {
     getPurchaseBase({address, satoshis}): string {
         const tx = new Tx();
         tx.addTxOut(new Bn(satoshis), Address.fromString(address).toTxOutScript());
-        tx.addTxOut(new Bn(Math.floor(satoshis * 0.025)), Address.fromString(this.feeAddress).toTxOutScript());
+        if(this.feeAddress) tx.addTxOut(new Bn(Math.floor(satoshis * this.feeRate)), Address.fromString(this.feeAddress).toTxOutScript());
         return tx.toHex();
     }
 

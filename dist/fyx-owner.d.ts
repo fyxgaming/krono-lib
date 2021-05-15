@@ -5,12 +5,13 @@ export declare class FyxOwner {
     fyxId: string;
     userId: string;
     private keyPair;
-    protected feeAddress: any;
+    protected feeAddress?: string;
     keyPairs: Map<string, any>;
     private _batonAddress;
     private _paymentAddress;
     pubkey: string;
-    constructor(apiUrl: string, bip32: any, fyxId: string, userId: string, keyPair: KeyPair, feeAddress: any);
+    feeRate: number;
+    constructor(apiUrl: string, bip32: any, fyxId: string, userId: string, keyPair: KeyPair, feeAddress?: string);
     get batonAddress(): any;
     get paymentAddress(): any;
     nextOwner(): Promise<any>;
