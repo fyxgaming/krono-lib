@@ -7,7 +7,7 @@ export declare class UtxoLock {
     expire(key: string, seconds: any): Promise<void>;
 }
 export declare class FyxPurse extends LockingPurse {
-    constructor(keyPair: KeyPair, blockchain: RestBlockchain, changeKeyPair?: KeyPair, changeThreashold?: number, satsPerByte?: number);
+    constructor(keyPair: KeyPair, blockchain: RestBlockchain, splits?: number, satsPerByte?: number);
     pay(rawtx: string, parents: {
         satoshis: number;
         script: string;
