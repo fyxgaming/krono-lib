@@ -71,7 +71,7 @@ class LockingPurse {
         }
         console.log('Final Outputs:', changeOutputs);
         await Promise.all([...inputsToSign.entries()].map(async ([vin, utxo]) => {
-            const sig = await tx.asyncSign(this.keyPair, bsv_1.Sig.SIGHASH_ALL | bsv_1.Sig.SIGHASH_FORKID, vin, bsv_1.Script.fromString(utxo.script), new bsv_1.Bn(utxo.satoshis));
+            const sig = await tx.asyncSign(this.keyPair, bsv_1.Sig.SIGHASH_ALL | bsv_1.Sig.SIGHASH_FORKID, vin, bsv_1.Script.fromHex(utxo.script), new bsv_1.Bn(utxo.satoshis));
             const sigScript = new bsv_1.Script()
                 .writeBuffer(sig.toTxFormat())
                 .writeBuffer(this.keyPair.pubKey.toBuffer());
