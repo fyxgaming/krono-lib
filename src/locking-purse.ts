@@ -10,14 +10,12 @@ const OUTPUT_SIZE = 34;
 export class LockingPurse {
     address: string;
     private script: Script;
-    changeAddress?: string;
-    private changeScript?: Script;
     constructor(
         public keyPair: KeyPair, 
         public blockchain: RestBlockchain, 
         public redis: any,
         public splits = 10,
-        public satsPerByte = 0.25
+        public satsPerByte = 0.5
     ) {
         const address = Address.fromPrivKey(keyPair.privKey);
         this.script = address.toTxOutScript();
@@ -86,7 +84,6 @@ export class LockingPurse {
     async utxos(): Promise<any> {
         return this.blockchain.utxos(this.script.toHex());
     }
-
 
     async balance(): Promise<number> {
         return this.blockchain.balance(this.address);

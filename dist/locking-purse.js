@@ -8,7 +8,7 @@ const SIG_SIZE = 114;
 const INPUT_SIZE = 149;
 const OUTPUT_SIZE = 34;
 class LockingPurse {
-    constructor(keyPair, blockchain, redis, splits = 10, satsPerByte = 0.25) {
+    constructor(keyPair, blockchain, redis, splits = 10, satsPerByte = 0.5) {
         this.keyPair = keyPair;
         this.blockchain = blockchain;
         this.redis = redis;

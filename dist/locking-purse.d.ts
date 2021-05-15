@@ -8,8 +8,6 @@ export declare class LockingPurse {
     satsPerByte: number;
     address: string;
     private script;
-    changeAddress?: string;
-    private changeScript?;
     constructor(keyPair: KeyPair, blockchain: RestBlockchain, redis: any, splits?: number, satsPerByte?: number);
     pay(rawtx: string, parents: {
         satoshis: number;
