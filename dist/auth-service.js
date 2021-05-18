@@ -74,12 +74,31 @@ class AuthService {
         await fyx_axios_1.default.post(`${this.apiUrl}/accounts/${id}`, reg);
         return keyPair;
     }
-    async recover(id, keyPair) {
+    async recoverBip39(id, keyPair) {
         id = id.toLowerCase().normalize('NFKC');
         const { data: { path, recovery } } = await fyx_axios_1.default.post(`${this.apiUrl}/accounts/${id}/recover`, new signed_message_1.SignedMessage({ subject: 'recover' }, id, keyPair));
         const recoveryBuf = bsv_1.Ecies.bitcoreDecrypt(buffer_1.Buffer.from(recovery, 'base64'), keyPair.privKey);
-        const bip39 = bsv_1.Bip39.fromBuffer(recoveryBuf);
+        return bsv_1.Bip39.fromBuffer(recoveryBuf);
+    }
+    async recover(id, keyPair) {
+        const bip39 = await this.recoverBip39(id, keyPair);
         return bsv_1.Bip32.fromSeed(bip39.toSeed());
+    }
+    async mnemonic(id, keyPair) {
+        const bip39 = await this.recoverBip39(id, keyPair);
+        return bip39.toString();
+    }
+    async rekey(mnemonic, id, password) {
+        const bip39 = bsv_1.Bip39.fromString(mnemonic);
+        const bip32 = bsv_1.Bip32.fromSeed(bip39.toSeed());
+        const keyPair = await this.generateKeyPair(id, password);
+        await fyx_axios_1.default.put(`${this.apiUrl}/accounts/${id}`, new signed_message_1.SignedMessage({
+            subject: 'rekey',
+            payload: JSON.stringify({
+                pubkey: keyPair.pubKey.toString()
+            })
+        }, id, bsv_1.KeyPair.fromPrivKey(bip32.privKey)));
+        return keyPair;
     }
     async isIdAvailable(id) {
         id = id.toLowerCase().normalize('NFKC');

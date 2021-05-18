@@ -6,6 +6,7 @@ import { Buffer } from 'buffer';
 
 export class AuthService {
     private network: string;
+
     constructor(private apiUrl: string, network: string) { 
         this.network = network.slice(0, 4);
     }
@@ -59,7 +60,7 @@ export class AuthService {
         return keyPair;
     }
 
-    async recover(id: string, keyPair: KeyPair): Promise<Bip32> {
+    async recoverBip39(id: string, keyPair: KeyPair): Promise<Bip32> {
         id = id.toLowerCase().normalize('NFKC');
         const { data: { path, recovery }} = await axios.post(
             `${this.apiUrl}/accounts/${id}/recover`, 
@@ -70,8 +71,35 @@ export class AuthService {
             Buffer.from(recovery, 'base64'),
             keyPair.privKey
         );
-        const bip39 = Bip39.fromBuffer(recoveryBuf);
+        return Bip39.fromBuffer(recoveryBuf);
+    }
+    
+    async recover(id: string, keyPair: KeyPair): Promise<Bip32> {
+        const bip39 = await this.recoverBip39(id, keyPair);
         return Bip32.fromSeed(bip39.toSeed());
+    }
+
+    async mnemonic(id: string, keyPair: KeyPair): Promise<string> {
+        const bip39 = await this.recoverBip39(id, keyPair);
+        return bip39.toString();
+    }
+
+    async rekey(mnemonic: string, id: string, password: string): Promise<KeyPair> {
+        const bip39 = Bip39.fromString(mnemonic);
+        const bip32 = Bip32.fromSeed(bip39.toSeed());
+
+        const keyPair = await this.generateKeyPair(id, password);
+        await axios.put(
+            `${this.apiUrl}/accounts/${id}`, 
+            new SignedMessage({
+                subject: 'rekey',
+                payload: JSON.stringify({
+                    pubkey: keyPair.pubKey.toString()
+                })
+            }, id, KeyPair.fromPrivKey(bip32.privKey))
+        );
+
+        return keyPair;
     }
 
     public async isIdAvailable(id: string): Promise<boolean> {
