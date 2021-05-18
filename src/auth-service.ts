@@ -86,15 +86,20 @@ export class AuthService {
 
     async rekey(mnemonic: string, id: string, password: string): Promise<KeyPair> {
         const bip39 = Bip39.fromString(mnemonic);
-        const bip32 = Bip32.fromSeed(bip39.toSeed());
-
+        const bip32 = Bip32.fromSeed(bip39.toSeed());        
         const keyPair = await this.generateKeyPair(id, password);
+        const recoveryBuf = Ecies.bitcoreEncrypt(
+            bip39.toBuffer(),
+            keyPair.pubKey,
+            keyPair
+        );
         await axios.put(
             `${this.apiUrl}/accounts/${id}`, 
             new SignedMessage({
                 subject: 'rekey',
                 payload: JSON.stringify({
-                    pubkey: keyPair.pubKey.toString()
+                    pubkey: keyPair.pubKey.toString(),
+                    recovery: recoveryBuf.toString('base64'),
                 })
             }, id, KeyPair.fromPrivKey(bip32.privKey))
         );

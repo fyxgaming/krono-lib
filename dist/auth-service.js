@@ -92,10 +92,12 @@ class AuthService {
         const bip39 = bsv_1.Bip39.fromString(mnemonic);
         const bip32 = bsv_1.Bip32.fromSeed(bip39.toSeed());
         const keyPair = await this.generateKeyPair(id, password);
+        const recoveryBuf = bsv_1.Ecies.bitcoreEncrypt(bip39.toBuffer(), keyPair.pubKey, keyPair);
         await fyx_axios_1.default.put(`${this.apiUrl}/accounts/${id}`, new signed_message_1.SignedMessage({
             subject: 'rekey',
             payload: JSON.stringify({
-                pubkey: keyPair.pubKey.toString()
+                pubkey: keyPair.pubKey.toString(),
+                recovery: recoveryBuf.toString('base64'),
             })
         }, id, bsv_1.KeyPair.fromPrivKey(bip32.privKey)));
         return keyPair;
