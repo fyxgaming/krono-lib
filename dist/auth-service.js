@@ -107,13 +107,26 @@ class AuthService {
         try {
             const user = await fyx_axios_1.default(`${this.apiUrl}/accounts/${id}`);
             return false;
-            ;
         }
         catch (e) {
             if (e.status === 404)
                 return true;
             throw e;
         }
+    }
+    async verifyEmail(id, nonce) {
+        try {
+            await fyx_axios_1.default.post(`${this.apiUrl}/accounts/emails/verify/${id}/${nonce}`);
+            return true;
+        }
+        catch (e) {
+            if (e.status === 401)
+                return false;
+            throw e;
+        }
+    }
+    async requestVerificationEmail(id) {
+        await fyx_axios_1.default.post(`${this.apiUrl}/accounts/emails/generate/${id}`);
     }
 }
 exports.AuthService = AuthService;

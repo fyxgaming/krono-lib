@@ -10,4 +10,6 @@ export declare class AuthService {
     mnemonic(id: string, keyPair: KeyPair): Promise<string>;
     rekey(mnemonic: string, id: string, password: string): Promise<KeyPair>;
     isIdAvailable(id: string): Promise<boolean>;
+    verifyEmail(id: string, nonce: string): Promise<boolean>;
+    requestVerificationEmail(id: any): Promise<void>;
 }

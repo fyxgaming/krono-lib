@@ -111,10 +111,24 @@ export class AuthService {
         id = id.toLowerCase().normalize('NFKC');
         try {
             const user = await axios(`${this.apiUrl}/accounts/${id}`);
-            return false;;
+            return false;
         } catch (e) {
             if(e.status === 404) return true;
             throw e;
         }
+    }
+
+    public async verifyEmail(id: string, nonce: string): Promise<boolean> {
+        try {
+            await axios.post(`${this.apiUrl}/accounts/emails/verify/${id}/${nonce}`);
+            return true;
+        } catch(e) {
+            if(e.status === 401) return false;
+            throw e;
+        }
+    }
+
+    public async requestVerificationEmail(id) {
+        await axios.post(`${this.apiUrl}/accounts/emails/generate/${id}`);
     }
 }
