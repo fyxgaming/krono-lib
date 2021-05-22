@@ -4,6 +4,7 @@ import { SignedMessage } from './signed-message';
 import orderLockRegex from './order-lock-regex';
 
 const FEE_RATE = 0.025;
+const DUST_LIMIT = 273;
 export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();
     private _batonAddress: Address;
@@ -85,15 +86,14 @@ export class FyxOwner {
     getPurchaseBase({address, satoshis}): string {
         const tx = new Tx();
         tx.addTxOut(new Bn(satoshis), Address.fromString(address).toTxOutScript());
-        if(this.feeAddress) tx.addTxOut(new Bn(Math.floor(satoshis * this.feeRate)), Address.fromString(this.feeAddress).toTxOutScript());
+        if(this.feeAddress) {
+            const tradingFee = Math.max(Math.floor(satoshis * this.feeRate), DUST_LIMIT)
+            tx.addTxOut(new Bn(tradingFee), Address.fromString(this.feeAddress).toTxOutScript());
+        }
         return tx.toHex();
     }
 
     signOrderLock(tx, script, valueBn) {
-        // const tx = Tx.fromHex(rawtx);
-        // const lockTx = Tx.fromHex(lockRawTx);
-        // const vout = lockTx.txOuts.findIndex(o => o.script.toHex().match(orderLockRegex));
-        // if (vout === -1) return;
         const isCancel = tx.txOuts[0].script.isSafeDataOut();
         const preimage = tx.sighashPreimage(
             Sig.SIGHASH_FORKID | (isCancel ? Sig.SIGHASH_NONE : (Sig.SIGHASH_SINGLE | Sig.SIGHASH_ANYONECANPAY)),
