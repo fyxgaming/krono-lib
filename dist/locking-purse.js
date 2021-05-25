@@ -41,7 +41,7 @@ class LockingPurse {
                 const lockKey = `lock:${utxo.txid}_o${utxo.vout}`;
                 if (await this.redis.setnx(lockKey, Date.now())) {
                     await this.redis.expire(lockKey, 120);
-                    console.log('UTXO Selected:', lockKey, utxo);
+                    console.log('UTXO Selected:', lockKey, JSON.stringify(utxo));
                     inputsToSign.set(tx.txIns.length, utxo);
                     tx.addTxIn(buffer_1.Buffer.from(utxo.txid, 'hex').reverse(), utxo.vout, bsv_1.Script.fromString('OP_0 OP_0'), bsv_1.TxIn.SEQUENCE_FINAL);
                     inputsAdded++;

@@ -20,6 +20,7 @@ export class LockingPurse {
         const address = Address.fromPrivKey(keyPair.privKey);
         this.script = address.toTxOutScript();
         this.address = address.toString();
+
     }
 
     async pay (rawtx: string, parents: { satoshis: number, script: string }[]) {
@@ -46,7 +47,7 @@ export class LockingPurse {
                 const lockKey = `lock:${utxo.txid}_o${utxo.vout}`;
                 if (await this.redis.setnx(lockKey, Date.now())) {
                     await this.redis.expire(lockKey, 120);
-                    console.log('UTXO Selected:', lockKey, utxo);
+                    console.log('UTXO Selected:', lockKey, JSON.stringify(utxo));
                     inputsToSign.set(tx.txIns.length, utxo);
                     tx.addTxIn(
                         Buffer.from(utxo.txid, 'hex').reverse(),
