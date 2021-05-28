@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FyxPurse = exports.UtxoLock = void 0;
 const bsv_1 = require("bsv");
-// import Run from 'run-sdk'
 const locking_purse_1 = require("./locking-purse");
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
 // export class FyxPurse extends Run.plugins.LocalPurse {

@@ -25,8 +25,9 @@ export class RestStateCache implements IStorage<any> {
                     if(this.debug) console.log('Remote Hit:', key);
                     await this.cache.set(key, value);
                 } catch (e) {
-                    if(e.status !== 404) throw e;
-                    if(this.debug) console.log('Remote Miss:', key);
+                    console.error('State Error:', e)
+                    // if(e.status !== 404) throw e;
+                    // if(this.debug) console.log('Remote Miss:', key);
                 }
                 this.requests.delete(key);
                 return value;

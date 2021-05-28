@@ -1,5 +1,4 @@
 import { KeyPair, Script, Tx } from 'bsv';
-// import Run from 'run-sdk'
 import { LockingPurse } from './locking-purse';
 import orderLockRegex from './order-lock-regex';
 import { RestBlockchain } from './rest-blockchain';
