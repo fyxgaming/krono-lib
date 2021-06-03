@@ -100,6 +100,7 @@ export class AuthService {
                 payload: JSON.stringify({
                     pubkey: keyPair.pubKey.toString(),
                     recovery: recoveryBuf.toString('base64'),
+                    xpub: bip32.toPublic().toString()
                 })
             }, id, KeyPair.fromPrivKey(bip32.privKey))
         );
