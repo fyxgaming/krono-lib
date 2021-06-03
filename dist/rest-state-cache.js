@@ -32,9 +32,8 @@ class RestStateCache {
                     await this.cache.set(key, value);
                 }
                 catch (e) {
-                    console.error('State Error:', e);
-                    // if(e.status !== 404) throw e;
-                    // if(this.debug) console.log('Remote Miss:', key);
+                    if (e.status !== 404)
+                        console.error('State Error:', e);
                 }
                 this.requests.delete(key);
                 return value;
