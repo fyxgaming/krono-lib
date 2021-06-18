@@ -71,17 +71,17 @@ class RestBlockchain {
         let spend = await this.cache.get(cacheKey);
         if (spend)
             return spend;
-        if (!this.requests.has(cacheKey)) {
-            const request = (async () => {
-                const { data: { spendTxId } } = await fyx_axios_1.default(`${this.apiUrl}/spends/${txid}_o${vout}`);
-                if (spendTxId)
-                    await this.cache.set(cacheKey, spendTxId);
-                this.requests.delete(cacheKey);
-                return spendTxId;
-            })();
-            this.requests.set(cacheKey, request);
-        }
-        return this.requests.get(cacheKey);
+        // if (!this.requests.has(cacheKey)) {
+        //     const request = (async () => {
+        const { data: { spendTxId } } = await fyx_axios_1.default(`${this.apiUrl}/spends/${txid}_o${vout}`);
+        if (spendTxId)
+            await this.cache.set(cacheKey, spendTxId);
+        // this.requests.delete(cacheKey);
+        return spendTxId;
+        // })();
+        // this.requests.set(cacheKey, request);
+        // }
+        // return this.requests.get(cacheKey);
     }
     async utxos(script, limit = 1000) {
         if (this.debug)

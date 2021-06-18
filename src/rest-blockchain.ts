@@ -67,16 +67,16 @@ export class RestBlockchain {
         const cacheKey = `spend://${txid}_${vout}`;
         let spend = await this.cache.get(cacheKey);
         if (spend) return spend;
-        if (!this.requests.has(cacheKey)) {
-            const request = (async () => {
+        // if (!this.requests.has(cacheKey)) {
+        //     const request = (async () => {
                 const { data: { spendTxId } } = await axios(`${this.apiUrl}/spends/${txid}_o${vout}`);
                 if (spendTxId) await this.cache.set(cacheKey, spendTxId);
-                this.requests.delete(cacheKey);
+                // this.requests.delete(cacheKey);
                 return spendTxId;
-            })();
-            this.requests.set(cacheKey, request);
-        }
-        return this.requests.get(cacheKey);
+            // })();
+            // this.requests.set(cacheKey, request);
+        // }
+        // return this.requests.get(cacheKey);
     }
 
     async utxos(script: string, limit: number = 1000): Promise<IUTXO[]> {
