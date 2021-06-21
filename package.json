@@ -13,7 +13,7 @@
     "**/*"
   ],
   "dependencies": {
-    "argon2-browser": "^1.15.3",
+    "argon2-browser": "^1.18.0",
     "axios": "^0.21.1",
     "bsv": "^2.0.10",
     "buffer": "^6.0.3",
