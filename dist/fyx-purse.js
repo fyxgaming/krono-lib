@@ -35,7 +35,13 @@ class FyxPurse extends locking_purse_1.LockingPurse {
             tx.txIns[0].setScript(bsv_1.Script.fromBuffer(Buffer.from(new Array(1568).fill(0))));
             if (tx.txOuts[0].script.isSafeDataOut()) {
                 tx.addTxIn(tx.txIns[0].txHashBuf, 0, bsv_1.Script.fromBuffer(Buffer.from(new Array(25).fill(0))), 2 ** 32 - 1);
-                return tx.toHex();
+                const sourceRawTx = await this.blockchain.fetch(Buffer.from(tx.txIns[0].txHashBuf).reverse().toString('hex'));
+                const sourceTx = bsv_1.Tx.fromHex(sourceRawTx);
+                parents.push({
+                    script: sourceTx.txOuts[0].script.toHex(),
+                    satoshis: sourceTx.txOuts[0].valueBn.toNumber()
+                });
+                return super.pay(tx.toHex(), parents);
             }
         }
         return super.pay(rawtx, parents);
