@@ -44,7 +44,7 @@ class FyxPurse extends locking_purse_1.LockingPurse {
                 return super.pay(tx.toHex(), parents);
             }
         }
-        return super.pay(rawtx, parents);
+        return super.pay(tx.toHex(), parents);
     }
 }
 exports.FyxPurse = FyxPurse;

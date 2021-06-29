@@ -49,6 +49,6 @@ export class FyxPurse extends LockingPurse {
                 return super.pay(tx.toHex(), parents);
             }
         }
-        return super.pay(rawtx, parents);
+        return super.pay(tx.toHex(), parents);
     }
 }
