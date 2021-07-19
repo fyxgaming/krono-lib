@@ -48,7 +48,7 @@ export class FyxOwner {
     async loadDerivations() {
         const { data: derivations } = await axios.post(
             `${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/derivations`,
-            new SignedMessage({}, this.userId, this.keyPair)
+            new SignedMessage({subject: 'LoadDerivations'}, this.userId, this.keyPair)
         )
         derivations.forEach(d => {
             if (this.keyPairs.has(d.script)) return;

@@ -1,5 +1,5 @@
 import * as argon2 from 'argon2-browser';
-import { Bip32, Bip39, Constants, Ecdsa, Ecies, Hash, KeyPair, PrivKey } from 'bsv';
+import { Bip32, Bip39, Bn, Constants, Ecdsa, Ecies, Hash, KeyPair, Point, PrivKey } from 'bsv';
 import axios from './fyx-axios';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
@@ -16,7 +16,9 @@ export class AuthService {
         const salt = Hash.sha256(Buffer.concat([Buffer.from(this.network), Buffer.from(id)]));
         const pass = Hash.sha256(Buffer.from(password.normalize('NFKC')));
         const { hash } = await argon2.hash({ pass, salt, time: 100, mem: 1024, hashLen: 32 });
-
+        if(!(new Bn().fromBuffer(Buffer.from(hash)).lt(Point.getN()))){
+            throw new Error('BigInteger is out of range of valid private keys')
+        }
         const versionByteNum = this.network === 'main' ?
             Constants.Mainnet.PrivKey.versionByteNum :
             Constants.Testnet.PrivKey.versionByteNum;

@@ -38,6 +38,9 @@ class AuthService {
         const salt = bsv_1.Hash.sha256(buffer_1.Buffer.concat([buffer_1.Buffer.from(this.network), buffer_1.Buffer.from(id)]));
         const pass = bsv_1.Hash.sha256(buffer_1.Buffer.from(password.normalize('NFKC')));
         const { hash } = await argon2.hash({ pass, salt, time: 100, mem: 1024, hashLen: 32 });
+        if (!(new bsv_1.Bn().fromBuffer(buffer_1.Buffer.from(hash)).lt(bsv_1.Point.getN()))) {
+            throw new Error('BigInteger is out of range of valid private keys');
+        }
         const versionByteNum = this.network === 'main' ?
             bsv_1.Constants.Mainnet.PrivKey.versionByteNum :
             bsv_1.Constants.Testnet.PrivKey.versionByteNum;

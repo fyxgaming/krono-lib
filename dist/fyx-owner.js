@@ -46,7 +46,7 @@ class FyxOwner {
         });
     }
     async loadDerivations() {
-        const { data: derivations } = await axios_1.default.post(`${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/derivations`, new signed_message_1.SignedMessage({}, this.userId, this.keyPair));
+        const { data: derivations } = await axios_1.default.post(`${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/derivations`, new signed_message_1.SignedMessage({ subject: 'LoadDerivations' }, this.userId, this.keyPair));
         derivations.forEach(d => {
             if (this.keyPairs.has(d.script))
                 return;

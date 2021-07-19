@@ -2,9 +2,9 @@ import { Address, Bn, KeyPair, Script, Sig, Tx, TxIn } from 'bsv';
 import { RestBlockchain } from './rest-blockchain';
 import { Buffer } from 'buffer';
 
-const DUST_LIMIT = 273;
-const SIG_SIZE = 114;
-const INPUT_SIZE = 149;
+const DUST_LIMIT = 1000;
+const SIG_SIZE = 107;
+const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
 
 export class LockingPurse {
@@ -29,7 +29,7 @@ export class LockingPurse {
         let totalIn = 0;
         parents.forEach(({satoshis}, i) => {
             const scriptBuf = tx.txIns[i].script.toBuffer()
-            size += (scriptBuf.length > 100 ? 0 : SIG_SIZE);
+            size += (scriptBuf.length > 0 ? 0 : SIG_SIZE);
             totalIn += satoshis;
         }, 0);
         let totalOut = tx.txOuts.reduce((a, {valueBn}) => a + valueBn.toNumber(), 0);
@@ -39,35 +39,32 @@ export class LockingPurse {
         const utxoCount = utxos.length;
         let inputsAdded = 0;
 
-        if(totalIn < totalOut + (size * this.satsPerByte)) {
-            while(totalIn < totalOut + (size * this.satsPerByte)) {
+        while(totalIn < totalOut + (size * this.satsPerByte)) {
+            const utxo = utxos.pop();
+            if(!utxo) break;
+            const lockKey = `lock:${utxo.txid}_o${utxo.vout}`;
+            if (await this.redis.setnx(lockKey, Date.now())) {
+                await this.redis.expire(lockKey, 120);
+                console.log('UTXO Selected:', lockKey, JSON.stringify(utxo));
+                inputsToSign.set(tx.txIns.length, utxo);
+                tx.addTxIn(
+                    Buffer.from(utxo.txid, 'hex').reverse(),
+                    utxo.vout,
+                    Script.fromString('OP_0 OP_0'),
+                    TxIn.SEQUENCE_FINAL
+                );
+                inputsAdded++;
+                totalIn += utxo.satoshis;
                 size += INPUT_SIZE;
-                const utxo = utxos.pop();
-                if(!utxo) break;
-                const lockKey = `lock:${utxo.txid}_o${utxo.vout}`;
-                if (await this.redis.setnx(lockKey, Date.now())) {
-                    await this.redis.expire(lockKey, 120);
-                    console.log('UTXO Selected:', lockKey, JSON.stringify(utxo));
-                    inputsToSign.set(tx.txIns.length, utxo);
-                    tx.addTxIn(
-                        Buffer.from(utxo.txid, 'hex').reverse(),
-                        utxo.vout,
-                        Script.fromString('OP_0 OP_0'),
-                        TxIn.SEQUENCE_FINAL
-                    );
-                    inputsAdded++;
-                    totalIn += utxo.satoshis;
-                    size += INPUT_SIZE;
-                } else {
-                    console.log('UTXO locked:', lockKey);
-                }
+            } else {
+                console.log('UTXO locked:', lockKey);
             }
-            if (totalIn < totalOut + (size * this.satsPerByte)) 
-                throw new Error(`Inadequate UTXOs for purse: ${this.address}`);
         }
+        if (totalIn < totalOut + (size * this.satsPerByte)) 
+            throw new Error(`Inadequate UTXOs for purse: ${this.address}`);
         
         console.log('UTXOS:', utxoCount);
-        let changeOutputs = Math.max(this.splits - utxoCount + inputsAdded, 1);
+        let changeOutputs = Math.max((this.splits - utxoCount) + inputsAdded, 1);
         console.log('Change Outputs:', changeOutputs);
         const change = totalIn - totalOut - (size * this.satsPerByte);
         while(changeOutputs > 0) {
