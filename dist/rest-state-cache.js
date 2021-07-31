@@ -15,6 +15,8 @@ class RestStateCache {
     async get(key) {
         if (this.debug)
             console.log('State:', key);
+        if (key.startsWith('ban://'))
+            return;
         let value = await this.cache.get(key);
         if (value) {
             if (this.debug)
