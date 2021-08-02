@@ -19,7 +19,6 @@
     "buffer": "^6.0.3",
     "events": "^3.2.0",
     "http-errors": "^1.8.0",
-    "isomorphic-fetch": "^3.0.0",
     "retry-axios": "^2.4.0",
     "run-sdk": "^0.6.24"
   },
