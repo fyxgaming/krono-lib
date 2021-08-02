@@ -10,6 +10,7 @@ export class RestStateCache implements IStorage<any> {
 
     async get(key: string): Promise<any> {
         if(this.debug) console.log('State:', key);
+        if(key.startsWith('ban://') || key.startsWith('trust://')) return;
         let value = await this.cache.get(key);
         if (value) {
             if(this.debug) console.log('Cache Hit:', key);
@@ -36,6 +37,7 @@ export class RestStateCache implements IStorage<any> {
     }
 
     async set(key: string, value: any) {
+        if(key.startsWith('ban://') || key.startsWith('trust://')) return;
         await this.cache.set(key, value);
     }
 }
