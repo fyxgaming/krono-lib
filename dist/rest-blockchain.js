@@ -95,6 +95,12 @@ class RestBlockchain {
         }));
     }
     ;
+    async applyPayments(rawtx, payments, payer, changeSplitSats = 0) {
+        const { data } = await fyx_axios_1.default.post(`${this.apiUrl}/pay`, {
+            rawtx, payments, payer, changeSplitSats
+        });
+        return data.rawtx;
+    }
     async loadJigData(loc, unspent = false) {
         const { data } = await fyx_axios_1.default(`${this.apiUrl}/jigs/${loc}?unspent=${unspent ? 'true' : ''}`);
         return data;

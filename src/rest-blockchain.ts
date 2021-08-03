@@ -90,6 +90,14 @@ export class RestBlockchain {
         }));
     };
 
+    async applyPayments(rawtx, payments: { from: string, amount: number}[], payer?: string, changeSplitSats = 0) {
+        const {data} = await axios.post(`${this.apiUrl}/pay`, {
+            rawtx, payments, payer, changeSplitSats
+        });
+
+        return data.rawtx;
+    }
+
     async loadJigData(loc: string, unspent = false) {
         const { data } = await axios(`${this.apiUrl}/jigs/${loc}?unspent=${unspent ? 'true' : ''}`);
         return data;

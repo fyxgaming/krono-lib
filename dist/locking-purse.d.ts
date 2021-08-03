@@ -5,10 +5,10 @@ export declare class LockingPurse {
     blockchain: RestBlockchain;
     redis: any;
     splits: number;
-    satsPerByte: number;
+    changeSplitSats: number;
     address: string;
     private script;
-    constructor(keyPair: KeyPair, blockchain: RestBlockchain, redis: any, splits?: number, satsPerByte?: number);
+    constructor(keyPair: KeyPair, blockchain: RestBlockchain, redis: any, splits?: number, changeSplitSats?: number);
     pay(rawtx: string, parents: {
         satoshis: number;
         script: string;

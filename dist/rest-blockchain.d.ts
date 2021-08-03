@@ -21,6 +21,10 @@ export declare class RestBlockchain {
     time(txid: string): Promise<number>;
     spends(txid: string, vout: number): Promise<string | null>;
     utxos(script: string, limit?: number): Promise<IUTXO[]>;
+    applyPayments(rawtx: any, payments: {
+        from: string;
+        amount: number;
+    }[], payer?: string, changeSplitSats?: number): Promise<any>;
     loadJigData(loc: string, unspent?: boolean): Promise<any>;
     jigQuery(query: any): Promise<any>;
     fund(address: string, satoshis?: number): Promise<any>;
