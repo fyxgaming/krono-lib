@@ -21,15 +21,13 @@ export class FyxPurse extends LockingPurse {
     constructor(
         keyPair: KeyPair, 
         blockchain: RestBlockchain, 
-        splits = 10,
-        satsPerByte = 0.5
+        changeSplitSats = 0
     ) {
         super(
             keyPair, 
             blockchain, 
             new UtxoLock(),
-            splits,
-            satsPerByte
+            changeSplitSats
         );
     }
     

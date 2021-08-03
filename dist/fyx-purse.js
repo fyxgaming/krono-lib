@@ -24,8 +24,8 @@ class UtxoLock {
 }
 exports.UtxoLock = UtxoLock;
 class FyxPurse extends locking_purse_1.LockingPurse {
-    constructor(keyPair, blockchain, splits = 10, satsPerByte = 0.5) {
-        super(keyPair, blockchain, new UtxoLock(), splits, satsPerByte);
+    constructor(keyPair, blockchain, changeSplitSats = 0) {
+        super(keyPair, blockchain, new UtxoLock(), changeSplitSats);
     }
     async pay(rawtx, parents) {
         var _a;
