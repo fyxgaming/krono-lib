@@ -21,7 +21,10 @@ export declare class RestBlockchain {
     time(txid: string): Promise<number>;
     spends(txid: string, vout: number): Promise<string | null>;
     utxos(script: string, limit?: number): Promise<IUTXO[]>;
-    loadParents(tx: any): Promise<any[]>;
+    loadParents(rawtx: string): Promise<{
+        script: string;
+        satoshis: number;
+    }[]>;
     applyPayments(rawtx: any, payments: {
         from: string;
         amount: number;

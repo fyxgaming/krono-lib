@@ -83,7 +83,8 @@ export class RestBlockchain {
         }));
     };
 
-    async loadParents(tx): Promise<any[]> {
+    async loadParents(rawtx: string): Promise<{script: string, satoshis: number}[]> {
+        const tx = Tx.fromHex(rawtx);
         return Promise.all(tx.txIns.map(async txIn => {
             const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
             const rawtx = await this.fetch(txid);

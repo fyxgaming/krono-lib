@@ -88,7 +88,8 @@ class RestBlockchain {
         }));
     }
     ;
-    async loadParents(tx) {
+    async loadParents(rawtx) {
+        const tx = bsv_1.Tx.fromHex(rawtx);
         return Promise.all(tx.txIns.map(async (txIn) => {
             const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
             const rawtx = await this.fetch(txid);
