@@ -36,14 +36,6 @@ export class FyxOwner {
         return address;
     }
 
-    async addDerivations(derivations: string[]) {
-        derivations.forEach((d) => {
-            if (!d) return;
-            let keyPair = KeyPair.fromPrivKey(this.bip32.derive(d).privKey);
-            const script = Address.fromPubKey(keyPair.pubKey).toTxOutScript().toHex();
-            this.keyPairs.set(script, keyPair)
-        });
-    }
 
     async loadDerivations() {
         const { data: derivations } = await axios.post(
@@ -66,10 +58,14 @@ export class FyxOwner {
             if(!i && parents[0].script.match(orderLockRegex)) {
                 const script = this.signOrderLock(tx, lockScript, new Bn(parents[i].satoshis))
                 txIn.setScript(script);
+                return;
             }
             const txOut = TxOut.fromProperties(new Bn(parents[i].satoshis), lockScript);
             const keyPair = this.keyPairs.get(txOut.script.toHex());
-            if (!keyPair) return;
+            if (!keyPair) {
+                console.log('Missing Keypair:', txOut.script.toHex())
+                return;
+            }
             const sig = await tx.asyncSign(keyPair, Sig.SIGHASH_ALL | Sig.SIGHASH_FORKID, i, txOut.script, txOut.valueBn);
             txIn.setScript(new Script().writeBuffer(sig.toTxFormat()).writeBuffer(keyPair.pubKey.toBuffer()));
         }));

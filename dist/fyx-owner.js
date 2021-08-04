@@ -36,15 +36,6 @@ class FyxOwner {
         const { data: { address } } = await axios_1.default.post(`${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/payment-destination`, new signed_message_1.SignedMessage({}, this.userId, this.keyPair));
         return address;
     }
-    async addDerivations(derivations) {
-        derivations.forEach((d) => {
-            if (!d)
-                return;
-            let keyPair = bsv_1.KeyPair.fromPrivKey(this.bip32.derive(d).privKey);
-            const script = bsv_1.Address.fromPubKey(keyPair.pubKey).toTxOutScript().toHex();
-            this.keyPairs.set(script, keyPair);
-        });
-    }
     async loadDerivations() {
         const { data: derivations } = await axios_1.default.post(`${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/derivations`, new signed_message_1.SignedMessage({ subject: 'LoadDerivations' }, this.userId, this.keyPair));
         console.log('Derivations:', derivations);
@@ -62,11 +53,14 @@ class FyxOwner {
             if (!i && parents[0].script.match(order_lock_regex_1.default)) {
                 const script = this.signOrderLock(tx, lockScript, new bsv_1.Bn(parents[i].satoshis));
                 txIn.setScript(script);
+                return;
             }
             const txOut = bsv_1.TxOut.fromProperties(new bsv_1.Bn(parents[i].satoshis), lockScript);
             const keyPair = this.keyPairs.get(txOut.script.toHex());
-            if (!keyPair)
+            if (!keyPair) {
+                console.log('Missing Keypair:', txOut.script.toHex());
                 return;
+            }
             const sig = await tx.asyncSign(keyPair, bsv_1.Sig.SIGHASH_ALL | bsv_1.Sig.SIGHASH_FORKID, i, txOut.script, txOut.valueBn);
             txIn.setScript(new bsv_1.Script().writeBuffer(sig.toTxFormat()).writeBuffer(keyPair.pubKey.toBuffer()));
         }));

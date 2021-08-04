@@ -15,7 +15,6 @@ export declare class FyxOwner {
     get batonAddress(): any;
     get paymentAddress(): any;
     nextOwner(): Promise<any>;
-    addDerivations(derivations: string[]): Promise<void>;
     loadDerivations(): Promise<void>;
     sign(rawtx: string, parents: {
         satoshis: number;
