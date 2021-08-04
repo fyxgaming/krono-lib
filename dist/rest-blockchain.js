@@ -71,17 +71,10 @@ class RestBlockchain {
         let spend = await this.cache.get(cacheKey);
         if (spend)
             return spend;
-        // if (!this.requests.has(cacheKey)) {
-        //     const request = (async () => {
         const { data: { spendTxId } } = await fyx_axios_1.default(`${this.apiUrl}/spends/${txid}_o${vout}`);
         if (spendTxId)
             await this.cache.set(cacheKey, spendTxId);
-        // this.requests.delete(cacheKey);
         return spendTxId;
-        // })();
-        // this.requests.set(cacheKey, request);
-        // }
-        // return this.requests.get(cacheKey);
     }
     async utxos(script, limit = 1000) {
         if (this.debug)
@@ -95,6 +88,15 @@ class RestBlockchain {
         }));
     }
     ;
+    async loadParents(tx) {
+        return Promise.all(tx.txIns.map(async (txIn) => {
+            const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
+            const rawtx = await this.fetch(txid);
+            const t = bsv_1.Tx.fromHex(rawtx);
+            const txOut = t.txOuts[txIn.txOutNum];
+            return { script: txOut.script.toHex(), satoshis: txOut.valueBn.toNumber() };
+        }));
+    }
     async applyPayments(rawtx, payments, payer, changeSplitSats = 0) {
         const { data } = await fyx_axios_1.default.post(`${this.apiUrl}/pay`, {
             rawtx, payments, payer, changeSplitSats

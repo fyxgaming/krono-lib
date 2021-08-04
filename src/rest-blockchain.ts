@@ -67,16 +67,9 @@ export class RestBlockchain {
         const cacheKey = `spend://${txid}_${vout}`;
         let spend = await this.cache.get(cacheKey);
         if (spend) return spend;
-        // if (!this.requests.has(cacheKey)) {
-        //     const request = (async () => {
-                const { data: { spendTxId } } = await axios(`${this.apiUrl}/spends/${txid}_o${vout}`);
-                if (spendTxId) await this.cache.set(cacheKey, spendTxId);
-                // this.requests.delete(cacheKey);
-                return spendTxId;
-            // })();
-            // this.requests.set(cacheKey, request);
-        // }
-        // return this.requests.get(cacheKey);
+        const { data: { spendTxId } } = await axios(`${this.apiUrl}/spends/${txid}_o${vout}`);
+        if (spendTxId) await this.cache.set(cacheKey, spendTxId);
+        return spendTxId;
     }
 
     async utxos(script: string, limit: number = 1000): Promise<IUTXO[]> {
@@ -89,6 +82,16 @@ export class RestBlockchain {
             satoshis: u.satoshis
         }));
     };
+
+    async loadParents(tx): Promise<any[]> {
+        return Promise.all(tx.txIns.map(async txIn => {
+            const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
+            const rawtx = await this.fetch(txid);
+            const t = Tx.fromHex(rawtx);
+            const txOut = t.txOuts[txIn.txOutNum]
+            return {script: txOut.script.toHex(), satoshis: txOut.valueBn.toNumber()};
+        }))
+    }
 
     async applyPayments(rawtx, payments: { from: string, amount: number}[], payer?: string, changeSplitSats = 0) {
         const {data} = await axios.post(`${this.apiUrl}/pay`, {
