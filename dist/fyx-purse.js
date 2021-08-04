@@ -3,29 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FyxPurse = exports.UtxoLock = void 0;
+exports.FyxPurse = void 0;
 const bsv_1 = require("bsv");
 const locking_purse_1 = require("./locking-purse");
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
-// export class FyxPurse extends Run.plugins.LocalPurse {
-class UtxoLock {
-    constructor() {
-        this.locks = new Map();
-    }
-    async setnx(key, value) {
-        if (this.locks.has(key))
-            return 0;
-        this.locks.set(key, value);
-        return 1;
-    }
-    async expire(key, seconds) {
-        setTimeout(() => this.locks.delete(key), seconds * 1000);
-    }
-}
-exports.UtxoLock = UtxoLock;
 class FyxPurse extends locking_purse_1.LockingPurse {
     constructor(keyPair, blockchain, changeSplitSats = 0) {
-        super(keyPair, blockchain, new UtxoLock(), changeSplitSats);
+        super(keyPair, blockchain, changeSplitSats);
     }
     async pay(rawtx, parents) {
         var _a;

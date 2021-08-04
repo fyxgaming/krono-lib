@@ -7,7 +7,6 @@ export class LockingPurse {
     constructor(
         public keyPair: KeyPair, 
         public blockchain: RestBlockchain, 
-        public redis: any,
         public changeSplitSats = 250000
     ) {
         const address = Address.fromPrivKey(keyPair.privKey);

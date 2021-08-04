@@ -2,21 +2,6 @@ import { KeyPair, Script, Tx } from 'bsv';
 import { LockingPurse } from './locking-purse';
 import orderLockRegex from './order-lock-regex';
 import { RestBlockchain } from './rest-blockchain';
-
-// export class FyxPurse extends Run.plugins.LocalPurse {
-
-export class UtxoLock {
-    protected locks = new Map<string, any>();
-    async setnx(key: string, value: any): Promise<0|1> {
-        if(this.locks.has(key)) return 0;
-        this.locks.set(key, value);
-        return 1;
-    }
-    async expire(key: string, seconds) {
-        setTimeout(() => this.locks.delete(key), seconds * 1000)
-    }
-
-}
 export class FyxPurse extends LockingPurse {
     constructor(
         keyPair: KeyPair, 
@@ -26,7 +11,6 @@ export class FyxPurse extends LockingPurse {
         super(
             keyPair, 
             blockchain, 
-            new UtxoLock(),
             changeSplitSats
         );
     }
