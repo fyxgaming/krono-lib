@@ -50,6 +50,7 @@ export class FyxOwner {
             `${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/derivations`,
             new SignedMessage({subject: 'LoadDerivations'}, this.userId, this.keyPair)
         )
+        console.log('Derivations:', derivations);
         derivations.forEach(d => {
             if (this.keyPairs.has(d.script)) return;
             this.keyPairs.set(d.script, KeyPair.fromPrivKey(this.bip32.derive(d.path).privKey));
