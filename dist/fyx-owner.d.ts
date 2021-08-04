@@ -19,7 +19,7 @@ export declare class FyxOwner {
     sign(rawtx: string, parents: {
         satoshis: number;
         script: string;
-    }[], locks: any[]): Promise<string>;
+    }[], locks?: any[]): Promise<string>;
     getListingBase(): string;
     getPurchaseBase({ address, satoshis }: {
         address: any;
