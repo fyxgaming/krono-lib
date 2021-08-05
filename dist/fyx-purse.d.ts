@@ -6,5 +6,5 @@ export declare class FyxPurse extends LockingPurse {
     pay(rawtx: string, parents: {
         satoshis: number;
         script: string;
-    }[]): Promise<any>;
+    }[]): Promise<string>;
 }

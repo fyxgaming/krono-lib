@@ -10,7 +10,7 @@ export declare class LockingPurse {
     pay(rawtx: string, parents: {
         satoshis: number;
         script: string;
-    }[]): Promise<any>;
+    }[]): Promise<string>;
     utxos(): Promise<any>;
     balance(): Promise<number>;
 }
