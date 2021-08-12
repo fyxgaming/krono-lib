@@ -36,4 +36,8 @@ export class LockingPurse {
     async balance(): Promise<number> {
         return this.blockchain.balance(this.address);
     }
+
+    async utxoCount(): Promise<any> {
+        return this.blockchain.utxoCount(this.script);
+    }
 }

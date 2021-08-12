@@ -72,15 +72,21 @@ export class RestBlockchain {
         return spendTxId;
     }
 
-    async utxos(script: string, limit: number = 1000): Promise<IUTXO[]> {
+    async utxos(script: string): Promise<IUTXO[]> {
         if (this.debug) console.log('UTXOS:', script);
-        const { data } = await axios(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
+        const { data } = await axios(`${this.apiUrl}/utxos/script/${script}`);
         return data.map(u => ({
             txid: u.txid,
             vout: u.vout,
             script: u.script,
             satoshis: u.satoshis
         }));
+    };
+
+    async utxoCount(script: string): Promise<IUTXO[]> {
+        if (this.debug) console.log('UTXOS:', script);
+        const { data: {utxoCount} } = await axios(`${this.apiUrl}/utxos/script/${script}/count`);
+        return utxoCount;
     };
 
     async loadParents(rawtx: string): Promise<{script: string, satoshis: number}[]> {

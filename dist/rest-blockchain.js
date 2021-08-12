@@ -76,16 +76,23 @@ class RestBlockchain {
             await this.cache.set(cacheKey, spendTxId);
         return spendTxId;
     }
-    async utxos(script, limit = 1000) {
+    async utxos(script) {
         if (this.debug)
             console.log('UTXOS:', script);
-        const { data } = await fyx_axios_1.default(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
+        const { data } = await fyx_axios_1.default(`${this.apiUrl}/utxos/script/${script}`);
         return data.map(u => ({
             txid: u.txid,
             vout: u.vout,
             script: u.script,
             satoshis: u.satoshis
         }));
+    }
+    ;
+    async utxoCount(script) {
+        if (this.debug)
+            console.log('UTXOS:', script);
+        const { data: { utxoCount } } = await fyx_axios_1.default(`${this.apiUrl}/utxos/script/${script}/count`);
+        return utxoCount;
     }
     ;
     async loadParents(rawtx) {

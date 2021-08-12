@@ -13,4 +13,5 @@ export declare class LockingPurse {
     }[]): Promise<string>;
     utxos(): Promise<any>;
     balance(): Promise<number>;
+    utxoCount(): Promise<any>;
 }

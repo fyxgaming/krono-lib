@@ -32,6 +32,9 @@ class LockingPurse {
     async balance() {
         return this.blockchain.balance(this.address);
     }
+    async utxoCount() {
+        return this.blockchain.utxoCount(this.script);
+    }
 }
 exports.LockingPurse = LockingPurse;
 //# sourceMappingURL=locking-purse.js.map
