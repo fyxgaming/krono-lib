@@ -83,7 +83,7 @@ export class RestBlockchain {
         }));
     };
 
-    async utxoCount(script: string): Promise<IUTXO[]> {
+    async utxoCount(script: string): Promise<number> {
         if (this.debug) console.log('UTXOS:', script);
         const { data: {utxoCount} } = await axios(`${this.apiUrl}/utxos/script/${script}/count`);
         return utxoCount;
