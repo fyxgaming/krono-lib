@@ -19,10 +19,12 @@
     "buffer": "^6.0.3",
     "events": "^3.2.0",
     "http-errors": "^1.8.0",
+    "ioredis": "^4.27.8",
     "retry-axios": "^2.4.0"
   },
   "devDependencies": {
     "@types/events": "^3.0.0",
+    "@types/ioredis": "^4.26.7",
     "@types/node": "^13.5.2",
     "@types/node-fetch": "^2.5.7",
     "ts-node": "^8.6.2",
