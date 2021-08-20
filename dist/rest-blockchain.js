@@ -67,7 +67,7 @@ class RestBlockchain {
     async spends(txid, vout) {
         if (this.debug)
             console.log('SPENDS:', txid, vout);
-        const cacheKey = `spend://${txid}_${vout}`;
+        const cacheKey = `spend://${txid}_o${vout}`;
         let spend = await this.cache.get(cacheKey);
         if (spend)
             return spend;

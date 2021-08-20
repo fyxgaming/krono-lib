@@ -64,7 +64,7 @@ export class RestBlockchain {
 
     async spends(txid: string, vout: number): Promise<string | null> {
         if (this.debug) console.log('SPENDS:', txid, vout);
-        const cacheKey = `spend://${txid}_${vout}`;
+        const cacheKey = `spend://${txid}_o${vout}`;
         let spend = await this.cache.get(cacheKey);
         if (spend) return spend;
         const { data: { spendTxId } } = await axios(`${this.apiUrl}/spends/${txid}_o${vout}`);
