@@ -4,7 +4,7 @@ import createError from 'http-errors';
 
 // rax.attach();
 axios.interceptors.response.use((r) => r, (e) => {
-    if(e.response) throw createError(e.response.status, `${e.config.url} -  ${e.response.data}`)
+    if(e.response) throw createError(e.response.status, `${e.config.url} -  ${JSON.stringify(e.response.data)}`)
     throw e;
 });
 
