@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RestBlockchain = void 0;
 const bsv_1 = require("bsv");
+const buffer_1 = require("buffer");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 class RestBlockchain {
     constructor(apiUrl, network, cache = new Map(), debug = false) {
@@ -98,7 +99,7 @@ class RestBlockchain {
     async loadParents(rawtx) {
         const tx = bsv_1.Tx.fromHex(rawtx);
         return Promise.all(tx.txIns.map(async (txIn) => {
-            const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
+            const txid = buffer_1.Buffer.from(txIn.txHashBuf).reverse().toString('hex');
             const rawtx = await this.fetch(txid);
             const t = bsv_1.Tx.fromHex(rawtx);
             const txOut = t.txOuts[txIn.txOutNum];

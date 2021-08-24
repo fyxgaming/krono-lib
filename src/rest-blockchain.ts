@@ -1,4 +1,5 @@
 import { Br, Tx } from 'bsv';
+import { Buffer } from 'buffer';
 import axios from './fyx-axios';
 import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
@@ -85,23 +86,23 @@ export class RestBlockchain {
 
     async utxoCount(script: string): Promise<number> {
         if (this.debug) console.log('UTXOS:', script);
-        const { data: {utxoCount} } = await axios(`${this.apiUrl}/utxos/script/${script}/count`);
+        const { data: { utxoCount } } = await axios(`${this.apiUrl}/utxos/script/${script}/count`);
         return utxoCount;
     };
 
-    async loadParents(rawtx: string): Promise<{script: string, satoshis: number}[]> {
+    async loadParents(rawtx: string): Promise<{ script: string, satoshis: number }[]> {
         const tx = Tx.fromHex(rawtx);
         return Promise.all(tx.txIns.map(async txIn => {
             const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
             const rawtx = await this.fetch(txid);
             const t = Tx.fromHex(rawtx);
             const txOut = t.txOuts[txIn.txOutNum]
-            return {script: txOut.script.toHex(), satoshis: txOut.valueBn.toNumber()};
+            return { script: txOut.script.toHex(), satoshis: txOut.valueBn.toNumber() };
         }))
     }
 
-    async applyPayments(rawtx, payments: { from: string, amount: number}[], payer?: string, changeSplitSats = 0) {
-        const {data} = await axios.post(`${this.apiUrl}/pay`, {
+    async applyPayments(rawtx, payments: { from: string, amount: number }[], payer?: string, changeSplitSats = 0) {
+        const { data } = await axios.post(`${this.apiUrl}/pay`, {
             rawtx, payments, payer, changeSplitSats
         });
 
@@ -124,14 +125,14 @@ export class RestBlockchain {
     }
 
     async balance(script, scriptType = 'address'): Promise<number> {
-        const {data: {balance}} = await axios(`${this.apiUrl}/balance/${scriptType}/${script}`)
+        const { data: { balance } } = await axios(`${this.apiUrl}/balance/${scriptType}/${script}`)
         return balance;
     }
 
     async sendMessage(message: SignedMessage, postTo?: string): Promise<any> {
         const url = postTo || `${this.apiUrl}/messages`;
         console.log('Post TO:', url);
-        
+
         const { data } = await axios.post(url, message);
         return data;
     }
