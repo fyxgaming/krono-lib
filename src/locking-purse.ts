@@ -7,7 +7,8 @@ export class LockingPurse {
     constructor(
         public keyPair: KeyPair, 
         public blockchain: RestBlockchain, 
-        public changeSplitSats = 250000
+        public changeSplitSats = 250000,
+        public satsPerByte = 0.25
     ) {
         const address = Address.fromPrivKey(keyPair.privKey);
         this.script = address.toTxOutScript().toHex();
@@ -15,7 +16,7 @@ export class LockingPurse {
     }
 
     async pay (rawtx: string, parents: { satoshis: number, script: string }[]): Promise<string> {
-        rawtx = await this.blockchain.applyPayments(rawtx, [], this.address, this.changeSplitSats);
+        rawtx = await this.blockchain.applyPayments(rawtx, [], this.address, this.changeSplitSats, this.satsPerByte);
         parents = await this.blockchain.loadParents(rawtx);
         const tx = Tx.fromHex(rawtx);
         await Promise.all(tx.txIns.map(async (txIn, i) => {

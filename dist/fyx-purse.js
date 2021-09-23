@@ -8,8 +8,8 @@ const bsv_1 = require("bsv");
 const locking_purse_1 = require("./locking-purse");
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
 class FyxPurse extends locking_purse_1.LockingPurse {
-    constructor(keyPair, blockchain, changeSplitSats = 0) {
-        super(keyPair, blockchain, changeSplitSats);
+    constructor(keyPair, blockchain, changeSplitSats = 0, satsPerByte = 0.25) {
+        super(keyPair, blockchain, changeSplitSats, satsPerByte);
     }
     async pay(rawtx, parents) {
         var _a;

@@ -9,7 +9,8 @@ export class RestBlockchain {
         public apiUrl: string,
         public network: string,
         public cache: { get: (key: string) => any, set: (key: string, value: any) => any } = new Map<string, any>(),
-        protected debug = false
+        public mapiKey?: string,
+        protected debug = false,
     ) { }
 
     get bsvNetwork(): string {
@@ -25,7 +26,10 @@ export class RestBlockchain {
 
     async broadcast(rawtx) {
         if (this.debug) console.log('BROADCAST:', rawtx);
-        const { data: { txid } } = await axios.post(`${this.apiUrl}/broadcast`, { rawtx })
+        const { data: { txid } } = await axios.post(
+            `${this.apiUrl}/broadcast`, 
+            { rawtx, mapiKey: this.mapiKey }
+        );
         this.debug && console.log('Broadcast:', txid);
         await this.cache.set(`tx://${txid}`, rawtx);
         return txid;
@@ -101,9 +105,9 @@ export class RestBlockchain {
         }))
     }
 
-    async applyPayments(rawtx, payments: { from: string, amount: number }[], payer?: string, changeSplitSats = 0) {
+    async applyPayments(rawtx, payments: { from: string, amount: number }[], payer?: string, changeSplitSats = 0, satsPerByte = 0.25) {
         const { data } = await axios.post(`${this.apiUrl}/pay`, {
-            rawtx, payments, payer, changeSplitSats
+            rawtx, payments, payer, changeSplitSats, satsPerByte
         });
 
         return data.rawtx;

@@ -6,12 +6,14 @@ export class FyxPurse extends LockingPurse {
     constructor(
         keyPair: KeyPair, 
         blockchain: RestBlockchain, 
-        changeSplitSats = 0
+        changeSplitSats = 0,
+        satsPerByte = 0.25
     ) {
         super(
             keyPair, 
             blockchain, 
-            changeSplitSats
+            changeSplitSats,
+            satsPerByte
         );
     }
     

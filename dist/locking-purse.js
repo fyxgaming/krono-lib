@@ -3,16 +3,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LockingPurse = void 0;
 const bsv_1 = require("bsv");
 class LockingPurse {
-    constructor(keyPair, blockchain, changeSplitSats = 250000) {
+    constructor(keyPair, blockchain, changeSplitSats = 250000, satsPerByte = 0.25) {
         this.keyPair = keyPair;
         this.blockchain = blockchain;
         this.changeSplitSats = changeSplitSats;
+        this.satsPerByte = satsPerByte;
         const address = bsv_1.Address.fromPrivKey(keyPair.privKey);
         this.script = address.toTxOutScript().toHex();
         this.address = address.toString();
     }
     async pay(rawtx, parents) {
-        rawtx = await this.blockchain.applyPayments(rawtx, [], this.address, this.changeSplitSats);
+        rawtx = await this.blockchain.applyPayments(rawtx, [], this.address, this.changeSplitSats, this.satsPerByte);
         parents = await this.blockchain.loadParents(rawtx);
         const tx = bsv_1.Tx.fromHex(rawtx);
         await Promise.all(tx.txIns.map(async (txIn, i) => {

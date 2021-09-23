@@ -8,12 +8,13 @@ export declare class RestBlockchain {
         get: (key: string) => any;
         set: (key: string, value: any) => any;
     };
+    mapiKey?: string;
     protected debug: boolean;
     private requests;
     constructor(apiUrl: string, network: string, cache?: {
         get: (key: string) => any;
         set: (key: string, value: any) => any;
-    }, debug?: boolean);
+    }, mapiKey?: string, debug?: boolean);
     get bsvNetwork(): string;
     broadcast(rawtx: any): Promise<any>;
     retrieveOutputs(tx: Tx): Promise<[unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown, unknown]>;
@@ -29,7 +30,7 @@ export declare class RestBlockchain {
     applyPayments(rawtx: any, payments: {
         from: string;
         amount: number;
-    }[], payer?: string, changeSplitSats?: number): Promise<any>;
+    }[], payer?: string, changeSplitSats?: number, satsPerByte?: number): Promise<any>;
     loadJigData(loc: string, unspent?: boolean): Promise<any>;
     jigQuery(query: any): Promise<any>;
     fund(address: string, satoshis?: number): Promise<any>;

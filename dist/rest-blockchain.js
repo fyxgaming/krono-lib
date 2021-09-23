@@ -8,10 +8,11 @@ const bsv_1 = require("bsv");
 const buffer_1 = require("buffer");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 class RestBlockchain {
-    constructor(apiUrl, network, cache = new Map(), debug = false) {
+    constructor(apiUrl, network, cache = new Map(), mapiKey, debug = false) {
         this.apiUrl = apiUrl;
         this.network = network;
         this.cache = cache;
+        this.mapiKey = mapiKey;
         this.debug = debug;
         this.requests = new Map();
     }
@@ -28,7 +29,7 @@ class RestBlockchain {
     async broadcast(rawtx) {
         if (this.debug)
             console.log('BROADCAST:', rawtx);
-        const { data: { txid } } = await fyx_axios_1.default.post(`${this.apiUrl}/broadcast`, { rawtx });
+        const { data: { txid } } = await fyx_axios_1.default.post(`${this.apiUrl}/broadcast`, { rawtx, mapiKey: this.mapiKey });
         this.debug && console.log('Broadcast:', txid);
         await this.cache.set(`tx://${txid}`, rawtx);
         return txid;
@@ -106,9 +107,9 @@ class RestBlockchain {
             return { script: txOut.script.toHex(), satoshis: txOut.valueBn.toNumber() };
         }));
     }
-    async applyPayments(rawtx, payments, payer, changeSplitSats = 0) {
+    async applyPayments(rawtx, payments, payer, changeSplitSats = 0, satsPerByte = 0.25) {
         const { data } = await fyx_axios_1.default.post(`${this.apiUrl}/pay`, {
-            rawtx, payments, payer, changeSplitSats
+            rawtx, payments, payer, changeSplitSats, satsPerByte
         });
         return data.rawtx;
     }
