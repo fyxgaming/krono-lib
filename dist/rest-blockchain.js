@@ -52,7 +52,7 @@ class RestBlockchain {
             return rawtx;
         if (!this.requests.has(txid)) {
             const request = Promise.resolve().then(async () => {
-                const { data: { rawtx } } = await fyx_axios_1.default(`${this.apiUrl}/tx/${txid}`);
+                const { data: { rawtx } } = await (0, fyx_axios_1.default)(`${this.apiUrl}/tx/${txid}`);
                 await this.cache.set(`tx://${txid}`, rawtx);
                 this.requests.delete(txid);
                 return rawtx;
@@ -63,7 +63,7 @@ class RestBlockchain {
     }
     ;
     async time(txid) {
-        const { data: { time } } = await fyx_axios_1.default(`${this.apiUrl}/tx/${txid}`);
+        const { data: { time } } = await (0, fyx_axios_1.default)(`${this.apiUrl}/tx/${txid}`);
         return time;
     }
     async spends(txid, vout) {
@@ -73,7 +73,7 @@ class RestBlockchain {
         let spend = await this.cache.get(cacheKey);
         if (spend)
             return spend;
-        const { data: { spendTxId } } = await fyx_axios_1.default(`${this.apiUrl}/spends/${txid}_o${vout}`);
+        const { data: { spendTxId } } = await (0, fyx_axios_1.default)(`${this.apiUrl}/spends/${txid}_o${vout}`);
         if (spendTxId)
             await this.cache.set(cacheKey, spendTxId);
         return spendTxId;
@@ -81,7 +81,7 @@ class RestBlockchain {
     async utxos(script, limit = 1000) {
         if (this.debug)
             console.log('UTXOS:', script);
-        const { data } = await fyx_axios_1.default(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
+        const { data } = await (0, fyx_axios_1.default)(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
         return data.map(u => ({
             txid: u.txid,
             vout: u.vout,
@@ -93,7 +93,7 @@ class RestBlockchain {
     async utxoCount(script) {
         if (this.debug)
             console.log('UTXOS:', script);
-        const { data: { utxoCount } } = await fyx_axios_1.default(`${this.apiUrl}/utxos/script/${script}/count`);
+        const { data: { utxoCount } } = await (0, fyx_axios_1.default)(`${this.apiUrl}/utxos/script/${script}/count`);
         return utxoCount;
     }
     ;
@@ -114,7 +114,7 @@ class RestBlockchain {
         return data.rawtx;
     }
     async loadJigData(loc, unspent = false) {
-        const { data } = await fyx_axios_1.default(`${this.apiUrl}/jigs/${loc}?unspent=${unspent ? 'true' : ''}`);
+        const { data } = await (0, fyx_axios_1.default)(`${this.apiUrl}/jigs/${loc}?unspent=${unspent ? 'true' : ''}`);
         return data;
     }
     async jigQuery(query) {
@@ -122,11 +122,11 @@ class RestBlockchain {
         return data;
     }
     async fund(address, satoshis) {
-        const { data } = await fyx_axios_1.default(`${this.apiUrl}/fund/${address}${satoshis ? `?satoshis=${satoshis}` : ''}`);
+        const { data } = await (0, fyx_axios_1.default)(`${this.apiUrl}/fund/${address}${satoshis ? `?satoshis=${satoshis}` : ''}`);
         return data;
     }
     async balance(script, scriptType = 'address') {
-        const { data: { balance } } = await fyx_axios_1.default(`${this.apiUrl}/balance/${scriptType}/${script}`);
+        const { data: { balance } } = await (0, fyx_axios_1.default)(`${this.apiUrl}/balance/${scriptType}/${script}`);
         return balance;
     }
     async sendMessage(message, postTo) {

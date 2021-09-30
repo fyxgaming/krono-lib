@@ -27,7 +27,7 @@ class RestStateCache {
             const request = (async () => {
                 let value;
                 try {
-                    const resp = await fyx_axios_1.default(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
+                    const resp = await (0, fyx_axios_1.default)(`${this.apiUrl}/state/${encodeURIComponent(key)}`);
                     value = resp.data;
                     if (this.debug)
                         console.log('Remote Hit:', key);
