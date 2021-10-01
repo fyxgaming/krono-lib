@@ -28,8 +28,9 @@ const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const run_sdk_1 = __importDefault(require("run-sdk"));
-const { API_KEY, BLOCKCHAIN_BUCKET, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
+const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
+const sqs = new AWS.SQS({ apiVersion: '2012-11-05' });
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
@@ -52,6 +53,11 @@ class FyxBlockchain {
         const txid = tx.id();
         console.log('Broadcasting:', txid, rawtx);
         const spends = tx.txIns.map(t => `${new bsv_1.Br(t.txHashBuf).readReverse().toString('hex')}_o${t.txOutNum}`);
+        // Verify no inputs have already been spent
+        await Promise.all(['outputs', 'txos'].map(coll => this.mongo.db('blockchain').collection(coll).findOne({ _id: { $in: spends }, spendTxId: { $ne: null } }, { projection: { _id: true } }).then(invalidInput => {
+            if (invalidInput)
+                throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${invalidInput._id}`);
+        })));
         const ts = Date.now();
         // Precalculate DB updates
         const outScripts = tx.txOuts
@@ -189,6 +195,12 @@ class FyxBlockchain {
             await sns.publish({
                 TopicArn: JIG_TOPIC !== null && JIG_TOPIC !== void 0 ? JIG_TOPIC : '',
                 Message: JSON.stringify({ txid })
+            }).promise();
+        }
+        if (BROADCAST_QUEUE) {
+            await sqs.sendMessage({
+                QueueUrl: BROADCAST_QUEUE || '',
+                MessageBody: JSON.stringify({ txid })
             }).promise();
         }
         return txid;
