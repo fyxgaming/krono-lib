@@ -7,10 +7,10 @@ import { MongoClient } from "mongodb";
 import axios from './fyx-axios';
 import Run from 'run-sdk';
 import { IBlockchain } from './iblockchain';
-import { IUTXO } from './interfaces';
 
-const { API_KEY, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
+const { API_KEY, BLOCKCHAIN_BUCKET, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
+const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
@@ -159,8 +159,13 @@ export class FyxBlockchain implements IBlockchain {
         await Promise.all([
             this.mongo.db('blockchain').collection('txos').bulkWrite(txoUpdates),
             this.mongo.db('blockchain').collection('outputs').bulkWrite(outputUpdates),
-            this.redis.set(`tx://${txid}`, tx.toHex()),
-            this.redis.publish('txn', txid)
+            this.redis.set(`tx://${txid}`, rawtx),
+            this.redis.publish('txn', txid),
+            Promise.resolve().then(async () => BLOCKCHAIN_BUCKET && s3.putObject({
+                Bucket: BLOCKCHAIN_BUCKET,
+                Key: `tx/${txid}`,
+                Body: rawtx
+            }).promise())
         ]);
 
         if (JIG_TOPIC && isRun) {
@@ -175,7 +180,7 @@ export class FyxBlockchain implements IBlockchain {
     async fetch(txid: string) {
         let rawtx = await this.redis.get(`tx://${txid}`);
         if (rawtx) return rawtx;
-        if(this.rpcClient) {
+        if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
@@ -303,7 +308,7 @@ export class FyxBlockchain implements IBlockchain {
             return { script: txOut.script.toHex(), satoshis: txOut.valueBn.toNumber() };
         }))
     }
-    
+
     async loadParentTxOuts(tx): Promise<any[]> {
         return Promise.all(tx.txIns.map(async txIn => {
             const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');

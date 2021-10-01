@@ -28,8 +28,9 @@ const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const run_sdk_1 = __importDefault(require("run-sdk"));
-const { API_KEY, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
+const { API_KEY, BLOCKCHAIN_BUCKET, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
+const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
@@ -176,8 +177,13 @@ class FyxBlockchain {
         await Promise.all([
             this.mongo.db('blockchain').collection('txos').bulkWrite(txoUpdates),
             this.mongo.db('blockchain').collection('outputs').bulkWrite(outputUpdates),
-            this.redis.set(`tx://${txid}`, tx.toHex()),
-            this.redis.publish('txn', txid)
+            this.redis.set(`tx://${txid}`, rawtx),
+            this.redis.publish('txn', txid),
+            Promise.resolve().then(async () => BLOCKCHAIN_BUCKET && s3.putObject({
+                Bucket: BLOCKCHAIN_BUCKET,
+                Key: `tx/${txid}`,
+                Body: rawtx
+            }).promise())
         ]);
         if (JIG_TOPIC && isRun) {
             await sns.publish({
