@@ -1,7 +1,8 @@
 import { Tx } from 'bsv';
+import { IBlockchain } from './iblockchain';
 import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
-export declare class RestBlockchain {
+export declare class RestBlockchain implements IBlockchain {
     apiUrl: string;
     network: string;
     cache: {
@@ -21,7 +22,7 @@ export declare class RestBlockchain {
     fetch(txid: string): Promise<any>;
     time(txid: string): Promise<number>;
     spends(txid: string, vout: number): Promise<string | null>;
-    utxos(script: string, limit?: number): Promise<IUTXO[]>;
+    utxos(owner: string, ownerType?: string, limit?: number): Promise<IUTXO[]>;
     utxoCount(script: string): Promise<number>;
     loadParents(rawtx: string): Promise<{
         script: string;

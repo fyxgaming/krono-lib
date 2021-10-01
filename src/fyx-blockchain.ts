@@ -6,6 +6,8 @@ import { Redis } from 'ioredis';
 import { MongoClient } from "mongodb";
 import axios from './fyx-axios';
 import Run from 'run-sdk';
+import { IBlockchain } from './iblockchain';
+import { IUTXO } from './interfaces';
 
 const { API_KEY, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
@@ -15,14 +17,13 @@ const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
 const LOCK_TIME = 60000;
-// const SATS_PER_BYTE = 0.5
 const MAX_SPLITS = 100;
 
 const runBuf = Buffer.from('run', 'utf8');
 const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
 const fyxBuf = Buffer.from('fyx', 'utf8');
 
-export class FyxBlockchain {
+export class FyxBlockchain implements IBlockchain {
     constructor(public network: string, private mongo: MongoClient, private redis: Redis, private rpcClient?: RpcClient) { }
 
     async broadcast(rawtx: string, mapiKey?: string) {
@@ -206,7 +207,7 @@ export class FyxBlockchain {
         }
 
         const db = this.mongo.db('blockchain');
-        const utxos = await db.collection('txos').find(
+        const utxos: any[] = await db.collection('txos').find(
             { scripthash, spendTxId: null },
             {
                 projection: {
@@ -292,6 +293,17 @@ export class FyxBlockchain {
         return Date.now();
     }
 
+    async loadParents(rawtx: string): Promise<{ script: string, satoshis: number }[]> {
+        const tx = Tx.fromHex(rawtx);
+        return Promise.all(tx.txIns.map(async txIn => {
+            const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
+            const rawtx = await this.fetch(txid);
+            const t = Tx.fromHex(rawtx);
+            const txOut = t.txOuts[txIn.txOutNum]
+            return { script: txOut.script.toHex(), satoshis: txOut.valueBn.toNumber() };
+        }))
+    }
+    
     async loadParentTxOuts(tx): Promise<any[]> {
         return Promise.all(tx.txIns.map(async txIn => {
             const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');

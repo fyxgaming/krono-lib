@@ -1,11 +1,11 @@
 import { KeyPair, Script, Tx } from 'bsv';
+import { IBlockchain } from './iblockchain';
 import { LockingPurse } from './locking-purse';
 import orderLockRegex from './order-lock-regex';
-import { RestBlockchain } from './rest-blockchain';
 export class FyxPurse extends LockingPurse {
     constructor(
         keyPair: KeyPair, 
-        blockchain: RestBlockchain, 
+        blockchain: IBlockchain, 
         changeSplitSats = 0,
         satsPerByte = 0.25
     ) {

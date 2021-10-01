@@ -1,9 +1,10 @@
 import { Br, Tx } from 'bsv';
 import { Buffer } from 'buffer';
 import axios from './fyx-axios';
+import { IBlockchain } from './iblockchain';
 import { IUTXO } from './interfaces';
 import { SignedMessage } from './signed-message';
-export class RestBlockchain {
+export class RestBlockchain implements IBlockchain {
     private requests = new Map<string, Promise<any>>();
     constructor(
         public apiUrl: string,
@@ -77,9 +78,9 @@ export class RestBlockchain {
         return spendTxId;
     }
 
-    async utxos(script: string, limit = 1000): Promise<IUTXO[]> {
-        if (this.debug) console.log('UTXOS:', script);
-        const { data } = await axios(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
+    async utxos(owner: string, ownerType = 'script', limit = 1000): Promise<IUTXO[]> {
+        if (this.debug) console.log('UTXOS:', owner);
+        const { data } = await axios(`${this.apiUrl}/utxos/${ownerType}/${owner}?limit=${limit}`);
         return data.map(u => ({
             txid: u.txid,
             vout: u.vout,

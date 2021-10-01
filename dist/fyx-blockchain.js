@@ -35,7 +35,6 @@ const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
 const LOCK_TIME = 60000;
-// const SATS_PER_BYTE = 0.5
 const MAX_SPLITS = 100;
 const runBuf = Buffer.from('run', 'utf8');
 const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
@@ -291,6 +290,16 @@ class FyxBlockchain {
     // TODO: Figure out what to do with this
     async time(txid) {
         return Date.now();
+    }
+    async loadParents(rawtx) {
+        const tx = bsv_1.Tx.fromHex(rawtx);
+        return Promise.all(tx.txIns.map(async (txIn) => {
+            const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
+            const rawtx = await this.fetch(txid);
+            const t = bsv_1.Tx.fromHex(rawtx);
+            const txOut = t.txOuts[txIn.txOutNum];
+            return { script: txOut.script.toHex(), satoshis: txOut.valueBn.toNumber() };
+        }));
     }
     async loadParentTxOuts(tx) {
         return Promise.all(tx.txIns.map(async (txIn) => {

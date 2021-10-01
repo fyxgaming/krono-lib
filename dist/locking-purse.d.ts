@@ -1,13 +1,13 @@
 import { KeyPair } from 'bsv';
-import { RestBlockchain } from './rest-blockchain';
+import { IBlockchain } from './iblockchain';
 export declare class LockingPurse {
     keyPair: KeyPair;
-    blockchain: RestBlockchain;
+    blockchain: IBlockchain;
     changeSplitSats: number;
     satsPerByte: number;
     address: string;
     private script;
-    constructor(keyPair: KeyPair, blockchain: RestBlockchain, changeSplitSats?: number, satsPerByte?: number);
+    constructor(keyPair: KeyPair, blockchain: IBlockchain, changeSplitSats?: number, satsPerByte?: number);
     pay(rawtx: string, parents: {
         satoshis: number;
         script: string;

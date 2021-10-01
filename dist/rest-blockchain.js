@@ -78,10 +78,10 @@ class RestBlockchain {
             await this.cache.set(cacheKey, spendTxId);
         return spendTxId;
     }
-    async utxos(script, limit = 1000) {
+    async utxos(owner, ownerType = 'script', limit = 1000) {
         if (this.debug)
-            console.log('UTXOS:', script);
-        const { data } = await (0, fyx_axios_1.default)(`${this.apiUrl}/utxos/script/${script}?limit=${limit}`);
+            console.log('UTXOS:', owner);
+        const { data } = await (0, fyx_axios_1.default)(`${this.apiUrl}/utxos/${ownerType}/${owner}?limit=${limit}`);
         return data.map(u => ({
             txid: u.txid,
             vout: u.vout,

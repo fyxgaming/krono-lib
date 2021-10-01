@@ -1,12 +1,12 @@
 import { Address, Bn, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
-import { RestBlockchain } from './rest-blockchain';
+import { IBlockchain } from './iblockchain';
 
 export class LockingPurse {
     address: string;
     private script: string;
     constructor(
         public keyPair: KeyPair, 
-        public blockchain: RestBlockchain, 
+        public blockchain: IBlockchain, 
         public changeSplitSats = 250000,
         public satsPerByte = 0.25
     ) {
