@@ -6,6 +6,7 @@ import { Redis } from 'ioredis';
 import { MongoClient } from "mongodb";
 import axios from './fyx-axios';
 import Run from 'run-sdk';
+import cookieparser from 'set-cookie-parser';
 import { IBlockchain } from './iblockchain';
 
 const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
@@ -18,6 +19,7 @@ const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
 const LOCK_TIME = 60000;
+// const SATS_PER_BYTE = 0.5
 const MAX_SPLITS = 100;
 
 const runBuf = Buffer.from('run', 'utf8');
@@ -35,11 +37,11 @@ export class FyxBlockchain implements IBlockchain {
 
         // Verify no inputs have already been spent
         await Promise.all(['outputs', 'txos'].map(coll => this.mongo.db('blockchain').collection(coll).findOne(
-                {_id: {$in: spends}, spendTxId: {$ne: null}},
-                { projection: {_id: true}}
-            ).then(invalidInput => {
-                if(invalidInput) throw createError(422, `Input already spent: ${txid} - ${invalidInput._id}`);
-            })
+            { _id: { $in: spends }, spendTxId: { $ne: null } },
+            { projection: { _id: true } }
+        ).then(invalidInput => {
+            if (invalidInput) throw createError(422, `Input already spent: ${txid} - ${invalidInput._id}`);
+        })
         ));
 
         const ts = Date.now();
@@ -119,22 +121,29 @@ export class FyxBlockchain implements IBlockchain {
 
         // Broadcast transaction
         if (MAPI) {
-            let resp;
+            let resp, axiosInstance = axios.create({ withCredentials: true });
+            let cookie = JSON.parse((await this.redis.get(`taal-elb-cookie`)) || '[]');
+            let headerConfig = { 'Content-type': 'application/json' };
+            if (Array.isArray(cookie) && cookie.length > 0) headerConfig['Cookie'] = cookie.join('; '); // this will set the cookie as "cookie1=val1; cookie2=val2; "
             const config: any = {
                 url: `${MAPI}/tx`,
                 method: 'POST',
                 data: { rawtx },
-                headers: {
-                    'Content-type': 'application/json',
-                },
+                headers: headerConfig
             };
             mapiKey = mapiKey || MAPI_KEY;
             console.log('MAPI_KEY:', mapiKey);
             if (mapiKey) config.headers['Authorization'] = `Bearer ${mapiKey}`;
             for (let retry = 0; retry < 3; retry++) {
                 try {
-                    resp = await axios(config);
-
+                    resp = await axiosInstance(config);
+                    console.log(`Response from Axios call to Taal - ${JSON.stringify(resp.headers)}`);
+                    let respCookie = cookieparser.parse(resp).map(cookie => `${cookie.name}=${cookie.value}`);
+                    if (Array.isArray(respCookie) && respCookie.length > 0) {
+                        console.log(`Saving response cookie from Taal - ${JSON.stringify(respCookie)}`)
+                        await this.redis.set('taal-elb-cookie', JSON.stringify(respCookie));
+                    }
+                    else console.log(`No cookie set in the response header from Taal. Retaining previously set value - ${cookie.join('; ')}`);
                     console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
                     break;
                 } catch (e: any) {
@@ -185,7 +194,7 @@ export class FyxBlockchain implements IBlockchain {
                 Message: JSON.stringify({ txid })
             }).promise();
         }
-        if(BROADCAST_QUEUE) {
+        if (BROADCAST_QUEUE) {
             await sqs.sendMessage({
                 QueueUrl: BROADCAST_QUEUE || '',
                 MessageBody: JSON.stringify({ txid })
@@ -200,6 +209,25 @@ export class FyxBlockchain implements IBlockchain {
         if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
+        }
+
+        if (this.network === 'main') {
+            const { data: { result, error } } = await axios({
+                url: 'https://tapi.taal.com/bitcoin',
+                method: 'POST',
+                data: {
+                    jsonrpc: '1.0',
+                    id: txid,
+                    method: 'getrawtransaction',
+                    params: [txid]
+                },
+                headers: { 
+                    'Content-type': 'application/json',
+                    Authorization: MAPI_KEY
+                }
+            });
+            if (error) console.error('TAPI Fetch error:', error)
+            if (result) rawtx = result;
         }
 
         if (!rawtx) {

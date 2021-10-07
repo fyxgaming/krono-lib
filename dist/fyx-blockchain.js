@@ -28,6 +28,7 @@ const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const run_sdk_1 = __importDefault(require("run-sdk"));
+const set_cookie_parser_1 = __importDefault(require("set-cookie-parser"));
 const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
 const sqs = new AWS.SQS({ apiVersion: '2012-11-05' });
@@ -37,6 +38,7 @@ const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
 const LOCK_TIME = 60000;
+// const SATS_PER_BYTE = 0.5
 const MAX_SPLITS = 100;
 const runBuf = Buffer.from('run', 'utf8');
 const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
@@ -127,14 +129,16 @@ class FyxBlockchain {
         }
         // Broadcast transaction
         if (MAPI) {
-            let resp;
+            let resp, axiosInstance = fyx_axios_1.default.create({ withCredentials: true });
+            let cookie = JSON.parse((await this.redis.get(`taal-elb-cookie`)) || '[]');
+            let headerConfig = { 'Content-type': 'application/json' };
+            if (Array.isArray(cookie) && cookie.length > 0)
+                headerConfig['Cookie'] = cookie.join('; '); // this will set the cookie as "cookie1=val1; cookie2=val2; "
             const config = {
                 url: `${MAPI}/tx`,
                 method: 'POST',
                 data: { rawtx },
-                headers: {
-                    'Content-type': 'application/json',
-                },
+                headers: headerConfig
             };
             mapiKey = mapiKey || MAPI_KEY;
             console.log('MAPI_KEY:', mapiKey);
@@ -142,7 +146,15 @@ class FyxBlockchain {
                 config.headers['Authorization'] = `Bearer ${mapiKey}`;
             for (let retry = 0; retry < 3; retry++) {
                 try {
-                    resp = await (0, fyx_axios_1.default)(config);
+                    resp = await axiosInstance(config);
+                    console.log(`Response from Axios call to Taal - ${JSON.stringify(resp.headers)}`);
+                    let respCookie = set_cookie_parser_1.default.parse(resp).map(cookie => `${cookie.name}=${cookie.value}`);
+                    if (Array.isArray(respCookie) && respCookie.length > 0) {
+                        console.log(`Saving response cookie from Taal - ${JSON.stringify(respCookie)}`);
+                        await this.redis.set('taal-elb-cookie', JSON.stringify(respCookie));
+                    }
+                    else
+                        console.log(`No cookie set in the response header from Taal. Retaining previously set value - ${cookie.join('; ')}`);
                     console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
                     break;
                 }
@@ -212,6 +224,26 @@ class FyxBlockchain {
         if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
+        }
+        if (this.network === 'main') {
+            const { data: { result, error } } = await (0, fyx_axios_1.default)({
+                url: 'https://tapi.taal.com/bitcoin',
+                method: 'POST',
+                data: {
+                    jsonrpc: '1.0',
+                    id: txid,
+                    method: 'getrawtransaction',
+                    params: [txid]
+                },
+                headers: {
+                    'Content-type': 'application/json',
+                    Authorization: MAPI_KEY
+                }
+            });
+            if (error)
+                console.error('TAPI Fetch error:', error);
+            if (result)
+                rawtx = result;
         }
         if (!rawtx) {
             console.log('Fallback to WoC');
