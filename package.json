@@ -24,7 +24,7 @@
     "ioredis": "^4.27.8",
     "mongodb": "^4.1.2",
     "retry-axios": "^2.4.0",
-    "run-sdk": "^0.6.32",
+    "run-sdk": "0.6.28",
     "set-cookie-parser": "^2.4.8"
   },
   "devDependencies": {
