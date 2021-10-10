@@ -5,11 +5,11 @@ import { Redis } from "ioredis";
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
 export class FyxCache {
-    constructor(private bucket: string, private redis: Redis) {}
+    constructor(private redis: Redis, private bucket?: string) {}
     async get(key) {
         if(key.startsWith('ban://')) return;
         let value = await this.redis.get(key);
-        if (!value) {
+        if (!value && this.bucket) {
             const obj = await s3.getObject({
                 Bucket: this.bucket,
                 Key: `state/${key}`
@@ -25,11 +25,13 @@ export class FyxCache {
     async set(key :string, value) {
         if(key.startsWith('ban://')) return;
         const valueString = JSON.stringify(value);
-        await s3.putObject({
-            Bucket: this.bucket,
-            Key: `state/${key}`,
-            Body: valueString
-        }).promise();
+        if(this.bucket) {
+            await s3.putObject({
+                Bucket: this.bucket,
+                Key: `state/${key}`,
+                Body: valueString
+            }).promise();
+        }
         await this.redis.set(key, valueString);
     }
 

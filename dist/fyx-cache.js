@@ -23,15 +23,15 @@ exports.FyxCache = void 0;
 const AWS = __importStar(require("aws-sdk"));
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 class FyxCache {
-    constructor(bucket, redis) {
-        this.bucket = bucket;
+    constructor(redis, bucket) {
         this.redis = redis;
+        this.bucket = bucket;
     }
     async get(key) {
         if (key.startsWith('ban://'))
             return;
         let value = await this.redis.get(key);
-        if (!value) {
+        if (!value && this.bucket) {
             const obj = await s3.getObject({
                 Bucket: this.bucket,
                 Key: `state/${key}`
@@ -48,11 +48,13 @@ class FyxCache {
         if (key.startsWith('ban://'))
             return;
         const valueString = JSON.stringify(value);
-        await s3.putObject({
-            Bucket: this.bucket,
-            Key: `state/${key}`,
-            Body: valueString
-        }).promise();
+        if (this.bucket) {
+            await s3.putObject({
+                Bucket: this.bucket,
+                Key: `state/${key}`,
+                Body: valueString
+            }).promise();
+        }
         await this.redis.set(key, valueString);
     }
 }
