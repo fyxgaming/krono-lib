@@ -8,6 +8,7 @@ import axios from './fyx-axios';
 import Run from 'run-sdk';
 import cookieparser from 'set-cookie-parser';
 import { IBlockchain } from './iblockchain';
+import { FyxCache } from './fyx-cache';
 
 const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
@@ -27,7 +28,7 @@ const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
 const fyxBuf = Buffer.from('fyx', 'utf8');
 
 export class FyxBlockchain implements IBlockchain {
-    constructor(public network: string, private mongo: MongoClient, private redis: Redis, private rpcClient?: RpcClient) { }
+    constructor(public network: string, private mongo: MongoClient, private redis: Redis, private cache: FyxCache, private rpcClient?: RpcClient) { }
 
     async broadcast(rawtx: string, mapiKey?: string) {
         const tx = Tx.fromHex(rawtx);
@@ -179,7 +180,7 @@ export class FyxBlockchain implements IBlockchain {
         await Promise.all([
             this.mongo.db('blockchain').collection('txos').bulkWrite(txoUpdates),
             this.mongo.db('blockchain').collection('outputs').bulkWrite(outputUpdates),
-            this.redis.set(`tx://${txid}`, rawtx),
+            this.cache.set(`tx://${txid}`, rawtx),
             this.redis.publish('txn', txid),
             Promise.resolve().then(async () => BLOCKCHAIN_BUCKET && s3.putObject({
                 Bucket: BLOCKCHAIN_BUCKET,
@@ -204,7 +205,7 @@ export class FyxBlockchain implements IBlockchain {
     }
 
     async fetch(txid: string) {
-        let rawtx = await this.redis.get(`tx://${txid}`);
+        let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx) return rawtx;
         if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
@@ -239,7 +240,7 @@ export class FyxBlockchain implements IBlockchain {
             rawtx = data;
         }
         if (!rawtx) throw new createError.NotFound();
-        await this.redis.set(`tx://${txid}`, rawtx);
+        await this.cache.set(`tx://${txid}`, rawtx);
         return rawtx;
     }
 

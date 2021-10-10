@@ -44,10 +44,11 @@ const runBuf = Buffer.from('run', 'utf8');
 const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
 const fyxBuf = Buffer.from('fyx', 'utf8');
 class FyxBlockchain {
-    constructor(network, mongo, redis, rpcClient) {
+    constructor(network, mongo, redis, cache, rpcClient) {
         this.network = network;
         this.mongo = mongo;
         this.redis = redis;
+        this.cache = cache;
         this.rpcClient = rpcClient;
     }
     async broadcast(rawtx, mapiKey) {
@@ -195,7 +196,7 @@ class FyxBlockchain {
         await Promise.all([
             this.mongo.db('blockchain').collection('txos').bulkWrite(txoUpdates),
             this.mongo.db('blockchain').collection('outputs').bulkWrite(outputUpdates),
-            this.redis.set(`tx://${txid}`, rawtx),
+            this.cache.set(`tx://${txid}`, rawtx),
             this.redis.publish('txn', txid),
             Promise.resolve().then(async () => BLOCKCHAIN_BUCKET && s3.putObject({
                 Bucket: BLOCKCHAIN_BUCKET,
@@ -218,7 +219,7 @@ class FyxBlockchain {
         return txid;
     }
     async fetch(txid) {
-        let rawtx = await this.redis.get(`tx://${txid}`);
+        let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx)
             return rawtx;
         if (this.rpcClient) {
@@ -252,7 +253,7 @@ class FyxBlockchain {
         }
         if (!rawtx)
             throw new http_errors_1.default.NotFound();
-        await this.redis.set(`tx://${txid}`, rawtx);
+        await this.cache.set(`tx://${txid}`, rawtx);
         return rawtx;
     }
     async utxos(owner, ownerType = 'script', limit = 1000) {
