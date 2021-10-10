@@ -38,7 +38,6 @@ const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
 const LOCK_TIME = 60000;
-// const SATS_PER_BYTE = 0.5
 const MAX_SPLITS = 100;
 const runBuf = Buffer.from('run', 'utf8');
 const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
@@ -139,7 +138,8 @@ class FyxBlockchain {
                 url: `${MAPI}/tx`,
                 method: 'POST',
                 data: { rawtx },
-                headers: headerConfig
+                headers: headerConfig,
+                timeout: 5000
             };
             mapiKey = mapiKey || MAPI_KEY;
             console.log('MAPI_KEY:', mapiKey);
