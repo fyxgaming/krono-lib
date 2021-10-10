@@ -3,8 +3,12 @@ import * as AWS from 'aws-sdk';
 import { Redis } from "ioredis";
 
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+export interface ICache {
+    get(key: string): Promise<any>;
+    set(key:string, value: any): Promise<void>;
+}
 export class FyxCache {
-    constructor(private redis: Redis, private localCache?, private bucket?: string) {}
+    constructor(private redis: Redis, private localCache?: ICache, private bucket?: string) {}
     async get(key: string) {
         if(key.startsWith('ban://')) return;
         if(this.localCache) {
