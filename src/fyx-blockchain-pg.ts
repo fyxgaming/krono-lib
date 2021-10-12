@@ -274,9 +274,9 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async spends(txid: string, vout: number | string) {
-        const [row] = this.sql`
+        const [row] = await this.sql`
             SELECT spend_txid FROM txos
-            WHERE txid = decode(${txid}, 'hex')} AND vout = ${vout}`
+            WHERE txid = decode(${txid}, 'hex')} AND vout = ${vout}`;
 
         return row?.spendTxId;
     }

@@ -280,7 +280,7 @@ class FyxBlockchainPg {
         return balance || 0;
     }
     async spends(txid, vout) {
-        const [row] = this.sql `
+        const [row] = await this.sql `
             SELECT spend_txid FROM txos
             WHERE txid = decode(${txid}, 'hex')} AND vout = ${vout}`;
         return row === null || row === void 0 ? void 0 : row.spendTxId;
