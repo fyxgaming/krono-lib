@@ -1,5 +1,5 @@
 import * as AWS from 'aws-sdk';
-import { Address, Bn, Br, Hash, Script, Tx, TxIn } from 'bsv';
+import { Address, Bn, Hash, Script, Tx, TxIn } from 'bsv';
 import RpcClient from 'bitcoin-core';
 import createError from 'http-errors';
 import { Redis } from 'ioredis';
@@ -9,7 +9,7 @@ import cookieparser from 'set-cookie-parser';
 import { IBlockchain } from './iblockchain';
 import { FyxCache } from './fyx-cache';
 
-const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
+const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
 const sqs = new AWS.SQS({ apiVersion: '2012-11-05' });
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
@@ -34,46 +34,44 @@ export class FyxBlockchainPg implements IBlockchain {
         const txidBuf = Buffer.from(txid, 'hex');
         console.log('Broadcasting:', txid, rawtx);
 
-        const derivations = await this.sql`
-            SELECT pubkey, encode(script, 'hex') as script FROM derivations
-            WHERE script IN (
-                ${tx.txOuts
-                .filter(txOut => txOut.script.isPubKeyHashOut())
-                .map(txOut => txOut.script.toBuffer())}
-            )`;
-        // If transaction doesn't apply to our users, throw Forbidden
-        if (!derivations.count) throw new createError.Forbidden();
-        const scriptHashes = new Map<string, any>();
-        derivations.forEach(d => scriptHashes.set(d.script, d.id));
+        const [{ count }] = await this.sql`
+            SELECT count(scripthash) as countFROM derivations
+            WHERE script IN (${
+                tx.txOuts
+                    .filter(txOut => txOut.script.isPubKeyHashOut())
+                    .map(txOut => txOut.script.toBuffer())
+            })`;
 
-        // Find any inputs which are already spent, unless it is a rebroadcast
         const spends = tx.txIns.map(t => ({
             txid: Buffer.from(t.txHashBuf).reverse(),
             vout: t.txOutNum,
             spend_txid: txidBuf
         }));
-        const spendValues = spends.map(s => `(decode('${s.txid.toString('hex')}', 'hex'), ${s.vout}})`).join(', '); 
-        // const spendsWhere = spends.map(s => `(txid=decode('${s.txid.toString('hex')}', 'hex') AND vout=${s.vout}})`).join(' OR ');
-        let query = `SELECT t.txid, t.vout FROM txos t
-            JOIN (VALUES ${spendValues}) as s(txid, vout) 
-                ON s.txid = t.txid AND s.vout = t.vout
-            WHERE t.spend_txid IS NULL AND t.spend_txid != decode('${txid}'', 'hex')`;
+
+        // Find inputs
+        const spendValues = spends.map(s => `(decode('${s.txid.toString('hex')}', 'hex'), ${s.vout}})`).join(', ');
+        let query = `SELECT t.txid, t.vout, t.spend_txid FROM txos t
+            JOIN (VALUES ${spendValues}) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
         console.log('Spends Query:', query);
         const spentIns = await this.sql.unsafe(query);
-        if (spentIns.count) {
-            throw createError(422, `Input already spent: ${txid} - ${spentIns.rows[0].txid.toString('hex')} ${spentIns.rows[0].vout}`);
+
+        // Throw error if this transaction doesn't create outputs for our users or spend exiting outputs
+        if (!count && !spentIns.count) throw new createError.Forbidden();
+
+        // Throw error if any input is already spent, unless this is a rebroadcast
+        if (spentIns.find(s => s.spend_txid !== null && s.spend_txid.toString('hex') !== txid)) {
+            throw createError(422, `Input already spent: ${txid} - ${spentIns[0].txid.toString('hex')} ${spentIns[0].vout}`);
         }
 
         const utxos = [];
         tx.txOuts.forEach((txOut: any, vout: number) => {
             if (!txOut.script.isPubKeyHashOut()) return;
-            let scripthash = scriptHashes.get(txOut.script.toHex());
-            if (!scripthash) return;
+            const script = txOut.script.toBuffer()
             utxos.push({
                 txid: Buffer.from(txid, 'hex'),
                 vout,
-                script: txOut.script.toBuffer(),
-                scripthash: Buffer.from(scripthash, 'hex'),
+                script,
+                scripthash: Hash.sha256(script).reverse(),
                 satoshis: txOut.valueBn.toNumber(),
             });
         });
@@ -88,7 +86,11 @@ export class FyxBlockchainPg implements IBlockchain {
             const config: any = {
                 url: `${MAPI}/tx`,
                 method: 'POST',
-                data: { rawtx },
+                data: {
+                    rawtx,
+                    callBackUrl: `${API}/mapi-callback`,
+                    callBackToken: CALLBACK_TOKEN
+                },
                 headers: headerConfig,
                 timeout: 5000
             };
@@ -139,14 +141,12 @@ export class FyxBlockchainPg implements IBlockchain {
 
         await Promise.all([
             this.sql`
-                INSERT INTO txos ${
-                    this.sql(spends, 'txid', 'vout', 'spend_txid')
+                INSERT INTO txos ${this.sql(spends, 'txid', 'vout', 'spend_txid')
                 }
                 ON CONFLICT(txid, vout) DO UPDATE 
                     SET spend_txid = EXCLUDED.spend_txid`,
             this.sql`
-                INSERT INTO txos ${
-                    this.sql(utxos, 'txid', 'vout', 'scripthash', 'satoshis')
+                INSERT INTO txos ${this.sql(utxos, 'txid', 'vout', 'scripthash', 'satoshis')
                 }
                 ON CONFLICT(txid, vout) DO UPDATE 
                     SET scripthash = EXCLUDED.scripthash,
@@ -197,25 +197,6 @@ export class FyxBlockchainPg implements IBlockchain {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
-
-        // if (!rawtx && this.network === 'main') {
-        //     const { data: { result, error } } = await axios({
-        //         url: 'https://tapi.taal.com/bitcoin',
-        //         method: 'POST',
-        //         data: {
-        //             jsonrpc: '1.0',
-        //             id: txid,
-        //             method: 'getrawtransaction',
-        //             params: [txid]
-        //         },
-        //         headers: {
-        //             'Content-type': 'application/json',
-        //             Authorization: MAPI_KEY
-        //         }
-        //     });
-        //     if (error) console.error('TAPI Fetch error:', error)
-        //     if (result) rawtx = result;
-        // }
 
         if (!rawtx) {
             console.log('Fallback to WoC Public');
@@ -304,7 +285,7 @@ export class FyxBlockchainPg implements IBlockchain {
         }))
     }
 
-    async findAndLockUtxo(scripthash: Buffer): Promise<{txid: Buffer, vout: number, satoshis: number}> {
+    async findAndLockUtxo(scripthash: Buffer): Promise<{ txid: Buffer, vout: number, satoshis: number }> {
         return this.sql.begin(async sql => {
             const [utxo] = await sql`
                 SELECT txid, vout, satoshis FROM txos

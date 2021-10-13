@@ -28,7 +28,7 @@ const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const set_cookie_parser_1 = __importDefault(require("set-cookie-parser"));
-const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
+const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
 const sqs = new AWS.SQS({ apiVersion: '2012-11-05' });
 const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
@@ -54,47 +54,39 @@ class FyxBlockchainPg {
         const txid = tx.id();
         const txidBuf = Buffer.from(txid, 'hex');
         console.log('Broadcasting:', txid, rawtx);
-        const derivations = await this.sql `
-            SELECT pubkey, encode(script, 'hex') as script FROM derivations
-            WHERE script IN (
-                ${tx.txOuts
+        const [{ count }] = await this.sql `
+            SELECT count(scripthash) as countFROM derivations
+            WHERE script IN (${tx.txOuts
             .filter(txOut => txOut.script.isPubKeyHashOut())
-            .map(txOut => txOut.script.toBuffer())}
-            )`;
-        // If transaction doesn't apply to our users, throw Forbidden
-        if (!derivations.count)
-            throw new http_errors_1.default.Forbidden();
-        const scriptHashes = new Map();
-        derivations.forEach(d => scriptHashes.set(d.script, d.id));
-        // Find any inputs which are already spent, unless it is a rebroadcast
+            .map(txOut => txOut.script.toBuffer())})`;
         const spends = tx.txIns.map(t => ({
             txid: Buffer.from(t.txHashBuf).reverse(),
             vout: t.txOutNum,
             spend_txid: txidBuf
         }));
+        // Find inputs
         const spendValues = spends.map(s => `(decode('${s.txid.toString('hex')}', 'hex'), ${s.vout}})`).join(', ');
-        // const spendsWhere = spends.map(s => `(txid=decode('${s.txid.toString('hex')}', 'hex') AND vout=${s.vout}})`).join(' OR ');
-        let query = `SELECT t.txid, t.vout FROM txos t
-            JOIN (VALUES ${spendValues}) as s(txid, vout) 
-                ON s.txid = t.txid AND s.vout = t.vout
-            WHERE t.spend_txid IS NULL AND t.spend_txid != decode('${txid}'', 'hex')`;
+        let query = `SELECT t.txid, t.vout, t.spend_txid FROM txos t
+            JOIN (VALUES ${spendValues}) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
         console.log('Spends Query:', query);
         const spentIns = await this.sql.unsafe(query);
-        if (spentIns.count) {
-            throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spentIns.rows[0].txid.toString('hex')} ${spentIns.rows[0].vout}`);
+        // Throw error if this transaction doesn't create outputs for our users or spend exiting outputs
+        if (!count && !spentIns.count)
+            throw new http_errors_1.default.Forbidden();
+        // Throw error if any input is already spent, unless this is a rebroadcast
+        if (spentIns.find(s => s.spend_txid !== null && s.spend_txid.toString('hex') !== txid)) {
+            throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spentIns[0].txid.toString('hex')} ${spentIns[0].vout}`);
         }
         const utxos = [];
         tx.txOuts.forEach((txOut, vout) => {
             if (!txOut.script.isPubKeyHashOut())
                 return;
-            let scripthash = scriptHashes.get(txOut.script.toHex());
-            if (!scripthash)
-                return;
+            const script = txOut.script.toBuffer();
             utxos.push({
                 txid: Buffer.from(txid, 'hex'),
                 vout,
-                script: txOut.script.toBuffer(),
-                scripthash: Buffer.from(scripthash, 'hex'),
+                script,
+                scripthash: bsv_1.Hash.sha256(script).reverse(),
                 satoshis: txOut.valueBn.toNumber(),
             });
         });
@@ -109,7 +101,11 @@ class FyxBlockchainPg {
             const config = {
                 url: `${MAPI}/tx`,
                 method: 'POST',
-                data: { rawtx },
+                data: {
+                    rawtx,
+                    callBackUrl: `${API}/mapi-callback`,
+                    callBackToken: CALLBACK_TOKEN
+                },
                 headers: headerConfig,
                 timeout: 5000
             };
@@ -216,24 +212,6 @@ class FyxBlockchainPg {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
-        // if (!rawtx && this.network === 'main') {
-        //     const { data: { result, error } } = await axios({
-        //         url: 'https://tapi.taal.com/bitcoin',
-        //         method: 'POST',
-        //         data: {
-        //             jsonrpc: '1.0',
-        //             id: txid,
-        //             method: 'getrawtransaction',
-        //             params: [txid]
-        //         },
-        //         headers: {
-        //             'Content-type': 'application/json',
-        //             Authorization: MAPI_KEY
-        //         }
-        //     });
-        //     if (error) console.error('TAPI Fetch error:', error)
-        //     if (result) rawtx = result;
-        // }
         if (!rawtx) {
             console.log('Fallback to WoC Public');
             const { data } = await (0, fyx_axios_1.default)(`https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`, { headers: { 'woc-api-key': API_KEY } });
