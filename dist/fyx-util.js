@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Util = void 0;
+exports.FyxUtil = void 0;
 const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
-class Util {
+class FyxUtil {
     constructor(sql) {
         this.sql = sql;
     }
@@ -45,5 +45,5 @@ class Util {
         return !!rows.count;
     }
 }
-exports.Util = Util;
+exports.FyxUtil = FyxUtil;
 //# sourceMappingURL=fyx-util.js.map

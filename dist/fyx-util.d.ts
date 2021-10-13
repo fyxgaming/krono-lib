@@ -6,7 +6,7 @@ export interface IUser {
     xpub: string;
     verified: Date;
 }
-export declare class Util {
+export declare class FyxUtil {
     private sql;
     constructor(sql: postgres);
     loadUser(userId: any): Promise<IUser>;

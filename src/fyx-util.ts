@@ -10,7 +10,7 @@ export interface IUser {
     verified: Date;
 }
 
-export class Util {
+export class FyxUtil {
     constructor(private sql: postgres) { }
 
     async loadUser(userId): Promise<IUser> {
