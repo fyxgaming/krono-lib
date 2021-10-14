@@ -78,7 +78,7 @@ class FyxBlockchainPg {
             throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spentIns[0].txid.toString('hex')} ${spentIns[0].vout}`);
         }
         const utxos = [];
-        await Promise.all(tx.txOuts.forEach(async (txOut, vout) => {
+        await Promise.all(tx.txOuts.map(async (txOut, vout) => {
             if (!txOut.script.isPubKeyHashOut())
                 return;
             const script = txOut.script.toBuffer();

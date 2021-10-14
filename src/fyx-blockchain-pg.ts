@@ -64,7 +64,7 @@ export class FyxBlockchainPg implements IBlockchain {
         }
 
         const utxos = [];
-        await Promise.all(tx.txOuts.forEach(async (txOut: any, vout: number) => {
+        await Promise.all(tx.txOuts.map(async (txOut: any, vout: number) => {
             if (!txOut.script.isPubKeyHashOut()) return;
             const script = txOut.script.toBuffer()
             utxos.push({
