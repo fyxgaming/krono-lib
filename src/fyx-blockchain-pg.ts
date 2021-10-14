@@ -34,6 +34,7 @@ export class FyxBlockchainPg implements IBlockchain {
         const txidBuf = Buffer.from(txid, 'hex');
         console.log('Broadcasting:', txid, rawtx);
 
+        console.log('Lookup derivations');
         const [{ count }] = await this.sql`
             SELECT count(scripthash) as count FROM derivations
             WHERE script IN (${
@@ -49,7 +50,7 @@ export class FyxBlockchainPg implements IBlockchain {
         }));
 
         // Find inputs
-        const spendValues = spends.map(s => `(decode('${s.txid.toString('hex')}', 'hex'), ${s.vout}})`).join(', ');
+        const spendValues = spends.map(s => `(decode('${s.txid.toString('hex')}', 'hex'), ${s.vout})`).join(', ');
         let query = `SELECT t.txid, t.vout, t.spend_txid FROM txos t
             JOIN (VALUES ${spendValues}) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
         console.log('Spends Query:', query);
