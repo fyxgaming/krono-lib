@@ -55,7 +55,7 @@ class FyxBlockchainPg {
         const txidBuf = Buffer.from(txid, 'hex');
         console.log('Broadcasting:', txid, rawtx);
         const [{ count }] = await this.sql `
-            SELECT count(scripthash) as countFROM derivations
+            SELECT count(scripthash) as count FROM derivations
             WHERE script IN (${tx.txOuts
             .filter(txOut => txOut.script.isPubKeyHashOut())
             .map(txOut => txOut.script.toBuffer())})`;

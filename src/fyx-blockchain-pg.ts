@@ -35,7 +35,7 @@ export class FyxBlockchainPg implements IBlockchain {
         console.log('Broadcasting:', txid, rawtx);
 
         const [{ count }] = await this.sql`
-            SELECT count(scripthash) as countFROM derivations
+            SELECT count(scripthash) as count FROM derivations
             WHERE script IN (${
                 tx.txOuts
                     .filter(txOut => txOut.script.isPubKeyHashOut())
