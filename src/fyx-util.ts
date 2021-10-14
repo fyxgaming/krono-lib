@@ -15,12 +15,12 @@ export class FyxUtil {
 
     async loadUser(userId): Promise<IUser> {
         userId = userId.toLowerCase().normalize('NFKC');
-        const [user] = await this.sql`SELECT user_id, pubkey, xpub, verified 
+        const [user] = await this.sql`SELECT id, pubkey, xpub, verified 
             FROM users WHERE user_id=${userId}`;
 
         if (!user) throw new createError.NotFound();
         return {
-            userId: user.user_id,
+            userId: user.id,
             pubkey: user.pubkey,
             xpub: user.xpub,
             verified: user.verified

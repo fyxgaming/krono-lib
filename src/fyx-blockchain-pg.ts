@@ -142,13 +142,11 @@ export class FyxBlockchainPg implements IBlockchain {
 
         await Promise.all([
             this.sql`
-                INSERT INTO txos ${this.sql(spends, 'txid', 'vout', 'spend_txid')
-                }
+                INSERT INTO txos ${this.sql(spends, 'txid', 'vout', 'spend_txid')}
                 ON CONFLICT(txid, vout) DO UPDATE 
                     SET spend_txid = EXCLUDED.spend_txid`,
             this.sql`
-                INSERT INTO txos ${this.sql(utxos, 'txid', 'vout', 'scripthash', 'satoshis')
-                }
+                INSERT INTO txos ${this.sql(utxos, 'txid', 'vout', 'scripthash', 'satoshis')}
                 ON CONFLICT(txid, vout) DO UPDATE 
                     SET scripthash = EXCLUDED.scripthash,
                         satoshis = EXCLUDED.satoshis`,
