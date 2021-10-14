@@ -13,7 +13,7 @@ class FyxUtil {
     async loadUser(userId) {
         userId = userId.toLowerCase().normalize('NFKC');
         const [user] = await this.sql `SELECT id, pubkey, xpub, verified 
-            FROM users WHERE user_id=${userId}`;
+            FROM users WHERE id=${userId}`;
         if (!user)
             throw new http_errors_1.default.NotFound();
         return {
