@@ -47,7 +47,7 @@ export class FyxUtil {
     async authAdmin(fyxId: string, message: SignedMessage): Promise<Boolean> {
         let user = await this.validateMessage(message);
 
-        const rows = await this.sql`SELECT id FROM client_admins
+        const rows = await this.sql`SELECT count(*) as count FROM client_admins
             WHERE fyx_id=${fyxId} AND user_id=${user.userId}`;
         
         return !!rows.count;
