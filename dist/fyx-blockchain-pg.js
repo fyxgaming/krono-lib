@@ -78,18 +78,18 @@ class FyxBlockchainPg {
             throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spentIns[0].txid.toString('hex')} ${spentIns[0].vout}`);
         }
         const utxos = [];
-        tx.txOuts.forEach((txOut, vout) => {
+        await Promise.all(tx.txOuts.forEach(async (txOut, vout) => {
             if (!txOut.script.isPubKeyHashOut())
                 return;
             const script = txOut.script.toBuffer();
             utxos.push({
-                txid: Buffer.from(txid, 'hex'),
+                txid: txidBuf,
                 vout,
                 script,
-                scripthash: bsv_1.Hash.sha256(script).reverse(),
+                scripthash: (await bsv_1.Hash.asyncSha256(script)).reverse(),
                 satoshis: txOut.valueBn.toNumber(),
             });
-        });
+        }));
         // Broadcast transaction
         let response;
         if (MAPI) {
@@ -203,14 +203,18 @@ class FyxBlockchainPg {
         let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx)
             return rawtx;
-        let [row] = await this.sql `
-            SELECT encode(rawtx, 'hex') as rawtx FROM txns
-            WHERE txid=decode(${txid}, 'hex')`;
-        if (row)
-            rawtx = row.rawtx;
         if (!rawtx && this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
+        }
+        if (!rawtx && BLOCKCHAIN_BUCKET) {
+            const obj = await s3.getObject({
+                Bucket: BLOCKCHAIN_BUCKET,
+                Key: `tx/${txid}`
+            }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
+            if (obj && obj.Body) {
+                rawtx = obj.Body.toString('utf8');
+            }
         }
         if (!rawtx) {
             console.log('Fallback to WoC Public');

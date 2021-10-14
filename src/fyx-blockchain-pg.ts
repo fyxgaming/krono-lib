@@ -64,17 +64,17 @@ export class FyxBlockchainPg implements IBlockchain {
         }
 
         const utxos = [];
-        tx.txOuts.forEach((txOut: any, vout: number) => {
+        await Promise.all(tx.txOuts.forEach(async (txOut: any, vout: number) => {
             if (!txOut.script.isPubKeyHashOut()) return;
             const script = txOut.script.toBuffer()
             utxos.push({
-                txid: Buffer.from(txid, 'hex'),
+                txid: txidBuf,
                 vout,
                 script,
-                scripthash: Hash.sha256(script).reverse(),
+                scripthash: (await Hash.asyncSha256(script)).reverse(),
                 satoshis: txOut.valueBn.toNumber(),
             });
-        });
+        }));
 
         // Broadcast transaction
         let response;
@@ -188,16 +188,20 @@ export class FyxBlockchainPg implements IBlockchain {
         let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx) return rawtx;
 
-        let [row] = await this.sql`
-            SELECT encode(rawtx, 'hex') as rawtx FROM txns
-            WHERE txid=decode(${txid}, 'hex')`;
-        if (row) rawtx = row.rawtx;
-
         if (!rawtx && this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
 
+        if(!rawtx && BLOCKCHAIN_BUCKET) {
+            const obj = await s3.getObject({
+                Bucket: BLOCKCHAIN_BUCKET,
+                Key: `tx/${txid}`
+            }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
+            if (obj && obj.Body) {
+                rawtx = obj.Body.toString('utf8');
+            }
+        }
         if (!rawtx) {
             console.log('Fallback to WoC Public');
             const { data } = await axios(
