@@ -7,7 +7,6 @@ export interface IUser {
     userId: string;
     pubkey: string;
     xpub: string;
-    verified: Date;
 }
 
 export class FyxUtil {
@@ -15,15 +14,14 @@ export class FyxUtil {
 
     async loadUser(userId): Promise<IUser> {
         userId = userId.toLowerCase().normalize('NFKC');
-        const [user] = await this.sql`SELECT id, pubkey, xpub, verified 
+        const [user] = await this.sql`SELECT id, pubkey, xpub 
             FROM users WHERE id=${userId}`;
 
         if (!user) throw new createError.NotFound();
         return {
             userId: user.id,
             pubkey: user.pubkey,
-            xpub: user.xpub,
-            verified: user.verified
+            xpub: user.xpub
         };
     }
 

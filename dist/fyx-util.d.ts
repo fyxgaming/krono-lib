@@ -4,7 +4,6 @@ export interface IUser {
     userId: string;
     pubkey: string;
     xpub: string;
-    verified: Date;
 }
 export declare class FyxUtil {
     private sql;
