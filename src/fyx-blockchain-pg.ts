@@ -188,10 +188,8 @@ export class FyxBlockchainPg implements IBlockchain {
         if (rawtx) return rawtx;
 
         if (!rawtx && this.rpcClient) {
-            console.log('Requesting from node:', txid);
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
-            console.log('Response from node:', txid, rawtx);
         }
 
         if(!rawtx && BLOCKCHAIN_BUCKET) {
