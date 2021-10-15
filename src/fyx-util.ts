@@ -14,7 +14,7 @@ export class FyxUtil {
 
     async loadUser(userId): Promise<IUser> {
         userId = userId.toLowerCase().normalize('NFKC');
-        const [user] = await this.sql`SELECT id, pubkey, xpub 
+        const [user] = await this.sql`SELECT id, encode(pubkey, 'hex') as pubkey, xpub 
             FROM users WHERE id=${userId}`;
 
         if (!user) throw new createError.NotFound();
