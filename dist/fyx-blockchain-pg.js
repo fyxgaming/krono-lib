@@ -208,6 +208,7 @@ class FyxBlockchainPg {
             console.log('Requesting from node:', txid);
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
+            console.log('Response from node:', rawtx);
         }
         if (!rawtx && BLOCKCHAIN_BUCKET) {
             const obj = await s3.getObject({
