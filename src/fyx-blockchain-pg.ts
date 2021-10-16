@@ -245,7 +245,7 @@ export class FyxBlockchainPg implements IBlockchain {
         const scripthash = this.calculateScriptHash(owner, ownerType);
 
         const [{ count }] = await this.sql`
-            SELECT count(id) as count FROM txos 
+            SELECT count(*) as count FROM txos 
             WHERE scripthash = ${scripthash} AND spend_txid IS NULL`;
 
         return count || 0;
