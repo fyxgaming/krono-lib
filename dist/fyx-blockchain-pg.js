@@ -163,15 +163,17 @@ class FyxBlockchainPg {
             }
         }
         await Promise.all([
-            this.sql `
-                INSERT INTO txos ${this.sql(spends, 'txid', 'vout', 'spend_txid')}
-                ON CONFLICT(txid, vout) DO UPDATE 
-                    SET spend_txid = EXCLUDED.spend_txid`,
-            this.sql `
-                INSERT INTO txos ${this.sql(utxos, 'txid', 'vout', 'scripthash', 'satoshis')}
-                ON CONFLICT(txid, vout) DO UPDATE 
-                    SET scripthash = EXCLUDED.scripthash,
-                        satoshis = EXCLUDED.satoshis`,
+            this.sql.begin(async (sql) => {
+                await this.sql `
+                    INSERT INTO txos ${this.sql(spends, 'txid', 'vout', 'spend_txid')}
+                    ON CONFLICT(txid, vout) DO UPDATE 
+                        SET spend_txid = EXCLUDED.spend_txid`;
+                await this.sql `
+                    INSERT INTO txos ${this.sql(utxos, 'txid', 'vout', 'scripthash', 'satoshis')}
+                    ON CONFLICT(txid, vout) DO UPDATE 
+                        SET scripthash = EXCLUDED.scripthash,
+                            satoshis = EXCLUDED.satoshis`;
+            }),
             this.cache.set(`tx://${txid}`, rawtx),
             this.redis.publish('txn', txid),
             Promise.resolve().then(async () => BLOCKCHAIN_BUCKET && s3.putObject({
