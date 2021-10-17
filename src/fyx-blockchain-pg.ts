@@ -40,6 +40,7 @@ export class FyxBlockchainPg implements IBlockchain {
             .map(txOut => txOut.script.toBuffer());
         let outCount = 0;
         if (scripts.length) {
+            console.log('Count Out Scripts');
             const [row] = await this.sql`
                 SELECT count(scripthash) as count FROM derivations
                 WHERE script IN (${scripts})`;
@@ -56,7 +57,7 @@ export class FyxBlockchainPg implements IBlockchain {
         const spendValues = spends.map(s => `(decode('${s.txid.toString('hex')}', 'hex'), ${s.vout})`).join(', ');
         let query = `SELECT t.txid, t.vout, t.spend_txid FROM txos t
             JOIN (VALUES ${spendValues}) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
-        console.log('Spends Query:', query);
+        console.log('Spends Query:', JSON.stringify(query));
         const spentIns = await this.sql.unsafe(query);
 
         // Throw error if this transaction doesn't create outputs for our users or spend exiting outputs
@@ -145,11 +146,13 @@ export class FyxBlockchainPg implements IBlockchain {
 
         await Promise.all([
             this.sql.begin(async sql => {
-                await this.sql`
+                console.log('Update Spends');
+                if(spends.length) await this.sql`
                     INSERT INTO txos ${this.sql(spends, 'txid', 'vout', 'spend_txid')}
                     ON CONFLICT(txid, vout) DO UPDATE 
                         SET spend_txid = EXCLUDED.spend_txid`;
-                await this.sql`
+                console.log('Create TXOs');
+                if(utxos.length) await this.sql`
                     INSERT INTO txos ${this.sql(utxos, 'txid', 'vout', 'scripthash', 'satoshis')}
                     ON CONFLICT(txid, vout) DO UPDATE 
                         SET scripthash = EXCLUDED.scripthash,
