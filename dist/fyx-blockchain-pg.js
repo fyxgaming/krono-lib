@@ -55,11 +55,16 @@ class FyxBlockchainPg {
         const txidBuf = Buffer.from(txid, 'hex');
         console.log('Broadcasting:', txid, rawtx);
         console.log('Lookup derivations');
-        const [{ count }] = await this.sql `
-            SELECT count(scripthash) as count FROM derivations
-            WHERE script IN (${tx.txOuts
+        const scripts = tx.txOuts
             .filter(txOut => txOut.script.isPubKeyHashOut())
-            .map(txOut => txOut.script.toBuffer())})`;
+            .map(txOut => txOut.script.toBuffer());
+        let outCount = 0;
+        if (scripts.length) {
+            const [row] = await this.sql `
+                SELECT count(scripthash) as count FROM derivations
+                WHERE script IN (${scripts})`;
+            outCount = row.count;
+        }
         const spends = tx.txIns.map(t => ({
             txid: Buffer.from(t.txHashBuf).reverse(),
             vout: t.txOutNum,
@@ -72,7 +77,7 @@ class FyxBlockchainPg {
         console.log('Spends Query:', query);
         const spentIns = await this.sql.unsafe(query);
         // Throw error if this transaction doesn't create outputs for our users or spend exiting outputs
-        if (!count && !spentIns.count)
+        if (!outCount && !spentIns.count)
             throw new http_errors_1.default.Forbidden();
         // Throw error if any input is already spent, unless this is a rebroadcast
         if (spentIns.find(s => s.spend_txid !== null && s.spend_txid.toString('hex') !== txid)) {
@@ -206,11 +211,11 @@ class FyxBlockchainPg {
         let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx)
             return rawtx;
-        if (!rawtx && this.rpcClient) {
+        if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
-        if (!rawtx && BLOCKCHAIN_BUCKET) {
+        if (BLOCKCHAIN_BUCKET && !rawtx) {
             const obj = await s3.getObject({
                 Bucket: BLOCKCHAIN_BUCKET,
                 Key: `tx/${txid}`

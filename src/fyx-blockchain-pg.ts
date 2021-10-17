@@ -35,13 +35,16 @@ export class FyxBlockchainPg implements IBlockchain {
         console.log('Broadcasting:', txid, rawtx);
 
         console.log('Lookup derivations');
-        const [{ count }] = await this.sql`
-            SELECT count(scripthash) as count FROM derivations
-            WHERE script IN (${
-                tx.txOuts
-                    .filter(txOut => txOut.script.isPubKeyHashOut())
-                    .map(txOut => txOut.script.toBuffer())
-            })`;
+        const scripts = tx.txOuts
+            .filter(txOut => txOut.script.isPubKeyHashOut())
+            .map(txOut => txOut.script.toBuffer());
+        let outCount = 0;
+        if (scripts.length) {
+            const [row] = await this.sql`
+                SELECT count(scripthash) as count FROM derivations
+                WHERE script IN (${scripts})`;
+            outCount = row.count;
+        }
 
         const spends = tx.txIns.map(t => ({
             txid: Buffer.from(t.txHashBuf).reverse(),
@@ -57,7 +60,7 @@ export class FyxBlockchainPg implements IBlockchain {
         const spentIns = await this.sql.unsafe(query);
 
         // Throw error if this transaction doesn't create outputs for our users or spend exiting outputs
-        if (!count && !spentIns.count) throw new createError.Forbidden();
+        if (!outCount && !spentIns.count) throw new createError.Forbidden();
 
         // Throw error if any input is already spent, unless this is a rebroadcast
         if (spentIns.find(s => s.spend_txid !== null && s.spend_txid.toString('hex') !== txid)) {
@@ -190,12 +193,12 @@ export class FyxBlockchainPg implements IBlockchain {
         let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx) return rawtx;
 
-        if (!rawtx && this.rpcClient) {
+        if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
 
-        if(!rawtx && BLOCKCHAIN_BUCKET) {
+        if (BLOCKCHAIN_BUCKET && !rawtx) {
             const obj = await s3.getObject({
                 Bucket: BLOCKCHAIN_BUCKET,
                 Key: `tx/${txid}`
