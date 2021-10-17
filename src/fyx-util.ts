@@ -1,8 +1,6 @@
 import { PubKey } from 'bsv';
 import createError from 'http-errors';
 import { SignedMessage } from './signed-message';
-import postgres from 'postgres';
-
 export interface IUser {
     userId: string;
     pubkey: string;
@@ -10,7 +8,7 @@ export interface IUser {
 }
 
 export class FyxUtil {
-    constructor(private sql: postgres) { }
+    constructor(private sql) { }
 
     async loadUser(userId): Promise<IUser> {
         userId = userId.toLowerCase().normalize('NFKC');

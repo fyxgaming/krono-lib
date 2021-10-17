@@ -1,18 +1,11 @@
-import * as AWS from 'aws-sdk';
 import { Address, Bn, Hash, Script, Tx, TxIn } from 'bsv';
-import RpcClient from 'bitcoin-core';
 import createError from 'http-errors';
-import { Redis } from 'ioredis';
-import postgres from 'postgres';
 import axios from './fyx-axios';
 import cookieparser from 'set-cookie-parser';
 import { IBlockchain } from './iblockchain';
 import { FyxCache } from './fyx-cache';
 
 const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
-const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
-const sqs = new AWS.SQS({ apiVersion: '2012-11-05' });
-const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
@@ -26,7 +19,14 @@ const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
 const fyxBuf = Buffer.from('fyx', 'utf8');
 
 export class FyxBlockchainPg implements IBlockchain {
-    constructor(public network: string, private sql: postgres, private redis: Redis, private cache: FyxCache, private rpcClient?: RpcClient) { }
+    constructor(
+        public network: string, 
+        private sql, 
+        private redis, 
+        private cache: FyxCache, 
+        private aws?: {s3: any, sns: any, sqs: any},
+        private rpcClient?
+    ) { }
 
     async broadcast(rawtx: string, mapiKey?: string) {
         const tx = Tx.fromHex(rawtx);
@@ -161,7 +161,7 @@ export class FyxBlockchainPg implements IBlockchain {
             }),
             this.cache.set(`tx://${txid}`, rawtx),
             this.redis.publish('txn', txid),
-            Promise.resolve().then(async () => BLOCKCHAIN_BUCKET && s3.putObject({
+            Promise.resolve().then(async () => this.aws?.s3.putObject({
                 Bucket: BLOCKCHAIN_BUCKET,
                 Key: `tx/${txid}`,
                 Body: rawtx
@@ -176,19 +176,17 @@ export class FyxBlockchainPg implements IBlockchain {
                 );
         });
 
-        if (JIG_TOPIC && isRun) {
-            await sns.publish({
+        if (isRun) {
+            await this.aws?.sns.publish({
                 TopicArn: JIG_TOPIC ?? '',
                 Message: JSON.stringify({ txid })
             }).promise();
         }
 
-        if (BROADCAST_QUEUE) {
-            await sqs.sendMessage({
-                QueueUrl: BROADCAST_QUEUE || '',
-                MessageBody: JSON.stringify({ txid })
-            }).promise();
-        }
+        await this.aws?.sqs.sendMessage({
+            QueueUrl: BROADCAST_QUEUE || '',
+            MessageBody: JSON.stringify({ txid })
+        }).promise();
         return txid;
     }
 
@@ -201,8 +199,8 @@ export class FyxBlockchainPg implements IBlockchain {
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
 
-        if (BLOCKCHAIN_BUCKET && !rawtx) {
-            const obj = await s3.getObject({
+        if (!rawtx) {
+            const obj = await this.aws?.s3.getObject({
                 Bucket: BLOCKCHAIN_BUCKET,
                 Key: `tx/${txid}`
             }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
@@ -224,7 +222,7 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     calculateScriptHash(owner: string, ownerType: string): Buffer {
-        let scripthash, script;
+        let script;
         if (ownerType === 'address') {
             const address = Address.fromString(owner);
             script = address.toTxOutScript();

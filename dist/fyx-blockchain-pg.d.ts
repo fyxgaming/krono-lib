@@ -1,7 +1,4 @@
 /// <reference types="node" />
-import RpcClient from 'bitcoin-core';
-import { Redis } from 'ioredis';
-import postgres from 'postgres';
 import { IBlockchain } from './iblockchain';
 import { FyxCache } from './fyx-cache';
 export declare class FyxBlockchainPg implements IBlockchain {
@@ -9,8 +6,13 @@ export declare class FyxBlockchainPg implements IBlockchain {
     private sql;
     private redis;
     private cache;
+    private aws?;
     private rpcClient?;
-    constructor(network: string, sql: postgres, redis: Redis, cache: FyxCache, rpcClient?: RpcClient);
+    constructor(network: string, sql: any, redis: any, cache: FyxCache, aws?: {
+        s3: any;
+        sns: any;
+        sqs: any;
+    }, rpcClient?: any);
     broadcast(rawtx: string, mapiKey?: string): Promise<any>;
     fetch(txid: string): Promise<any>;
     calculateScriptHash(owner: string, ownerType: string): Buffer;

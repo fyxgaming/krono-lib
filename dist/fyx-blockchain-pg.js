@@ -1,37 +1,14 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FyxBlockchainPg = void 0;
-const AWS = __importStar(require("aws-sdk"));
 const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const set_cookie_parser_1 = __importDefault(require("set-cookie-parser"));
 const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
-const sns = new AWS.SNS({ apiVersion: '2010-03-31' });
-const sqs = new AWS.SQS({ apiVersion: '2012-11-05' });
-const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
@@ -42,14 +19,16 @@ const runBuf = Buffer.from('run', 'utf8');
 const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
 const fyxBuf = Buffer.from('fyx', 'utf8');
 class FyxBlockchainPg {
-    constructor(network, sql, redis, cache, rpcClient) {
+    constructor(network, sql, redis, cache, aws, rpcClient) {
         this.network = network;
         this.sql = sql;
         this.redis = redis;
         this.cache = cache;
+        this.aws = aws;
         this.rpcClient = rpcClient;
     }
     async broadcast(rawtx, mapiKey) {
+        var _a, _b;
         const tx = bsv_1.Tx.fromHex(rawtx);
         const txid = tx.id();
         const txidBuf = Buffer.from(txid, 'hex');
@@ -186,11 +165,14 @@ class FyxBlockchainPg {
             }),
             this.cache.set(`tx://${txid}`, rawtx),
             this.redis.publish('txn', txid),
-            Promise.resolve().then(async () => BLOCKCHAIN_BUCKET && s3.putObject({
-                Bucket: BLOCKCHAIN_BUCKET,
-                Key: `tx/${txid}`,
-                Body: rawtx
-            }).promise())
+            Promise.resolve().then(async () => {
+                var _a;
+                return (_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.putObject({
+                    Bucket: BLOCKCHAIN_BUCKET,
+                    Key: `tx/${txid}`,
+                    Body: rawtx
+                }).promise();
+            })
         ]);
         const isRun = tx.txOuts.find(txOut => {
             var _a, _b, _c, _d, _e, _f;
@@ -198,21 +180,20 @@ class FyxBlockchainPg {
                 ((_b = (_a = txOut.script.chunks[2]) === null || _a === void 0 ? void 0 : _a.buf) === null || _b === void 0 ? void 0 : _b.compare(runBuf)) === 0 && (((_d = (_c = txOut.script.chunks[4]) === null || _c === void 0 ? void 0 : _c.buf) === null || _d === void 0 ? void 0 : _d.compare(cryptofightsBuf)) === 0 ||
                 ((_f = (_e = txOut.script.chunks[4]) === null || _e === void 0 ? void 0 : _e.buf) === null || _f === void 0 ? void 0 : _f.compare(fyxBuf)) === 0);
         });
-        if (JIG_TOPIC && isRun) {
-            await sns.publish({
+        if (isRun) {
+            await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.sns.publish({
                 TopicArn: JIG_TOPIC !== null && JIG_TOPIC !== void 0 ? JIG_TOPIC : '',
                 Message: JSON.stringify({ txid })
-            }).promise();
+            }).promise());
         }
-        if (BROADCAST_QUEUE) {
-            await sqs.sendMessage({
-                QueueUrl: BROADCAST_QUEUE || '',
-                MessageBody: JSON.stringify({ txid })
-            }).promise();
-        }
+        await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.sqs.sendMessage({
+            QueueUrl: BROADCAST_QUEUE || '',
+            MessageBody: JSON.stringify({ txid })
+        }).promise());
         return txid;
     }
     async fetch(txid) {
+        var _a;
         let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx)
             return rawtx;
@@ -220,11 +201,11 @@ class FyxBlockchainPg {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
-        if (BLOCKCHAIN_BUCKET && !rawtx) {
-            const obj = await s3.getObject({
+        if (!rawtx) {
+            const obj = await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.getObject({
                 Bucket: BLOCKCHAIN_BUCKET,
                 Key: `tx/${txid}`
-            }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
+            }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message)));
             if (obj && obj.Body) {
                 rawtx = obj.Body.toString('utf8');
             }
@@ -240,7 +221,7 @@ class FyxBlockchainPg {
         return rawtx;
     }
     calculateScriptHash(owner, ownerType) {
-        let scripthash, script;
+        let script;
         if (ownerType === 'address') {
             const address = bsv_1.Address.fromString(owner);
             script = address.toTxOutScript();

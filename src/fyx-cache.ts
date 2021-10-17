@@ -1,14 +1,14 @@
-
-import * as AWS from 'aws-sdk';
-import { Redis } from "ioredis";
-
-const s3 = new AWS.S3({ apiVersion: '2006-03-01' });
 export interface ICache {
     get(key: string): Promise<any>;
     set(key:string, value: any): Promise<void>;
 }
 export class FyxCache {
-    constructor(private redis: Redis, private localCache?: ICache, private bucket?: string) {}
+    constructor(
+        private redis, 
+        private localCache?: ICache, 
+        private bucket = '',
+        private aws?: {s3: any}
+    ) {}
     async get(key: string) {
         if(key.startsWith('ban://')) return;
         if(this.localCache) {
@@ -17,7 +17,7 @@ export class FyxCache {
         }
         let valueString = await this.redis.get(key);
         if (!valueString && this.bucket && key.startsWith('jig://')) {
-            const obj = await s3.getObject({
+            const obj = await this.aws?.s3.getObject({
                 Bucket: this.bucket,
                 Key: `state/${key}`
             }).promise().catch(e => console.error('GetObject Error:', `state/${key}`, e.message));
@@ -32,7 +32,7 @@ export class FyxCache {
         if(key.startsWith('ban://')) return;
         const valueString = JSON.stringify(value);
         if(this.bucket && key.startsWith('jig://')) {
-            await s3.putObject({
+            await this.aws?.s3.putObject({
                 Bucket: this.bucket,
                 Key: `state/${key}`,
                 Body: valueString

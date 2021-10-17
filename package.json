@@ -14,21 +14,16 @@
   ],
   "dependencies": {
     "argon2-browser": "^1.18.0",
-    "aws-sdk": "^2.997.0",
     "axios": "^0.21.1",
-    "bitcoin-core": "^3.0.0",
     "bsv": "^2.0.10",
     "buffer": "^6.0.3",
     "events": "^3.2.0",
     "http-errors": "^1.8.0",
-    "ioredis": "^4.27.8",
-    "postgres": "^1.0.2",
-    "run-sdk": "0.6.28",
     "set-cookie-parser": "^2.4.8"
   },
   "devDependencies": {
     "@types/events": "^3.0.0",
-    "@types/ioredis": "^4.26.7",
+    "@types/ioredis": "^4.27.7",
     "@types/node": "^13.5.2",
     "@types/node-fetch": "^2.5.7",
     "ts-node": "^8.6.2",
