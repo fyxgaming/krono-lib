@@ -86,6 +86,16 @@ export class AuthService {
         return bip39.toString();
     }
 
+    async getProfile(id: string, keyPair: KeyPair): Promise<Bip32> {
+        id = id.toLowerCase().normalize('NFKC');
+        const { data: user} = await axios.post(
+            `${this.apiUrl}/accounts/${id}/recover`, 
+            new SignedMessage({subject: 'recover'}, id, keyPair)
+        );
+
+        return user;
+    }
+
     async rekey(mnemonic: string, id: string, password: string): Promise<KeyPair> {
         const bip39 = Bip39.fromString(mnemonic);
         const bip32 = Bip32.fromSeed(bip39.toSeed());        

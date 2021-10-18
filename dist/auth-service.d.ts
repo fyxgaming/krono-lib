@@ -8,6 +8,7 @@ export declare class AuthService {
     recoverBip39(id: string, keyPair: KeyPair): Promise<Bip32>;
     recover(id: string, keyPair: KeyPair): Promise<Bip32>;
     mnemonic(id: string, keyPair: KeyPair): Promise<string>;
+    getProfile(id: string, keyPair: KeyPair): Promise<Bip32>;
     rekey(mnemonic: string, id: string, password: string): Promise<KeyPair>;
     isIdAvailable(id: string): Promise<boolean>;
     verifyEmail(id: string, nonce: string): Promise<boolean>;

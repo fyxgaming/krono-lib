@@ -91,6 +91,11 @@ class AuthService {
         const bip39 = await this.recoverBip39(id, keyPair);
         return bip39.toString();
     }
+    async getProfile(id, keyPair) {
+        id = id.toLowerCase().normalize('NFKC');
+        const { data: user } = await fyx_axios_1.default.post(`${this.apiUrl}/accounts/${id}/recover`, new signed_message_1.SignedMessage({ subject: 'recover' }, id, keyPair));
+        return user;
+    }
     async rekey(mnemonic, id, password) {
         const bip39 = bsv_1.Bip39.fromString(mnemonic);
         const bip32 = bsv_1.Bip32.fromSeed(bip39.toSeed());
