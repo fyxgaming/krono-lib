@@ -161,7 +161,7 @@ export class FyxBlockchainPg implements IBlockchain {
             }),
             this.cache.set(`tx://${txid}`, rawtx),
             this.redis.publish('txn', txid),
-            Promise.resolve().then(async () => this.aws?.s3.putObject({
+            BLOCKCHAIN_BUCKET && Promise.resolve().then(async () => this.aws?.s3.putObject({
                 Bucket: BLOCKCHAIN_BUCKET,
                 Key: `tx/${txid}`,
                 Body: rawtx
@@ -176,17 +176,19 @@ export class FyxBlockchainPg implements IBlockchain {
                 );
         });
 
-        if (isRun) {
+        if (isRun && JIG_TOPIC) {
             await this.aws?.sns.publish({
                 TopicArn: JIG_TOPIC ?? '',
                 Message: JSON.stringify({ txid })
             }).promise();
         }
 
-        await this.aws?.sqs.sendMessage({
-            QueueUrl: BROADCAST_QUEUE || '',
-            MessageBody: JSON.stringify({ txid })
-        }).promise();
+        if(BROADCAST_QUEUE) {
+            await this.aws?.sqs.sendMessage({
+                QueueUrl: BROADCAST_QUEUE || '',
+                MessageBody: JSON.stringify({ txid })
+            }).promise();
+        }
         return txid;
     }
 
@@ -199,7 +201,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
 
-        if (!rawtx) {
+        if (!rawtx && BLOCKCHAIN_BUCKET) {
             const obj = await this.aws?.s3.getObject({
                 Bucket: BLOCKCHAIN_BUCKET,
                 Key: `tx/${txid}`

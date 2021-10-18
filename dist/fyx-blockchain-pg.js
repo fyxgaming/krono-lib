@@ -165,7 +165,7 @@ class FyxBlockchainPg {
             }),
             this.cache.set(`tx://${txid}`, rawtx),
             this.redis.publish('txn', txid),
-            Promise.resolve().then(async () => {
+            BLOCKCHAIN_BUCKET && Promise.resolve().then(async () => {
                 var _a;
                 return (_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.putObject({
                     Bucket: BLOCKCHAIN_BUCKET,
@@ -180,16 +180,18 @@ class FyxBlockchainPg {
                 ((_b = (_a = txOut.script.chunks[2]) === null || _a === void 0 ? void 0 : _a.buf) === null || _b === void 0 ? void 0 : _b.compare(runBuf)) === 0 && (((_d = (_c = txOut.script.chunks[4]) === null || _c === void 0 ? void 0 : _c.buf) === null || _d === void 0 ? void 0 : _d.compare(cryptofightsBuf)) === 0 ||
                 ((_f = (_e = txOut.script.chunks[4]) === null || _e === void 0 ? void 0 : _e.buf) === null || _f === void 0 ? void 0 : _f.compare(fyxBuf)) === 0);
         });
-        if (isRun) {
+        if (isRun && JIG_TOPIC) {
             await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.sns.publish({
                 TopicArn: JIG_TOPIC !== null && JIG_TOPIC !== void 0 ? JIG_TOPIC : '',
                 Message: JSON.stringify({ txid })
             }).promise());
         }
-        await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.sqs.sendMessage({
-            QueueUrl: BROADCAST_QUEUE || '',
-            MessageBody: JSON.stringify({ txid })
-        }).promise());
+        if (BROADCAST_QUEUE) {
+            await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.sqs.sendMessage({
+                QueueUrl: BROADCAST_QUEUE || '',
+                MessageBody: JSON.stringify({ txid })
+            }).promise());
+        }
         return txid;
     }
     async fetch(txid) {
@@ -201,7 +203,7 @@ class FyxBlockchainPg {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
         }
-        if (!rawtx) {
+        if (!rawtx && BLOCKCHAIN_BUCKET) {
             const obj = await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.getObject({
                 Bucket: BLOCKCHAIN_BUCKET,
                 Key: `tx/${txid}`
