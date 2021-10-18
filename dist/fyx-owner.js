@@ -33,7 +33,7 @@ class FyxOwner {
         return this._paymentAddress.toString();
     }
     async nextOwner() {
-        const { data: { address } } = await axios_1.default.post(`${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/payment-destination`, new signed_message_1.SignedMessage({}, this.userId, this.keyPair));
+        const { data: { address } } = await axios_1.default.post(`${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/payment-destination`, new signed_message_1.SignedMessage({ subject: 'GetPaymentDestination' }, this.userId, this.keyPair));
         return address;
     }
     async loadDerivations() {

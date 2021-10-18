@@ -31,7 +31,7 @@ export class FyxOwner {
     async nextOwner() {
         const { data: { address } } = await axios.post(
             `${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/payment-destination`,
-            new SignedMessage({}, this.userId, this.keyPair)
+            new SignedMessage({subject: 'GetPaymentDestination'}, this.userId, this.keyPair)
         )
         return address;
     }
