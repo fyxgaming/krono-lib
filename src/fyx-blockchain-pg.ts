@@ -70,7 +70,7 @@ export class FyxBlockchainPg implements IBlockchain {
 
         const utxos = [];
         await Promise.all(tx.txOuts.map(async (txOut: any, vout: number) => {
-            if (!txOut.script.isPubKeyHashOut()) return;
+            if (txOut.script.isSafeDataOut()) return;
             const script = txOut.script.toBuffer()
             utxos.push({
                 txid: txidBuf,

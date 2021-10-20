@@ -65,7 +65,7 @@ class FyxBlockchainPg {
         }
         const utxos = [];
         await Promise.all(tx.txOuts.map(async (txOut, vout) => {
-            if (!txOut.script.isPubKeyHashOut())
+            if (txOut.script.isSafeDataOut())
                 return;
             const script = txOut.script.toBuffer();
             utxos.push({
