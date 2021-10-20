@@ -268,10 +268,10 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async spends(txid: string, vout: number | string) {
         const [row] = await this.sql`
-            SELECT spend_txid FROM txos
+            SELECT encode(spend_txid, 'hex') as spend_txid FROM txos
             WHERE txid = decode(${txid}, 'hex') AND vout = ${vout}`;
 
-        return row?.spendTxId;
+        return row?.spend_txid;
     }
 
     // TODO: Figure out what to do with this

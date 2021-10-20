@@ -259,9 +259,9 @@ class FyxBlockchainPg {
     }
     async spends(txid, vout) {
         const [row] = await this.sql `
-            SELECT spend_txid FROM txos
+            SELECT encode(spend_txid, 'hex') as spend_txid FROM txos
             WHERE txid = decode(${txid}, 'hex') AND vout = ${vout}`;
-        return row === null || row === void 0 ? void 0 : row.spendTxId;
+        return row === null || row === void 0 ? void 0 : row.spend_txid;
     }
     // TODO: Figure out what to do with this
     async time(txid) {
