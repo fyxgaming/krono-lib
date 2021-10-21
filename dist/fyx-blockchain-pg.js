@@ -8,7 +8,7 @@ const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const set_cookie_parser_1 = __importDefault(require("set-cookie-parser"));
-const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
+const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
@@ -194,16 +194,18 @@ class FyxBlockchainPg {
         return txid;
     }
     async fetch(txid) {
-        console.log('Fetch:', txid);
+        if (DEBUG)
+            console.log('Fetch:', txid);
         let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx) {
-            console.log('Found in cache:', txid);
+            if (DEBUG)
+                console.log('Found in cache:', txid);
             return rawtx;
         }
         if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
-            if (rawtx)
+            if (DEBUG && rawtx)
                 console.log('Loaded from node:', txid);
         }
         // if (!rawtx && BLOCKCHAIN_BUCKET) {
@@ -213,32 +215,33 @@ class FyxBlockchainPg {
         //     }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
         //     if (obj && obj.Body) {
         //         rawtx = obj.Body.toString('utf8');
+        //         if(DEBUG) console.log('Loaded from s3:', txid);
         //     }
         // }
         if (!rawtx) {
-            console.log('Fallback to WoC Public');
-            // if(this.network === 'main') {
-            //     const { data } = await axios({
-            //         url: `https://tapi.taal.com/bitcoin`,
-            //         method: 'POST',
-            //         headers: { 
-            //             Authorization: `Bearer ${MAPI_KEY}`,
-            //             'Content-type': 'application/json'
-            //         },
-            //         data: {
-            //             jsonrpc: "1.0", 
-            //             id: txid, 
-            //             method: "getrawtransaction", 
-            //             params: [txid] 
-            //         }
-            //     });
-            //     if(!data.error) rawtx = data.result;
-            // } else {
-            const { data } = await (0, fyx_axios_1.default)(`https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`, { headers: { 'woc-api-key': API_KEY } });
-            rawtx = data;
-            // }
-            if (rawtx)
-                console.log('Retrieved from TAAL:', txid);
+            console.log('Fallback to WoC Public', txid);
+            if (this.network === 'main') {
+                const { data } = await (0, fyx_axios_1.default)({
+                    url: `https://tapi.taal.com/bitcoin`,
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${MAPI_KEY}`,
+                        'Content-type': 'application/json'
+                    },
+                    data: {
+                        jsonrpc: "1.0",
+                        id: txid,
+                        method: "getrawtransaction",
+                        params: [txid]
+                    }
+                });
+                if (!data.error)
+                    rawtx = data.result;
+            }
+            else {
+                const { data } = await (0, fyx_axios_1.default)(`https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`, { headers: { 'woc-api-key': API_KEY } });
+                rawtx = data;
+            }
         }
         if (!rawtx)
             throw new http_errors_1.default.NotFound();
