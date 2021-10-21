@@ -216,29 +216,29 @@ export class FyxBlockchainPg implements IBlockchain {
         // }
         if (!rawtx) {
             console.log('Fallback to WoC Public');
-            if(this.network === 'main') {
-                const { data } = await axios({
-                    url: `https://tapi.taal.com/bitcoin`,
-                    method: 'POST',
-                    headers: { 
-                        Authorization: `Bearer ${MAPI_KEY}`,
-                        'Content-type': 'application/json'
-                    },
-                    data: {
-                        jsonrpc: "1.0", 
-                        id: txid, 
-                        method: "getrawtransaction", 
-                        params: [txid] 
-                    }
-                });
-                if(!data.error) rawtx = data.result;
-            } else {
+            // if(this.network === 'main') {
+            //     const { data } = await axios({
+            //         url: `https://tapi.taal.com/bitcoin`,
+            //         method: 'POST',
+            //         headers: { 
+            //             Authorization: `Bearer ${MAPI_KEY}`,
+            //             'Content-type': 'application/json'
+            //         },
+            //         data: {
+            //             jsonrpc: "1.0", 
+            //             id: txid, 
+            //             method: "getrawtransaction", 
+            //             params: [txid] 
+            //         }
+            //     });
+            //     if(!data.error) rawtx = data.result;
+            // } else {
                 const { data } = await axios(
                     `https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`,
                     { headers: { 'woc-api-key': API_KEY } }
                 );
                 rawtx = data;
-            }
+            // }
             if(rawtx) console.log('Retrieved from TAAL:', txid);
         }
         if (!rawtx) throw new createError.NotFound();

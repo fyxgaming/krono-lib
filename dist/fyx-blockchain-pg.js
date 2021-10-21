@@ -217,28 +217,26 @@ class FyxBlockchainPg {
         // }
         if (!rawtx) {
             console.log('Fallback to WoC Public');
-            if (this.network === 'main') {
-                const { data } = await (0, fyx_axios_1.default)({
-                    url: `https://tapi.taal.com/bitcoin`,
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${MAPI_KEY}`,
-                        'Content-type': 'application/json'
-                    },
-                    data: {
-                        jsonrpc: "1.0",
-                        id: txid,
-                        method: "getrawtransaction",
-                        params: [txid]
-                    }
-                });
-                if (!data.error)
-                    rawtx = data.result;
-            }
-            else {
-                const { data } = await (0, fyx_axios_1.default)(`https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`, { headers: { 'woc-api-key': API_KEY } });
-                rawtx = data;
-            }
+            // if(this.network === 'main') {
+            //     const { data } = await axios({
+            //         url: `https://tapi.taal.com/bitcoin`,
+            //         method: 'POST',
+            //         headers: { 
+            //             Authorization: `Bearer ${MAPI_KEY}`,
+            //             'Content-type': 'application/json'
+            //         },
+            //         data: {
+            //             jsonrpc: "1.0", 
+            //             id: txid, 
+            //             method: "getrawtransaction", 
+            //             params: [txid] 
+            //         }
+            //     });
+            //     if(!data.error) rawtx = data.result;
+            // } else {
+            const { data } = await (0, fyx_axios_1.default)(`https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`, { headers: { 'woc-api-key': API_KEY } });
+            rawtx = data;
+            // }
             if (rawtx)
                 console.log('Retrieved from TAAL:', txid);
         }
