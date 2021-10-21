@@ -41,8 +41,7 @@ export class FyxBlockchainPg implements IBlockchain {
         let outCount = 0;
         if (scripts.length) {
             console.log('Count Out Scripts');
-            const [row] = await this.sql`
-                SELECT count(scripthash) as count FROM derivations
+            const [row] = await this.sql`SELECT count(scripthash) as count FROM derivations
                 WHERE script IN (${scripts})`;
             outCount = row.count;
         }
@@ -193,30 +192,54 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async fetch(txid: string) {
+        console.log('Fetch:', txid);
         let rawtx = await this.cache.get(`tx://${txid}`);
-        if (rawtx) return rawtx;
+        if (rawtx) {
+            console.log('Found in cache:', txid);
+            return rawtx;
+        }
 
         if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
+            if(rawtx) console.log('Loaded from node:', txid);
         }
 
-        if (!rawtx && BLOCKCHAIN_BUCKET) {
-            const obj = await this.aws?.s3.getObject({
-                Bucket: BLOCKCHAIN_BUCKET,
-                Key: `tx/${txid}`
-            }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
-            if (obj && obj.Body) {
-                rawtx = obj.Body.toString('utf8');
-            }
-        }
+        // if (!rawtx && BLOCKCHAIN_BUCKET) {
+        //     const obj = await this.aws?.s3.getObject({
+        //         Bucket: BLOCKCHAIN_BUCKET,
+        //         Key: `tx/${txid}`
+        //     }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
+        //     if (obj && obj.Body) {
+        //         rawtx = obj.Body.toString('utf8');
+        //     }
+        // }
         if (!rawtx) {
             console.log('Fallback to WoC Public');
-            const { data } = await axios(
-                `https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`,
-                { headers: { 'woc-api-key': API_KEY } }
-            );
-            rawtx = data;
+            if(this.network === 'main') {
+                const { data } = await axios({
+                    url: `https://tapi.taal.com/bitcoin`,
+                    method: 'POST',
+                    headers: { 
+                        Authorization: `Bearer ${MAPI_KEY}`,
+                        'Content-type': 'application/json'
+                    },
+                    data: {
+                        jsonrpc: "1.0", 
+                        id: txid, 
+                        method: "getrawtransaction", 
+                        params: [txid] 
+                    }
+                });
+                if(!data.error) rawtx = data.result;
+            } else {
+                const { data } = await axios(
+                    `https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`,
+                    { headers: { 'woc-api-key': API_KEY } }
+                );
+                rawtx = data;
+            }
+            if(rawtx) console.log('Retrieved from TAAL:', txid);
         }
         if (!rawtx) throw new createError.NotFound();
         await this.cache.set(`tx://${txid}`, rawtx);
@@ -299,8 +322,7 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async findAndLockUtxo(scripthash: Buffer): Promise<{ txid: Buffer, vout: number, satoshis: number }> {
         return this.sql.begin(async sql => {
-            const [utxo] = await sql`
-                SELECT txid, vout, satoshis FROM txos
+            const [utxo] = await sql`SELECT txid, vout, satoshis FROM txos
                 WHERE scripthash = ${scripthash} AND 
                     spend_txid IS NULL AND
                     lock_until < ${new Date()}
@@ -308,7 +330,7 @@ export class FyxBlockchainPg implements IBlockchain {
             if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
             await sql`UPDATE txos
                 SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
-                WHERE txid = ${utxo.txid} AND vout = ${utxo.vout}`
+                WHERE txid = ${utxo.txid} AND vout = ${utxo.vout}`;
 
             return utxo;
         });

@@ -40,8 +40,7 @@ class FyxBlockchainPg {
         let outCount = 0;
         if (scripts.length) {
             console.log('Count Out Scripts');
-            const [row] = await this.sql `
-                SELECT count(scripthash) as count FROM derivations
+            const [row] = await this.sql `SELECT count(scripthash) as count FROM derivations
                 WHERE script IN (${scripts})`;
             outCount = row.count;
         }
@@ -195,27 +194,53 @@ class FyxBlockchainPg {
         return txid;
     }
     async fetch(txid) {
-        var _a;
+        console.log('Fetch:', txid);
         let rawtx = await this.cache.get(`tx://${txid}`);
-        if (rawtx)
+        if (rawtx) {
+            console.log('Found in cache:', txid);
             return rawtx;
+        }
         if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
+            if (rawtx)
+                console.log('Loaded from node:', txid);
         }
-        if (!rawtx && BLOCKCHAIN_BUCKET) {
-            const obj = await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.getObject({
-                Bucket: BLOCKCHAIN_BUCKET,
-                Key: `tx/${txid}`
-            }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message)));
-            if (obj && obj.Body) {
-                rawtx = obj.Body.toString('utf8');
-            }
-        }
+        // if (!rawtx && BLOCKCHAIN_BUCKET) {
+        //     const obj = await this.aws?.s3.getObject({
+        //         Bucket: BLOCKCHAIN_BUCKET,
+        //         Key: `tx/${txid}`
+        //     }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
+        //     if (obj && obj.Body) {
+        //         rawtx = obj.Body.toString('utf8');
+        //     }
+        // }
         if (!rawtx) {
             console.log('Fallback to WoC Public');
-            const { data } = await (0, fyx_axios_1.default)(`https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`, { headers: { 'woc-api-key': API_KEY } });
-            rawtx = data;
+            if (this.network === 'main') {
+                const { data } = await (0, fyx_axios_1.default)({
+                    url: `https://tapi.taal.com/bitcoin`,
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${MAPI_KEY}`,
+                        'Content-type': 'application/json'
+                    },
+                    data: {
+                        jsonrpc: "1.0",
+                        id: txid,
+                        method: "getrawtransaction",
+                        params: [txid]
+                    }
+                });
+                if (!data.error)
+                    rawtx = data.result;
+            }
+            else {
+                const { data } = await (0, fyx_axios_1.default)(`https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`, { headers: { 'woc-api-key': API_KEY } });
+                rawtx = data;
+            }
+            if (rawtx)
+                console.log('Retrieved from TAAL:', txid);
         }
         if (!rawtx)
             throw new http_errors_1.default.NotFound();
@@ -283,8 +308,7 @@ class FyxBlockchainPg {
     }
     async findAndLockUtxo(scripthash) {
         return this.sql.begin(async (sql) => {
-            const [utxo] = await sql `
-                SELECT txid, vout, satoshis FROM txos
+            const [utxo] = await sql `SELECT txid, vout, satoshis FROM txos
                 WHERE scripthash = ${scripthash} AND 
                     spend_txid IS NULL AND
                     lock_until < ${new Date()}
