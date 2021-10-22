@@ -143,7 +143,7 @@ export class FyxBlockchainPg implements IBlockchain {
             }
         }
 
-        await this.sql`INSERT INTO txns(txid) VALUES(${txidBuf})`,
+        await this.sql`INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
         await Promise.all([
             spends.length && this.sql`INSERT INTO txos 
                 ${this.sql(spends, 'txid', 'vout', 'spend_txid')}

@@ -146,7 +146,7 @@ class FyxBlockchainPg {
                     throw (0, http_errors_1.default)(422, e.message);
             }
         }
-        await this.sql `INSERT INTO txns(txid) VALUES(${txidBuf})`,
+        await this.sql `INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
             await Promise.all([
                 spends.length && this.sql `INSERT INTO txos 
                 ${this.sql(spends, 'txid', 'vout', 'spend_txid')}
