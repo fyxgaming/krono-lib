@@ -163,16 +163,18 @@ class FyxBlockchainPg {
                             satoshis = EXCLUDED.satoshis`;
             }),
             this.cache.set(`tx://${txid}`, rawtx),
-            this.redis.publish('txn', txid),
-            BLOCKCHAIN_BUCKET && Promise.resolve().then(async () => {
+            this.redis.publish('txn', txid)
+        ]);
+        if (BLOCKCHAIN_BUCKET) {
+            await Promise.resolve().then(async () => {
                 var _a;
                 return (_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.putObject({
                     Bucket: BLOCKCHAIN_BUCKET,
-                    Key: `tx/${txid}`,
+                    Key: `txns/${txid}`,
                     Body: rawtx
                 }).promise();
-            })
-        ]);
+            });
+        }
         const isRun = tx.txOuts.find(txOut => {
             var _a, _b, _c, _d, _e, _f;
             return txOut.script.chunks.length > 5 &&
@@ -194,6 +196,7 @@ class FyxBlockchainPg {
         return txid;
     }
     async fetch(txid) {
+        var _a;
         if (DEBUG)
             console.log('Fetch:', txid);
         let rawtx = await this.cache.get(`tx://${txid}`);
@@ -208,16 +211,17 @@ class FyxBlockchainPg {
             if (DEBUG && rawtx)
                 console.log('Loaded from node:', txid);
         }
-        // if (!rawtx && BLOCKCHAIN_BUCKET) {
-        //     const obj = await this.aws?.s3.getObject({
-        //         Bucket: BLOCKCHAIN_BUCKET,
-        //         Key: `tx/${txid}`
-        //     }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
-        //     if (obj && obj.Body) {
-        //         rawtx = obj.Body.toString('utf8');
-        //         if(DEBUG) console.log('Loaded from s3:', txid);
-        //     }
-        // }
+        if (!rawtx && BLOCKCHAIN_BUCKET) {
+            const obj = await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.getObject({
+                Bucket: BLOCKCHAIN_BUCKET,
+                Key: `txns/${txid}`
+            }).promise().catch(e => null));
+            if (obj && obj.Body) {
+                rawtx = obj.Body.toString('utf8');
+                if (DEBUG)
+                    console.log('Loaded from s3:', txid);
+            }
+        }
         if (!rawtx) {
             console.log('Fallback to WoC Public', txid);
             if (this.network === 'main') {

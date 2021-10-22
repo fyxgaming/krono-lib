@@ -20,11 +20,11 @@ const fyxBuf = Buffer.from('fyx', 'utf8');
 
 export class FyxBlockchainPg implements IBlockchain {
     constructor(
-        public network: string, 
-        private sql, 
-        private redis, 
-        private cache: FyxCache, 
-        private aws?: {s3: any, sns: any, sqs: any},
+        public network: string,
+        private sql,
+        private redis,
+        private cache: FyxCache,
+        private aws?: { s3: any, sns: any, sqs: any },
         private rpcClient?
     ) { }
 
@@ -146,12 +146,12 @@ export class FyxBlockchainPg implements IBlockchain {
         await Promise.all([
             this.sql.begin(async sql => {
                 console.log('Update Spends');
-                if(spends.length) await this.sql`
+                if (spends.length) await this.sql`
                     INSERT INTO txos ${this.sql(spends, 'txid', 'vout', 'spend_txid')}
                     ON CONFLICT(txid, vout) DO UPDATE 
                         SET spend_txid = EXCLUDED.spend_txid`;
                 console.log('Create TXOs');
-                if(utxos.length) await this.sql`
+                if (utxos.length) await this.sql`
                     INSERT INTO txos ${this.sql(utxos, 'txid', 'vout', 'scripthash', 'satoshis')}
                     ON CONFLICT(txid, vout) DO UPDATE 
                         SET scripthash = EXCLUDED.scripthash,
@@ -159,13 +159,16 @@ export class FyxBlockchainPg implements IBlockchain {
 
             }),
             this.cache.set(`tx://${txid}`, rawtx),
-            this.redis.publish('txn', txid),
-            BLOCKCHAIN_BUCKET && Promise.resolve().then(async () => this.aws?.s3.putObject({
-                Bucket: BLOCKCHAIN_BUCKET,
-                Key: `tx/${txid}`,
-                Body: rawtx
-            }).promise())
+            this.redis.publish('txn', txid)
         ]);
+
+        if (BLOCKCHAIN_BUCKET) {
+            await Promise.resolve().then(async () => this.aws?.s3.putObject({
+                Bucket: BLOCKCHAIN_BUCKET,
+                Key: `txns/${txid}`,
+                Body: rawtx
+            }).promise());
+        }
 
         const isRun = tx.txOuts.find(txOut => {
             return txOut.script.chunks.length > 5 &&
@@ -182,7 +185,7 @@ export class FyxBlockchainPg implements IBlockchain {
             }).promise();
         }
 
-        if(BROADCAST_QUEUE) {
+        if (BROADCAST_QUEUE) {
             await this.aws?.sqs.sendMessage({
                 QueueUrl: BROADCAST_QUEUE || '',
                 MessageBody: JSON.stringify({ txid })
@@ -192,47 +195,48 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async fetch(txid: string) {
-        if(DEBUG) console.log('Fetch:', txid);
+        if (DEBUG) console.log('Fetch:', txid);
         let rawtx = await this.cache.get(`tx://${txid}`);
         if (rawtx) {
-            if(DEBUG) console.log('Found in cache:', txid);
+            if (DEBUG) console.log('Found in cache:', txid);
             return rawtx;
         }
 
         if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
                 .catch(e => console.error('getRawTransaction Error:', e.message));
-            if(DEBUG && rawtx) console.log('Loaded from node:', txid);
+            if (DEBUG && rawtx) console.log('Loaded from node:', txid);
         }
 
-        // if (!rawtx && BLOCKCHAIN_BUCKET) {
-        //     const obj = await this.aws?.s3.getObject({
-        //         Bucket: BLOCKCHAIN_BUCKET,
-        //         Key: `tx/${txid}`
-        //     }).promise().catch(e => console.error('GetObject Error:', `tx/${txid}`, e.message));
-        //     if (obj && obj.Body) {
-        //         rawtx = obj.Body.toString('utf8');
-        //         if(DEBUG) console.log('Loaded from s3:', txid);
-        //     }
-        // }
+        if (!rawtx && BLOCKCHAIN_BUCKET) {
+            const obj = await this.aws?.s3.getObject({
+                Bucket: BLOCKCHAIN_BUCKET,
+                Key: `txns/${txid}`
+            }).promise().catch(e => null);
+            if (obj && obj.Body) {
+                rawtx = obj.Body.toString('utf8');
+                if (DEBUG) console.log('Loaded from s3:', txid);
+            }
+        }
+        
         if (!rawtx) {
             console.log('Fallback to WoC Public', txid);
-            if(this.network === 'main') {
+            if (this.network === 'main') {
                 const { data } = await axios({
                     url: `https://tapi.taal.com/bitcoin`,
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         Authorization: `Bearer ${MAPI_KEY}`,
                         'Content-type': 'application/json'
                     },
                     data: {
-                        jsonrpc: "1.0", 
-                        id: txid, 
-                        method: "getrawtransaction", 
-                        params: [txid] 
+                        jsonrpc: "1.0",
+                        id: txid,
+                        method: "getrawtransaction",
+                        params: [txid]
                     }
                 });
-                if(!data.error) rawtx = data.result;
+                if (!data.error) rawtx = data.result;
             } else {
                 const { data } = await axios(
                     `https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`,
