@@ -28,7 +28,7 @@ class FyxBlockchainPg {
         this.rpcClient = rpcClient;
     }
     async broadcast(rawtx, mapiKey) {
-        var _a, _b;
+        var _a, _b, _c;
         const tx = bsv_1.Tx.fromHex(rawtx);
         const txid = tx.id();
         const txidBuf = Buffer.from(txid, 'hex');
@@ -161,14 +161,11 @@ class FyxBlockchainPg {
                 this.redis.publish('txn', txid)
             ]);
         if (BLOCKCHAIN_BUCKET) {
-            await Promise.resolve().then(async () => {
-                var _a;
-                return (_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.putObject({
-                    Bucket: BLOCKCHAIN_BUCKET,
-                    Key: `txns/${txid}`,
-                    Body: rawtx
-                }).promise();
-            });
+            await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.putObject({
+                Bucket: BLOCKCHAIN_BUCKET,
+                Key: `txns/${txid}`,
+                Body: rawtx
+            }).promise());
         }
         const isRun = tx.txOuts.find(txOut => {
             var _a, _b, _c, _d, _e, _f;
@@ -177,13 +174,13 @@ class FyxBlockchainPg {
                 ((_f = (_e = txOut.script.chunks[4]) === null || _e === void 0 ? void 0 : _e.buf) === null || _f === void 0 ? void 0 : _f.compare(fyxBuf)) === 0);
         });
         if (isRun && JIG_TOPIC) {
-            await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.sns.publish({
+            await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.sns.publish({
                 TopicArn: JIG_TOPIC !== null && JIG_TOPIC !== void 0 ? JIG_TOPIC : '',
                 Message: JSON.stringify({ txid })
             }).promise());
         }
         if (BROADCAST_QUEUE) {
-            await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.sqs.sendMessage({
+            await ((_c = this.aws) === null || _c === void 0 ? void 0 : _c.sqs.sendMessage({
                 QueueUrl: BROADCAST_QUEUE || '',
                 MessageBody: JSON.stringify({ txid })
             }).promise());
@@ -191,7 +188,7 @@ class FyxBlockchainPg {
         return txid;
     }
     async fetch(txid) {
-        var _a;
+        var _a, _b;
         if (DEBUG)
             console.log('Fetch:', txid);
         let rawtx = await this.cache.get(`tx://${txid}`);
@@ -219,27 +216,14 @@ class FyxBlockchainPg {
         }
         if (!rawtx) {
             console.log('Fallback to WoC Public', txid);
-            if (this.network === 'main') {
-                const { data } = await (0, fyx_axios_1.default)({
-                    url: `https://tapi.taal.com/bitcoin`,
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${MAPI_KEY}`,
-                        'Content-type': 'application/json'
-                    },
-                    data: {
-                        jsonrpc: "1.0",
-                        id: txid,
-                        method: "getrawtransaction",
-                        params: [txid]
-                    }
-                });
-                if (!data.error)
-                    rawtx = data.result;
-            }
-            else {
-                const { data } = await (0, fyx_axios_1.default)(`https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`, { headers: { 'woc-api-key': API_KEY } });
-                rawtx = data;
+            const { data } = await (0, fyx_axios_1.default)(`https://api-aws.whatsonchain.com/v1/bsv/${this.network}/tx/${txid}/hex`, { headers: { 'woc-api-key': API_KEY } });
+            rawtx = data;
+            if (BLOCKCHAIN_BUCKET && rawtx) {
+                await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.s3.putObject({
+                    Bucket: BLOCKCHAIN_BUCKET,
+                    Key: `txns/${txid}`,
+                    Body: rawtx
+                }).promise());
             }
         }
         if (!rawtx)
