@@ -70,7 +70,6 @@ class FyxBlockchainPg {
             utxos.push({
                 txid: txidBuf,
                 vout,
-                script,
                 scripthash: (await bsv_1.Hash.asyncSha256(script)).reverse(),
                 satoshis: txOut.valueBn.toNumber(),
             });
@@ -231,21 +230,25 @@ class FyxBlockchainPg {
         await this.cache.set(`tx://${txid}`, rawtx);
         return rawtx;
     }
-    calculateScriptHash(owner, ownerType) {
+    async calculateScriptHash(owner, ownerType) {
         let script;
-        if (ownerType === 'address') {
+        if (ownerType === 'scripthash') {
+            return Buffer.from(owner, 'hex');
+        }
+        else if (ownerType === 'address') {
             const address = bsv_1.Address.fromString(owner);
             script = address.toTxOutScript();
-            return bsv_1.Hash.sha256(script.toBuffer()).reverse();
         }
         else if (ownerType === 'script') {
             script = bsv_1.Script.fromHex(owner);
-            return bsv_1.Hash.sha256(script.toBuffer()).reverse();
         }
-        return Buffer.from(owner, 'hex');
+        else {
+            throw new Error('Invalid ownerType');
+        }
+        return (await bsv_1.Hash.asyncSha256(script.toBuffer())).reverse();
     }
     async utxos(owner, ownerType = 'script', limit = 1000) {
-        const scripthash = this.calculateScriptHash(owner, ownerType);
+        const scripthash = await this.calculateScriptHash(owner, ownerType);
         const utxos = await this.sql `
             SELECT encode(txid, 'hex') as txid, vout, encode(script, 'hex') as script, satoshis 
             FROM txos 
@@ -253,14 +256,14 @@ class FyxBlockchainPg {
         return utxos;
     }
     async utxoCount(owner, ownerType = 'script') {
-        const scripthash = this.calculateScriptHash(owner, ownerType);
+        const scripthash = await this.calculateScriptHash(owner, ownerType);
         const [{ count }] = await this.sql `
             SELECT count(*) as count FROM txos 
             WHERE scripthash = ${scripthash} AND spend_txid IS NULL`;
         return count || 0;
     }
     async balance(owner, ownerType = 'script') {
-        const scripthash = this.calculateScriptHash(owner, ownerType);
+        const scripthash = await this.calculateScriptHash(owner, ownerType);
         const [{ balance }] = await this.sql `
             SELECT sum(satoshis) as balance FROM txos 
             WHERE scripthash = ${scripthash} AND spend_txid IS NULL`;
@@ -306,9 +309,8 @@ class FyxBlockchainPg {
         });
     }
     async applyPayment(tx, payment, change = true) {
-        const now = Date.now();
         const address = bsv_1.Address.fromString(payment.from);
-        const scripthash = bsv_1.Hash.sha256(address.toTxOutScript().toBuffer()).reverse();
+        const scripthash = (await bsv_1.Hash.asyncSha256(address.toTxOutScript().toBuffer())).reverse();
         let inputSats = 0, outputSats = 0, byteCount = 0, inputCount = 0;
         while (inputSats < payment.amount) {
             const utxo = await this.findAndLockUtxo(scripthash);
@@ -347,7 +349,7 @@ class FyxBlockchainPg {
         }));
         if (payer) {
             const address = bsv_1.Address.fromString(payer);
-            const scripthash = bsv_1.Hash.sha256(address.toTxOutScript().toBuffer()).reverse();
+            const scripthash = (await bsv_1.Hash.asyncSha256(address.toTxOutScript().toBuffer())).reverse();
             while (totalIn < totalOut + (size * satsPerByte)) {
                 const utxo = await this.findAndLockUtxo(scripthash);
                 totalIn += utxo.satoshis;
