@@ -34,8 +34,8 @@ export class LockingPurse {
         const utxos = await this.blockchain.utxos(this.script);
 
         return utxos.map(u => ({
-            script: this.script,
-            ...u
+            ...u,
+            script: this.script
         }))
     }
 

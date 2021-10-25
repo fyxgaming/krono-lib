@@ -30,8 +30,8 @@ class LockingPurse {
     async utxos() {
         const utxos = await this.blockchain.utxos(this.script);
         return utxos.map(u => ({
-            script: this.script,
-            ...u
+            ...u,
+            script: this.script
         }));
     }
     async balance() {
