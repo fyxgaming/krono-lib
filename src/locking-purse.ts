@@ -31,7 +31,12 @@ export class LockingPurse {
     }
 
     async utxos(): Promise<any> {
-        return this.blockchain.utxos(this.script);
+        const utxos = await this.blockchain.utxos(this.script);
+
+        return utxos.map(u => ({
+            script: this.script,
+            ...u
+        }))
     }
 
     async balance(): Promise<number> {

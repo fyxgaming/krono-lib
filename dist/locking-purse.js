@@ -28,7 +28,11 @@ class LockingPurse {
         return tx.toHex();
     }
     async utxos() {
-        return this.blockchain.utxos(this.script);
+        const utxos = await this.blockchain.utxos(this.script);
+        return utxos.map(u => ({
+            script: this.script,
+            ...u
+        }));
     }
     async balance() {
         return this.blockchain.balance(this.address);
