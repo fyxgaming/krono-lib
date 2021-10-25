@@ -36,7 +36,7 @@ export class LockingPurse {
         return utxos.map(u => ({
             ...u,
             script: this.script
-        }))
+        }));
     }
 
     async balance(): Promise<number> {
