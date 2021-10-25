@@ -254,7 +254,7 @@ export class FyxBlockchainPg implements IBlockchain {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
 
         const utxos = await this.sql`
-            SELECT encode(txid, 'hex') as txid, vout, encode(script, 'hex') as script, satoshis 
+            SELECT encode(txid, 'hex') as txid, vout, satoshis 
             FROM txos 
             WHERE scripthash = ${scripthash} AND spend_txid IS NULL`;
 

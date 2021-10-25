@@ -36,7 +36,6 @@ export class FyxOwner {
         return address;
     }
 
-
     async loadDerivations() {
         const { data: derivations } = await axios.post(
             `${this.apiUrl}/accounts/${this.fyxId}/${this.userId}/derivations`,
