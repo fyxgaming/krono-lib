@@ -315,22 +315,18 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async utxos(owner: string, ownerType = 'script', limit = 1000) {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
-
         const utxos = await this.sql`
             SELECT encode(txid, 'hex') as txid, vout, satoshis 
             FROM fund_txos_unspent 
             WHERE scripthash = ${scripthash}`;
-
         return utxos;
     }
 
     async utxoCount(owner: string, ownerType = 'script') {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
-
         const [{ count }] = await this.sql`
             SELECT count(*) as count FROM fund_txos_unspent 
             WHERE scripthash = ${scripthash}`;
-
         return count || 0;
     }
 
@@ -339,15 +335,13 @@ export class FyxBlockchainPg implements IBlockchain {
         const [{ balance }] = await this.sql`
             SELECT sum(satoshis) as balance FROM fund_txos_unspent 
             WHERE scripthash = ${scripthash}`;
-
         return balance || 0;
     }
 
     async spends(txid: string, vout: number | string) {
         const [row] = await this.sql`
-            SELECT encode(spend_txid, 'hex') as spend_txid FROM fund_txos_spent
+            SELECT encode(spend_txid, 'hex') as spend_txid FROM jig_txos_spent
             WHERE txid = decode(${txid}, 'hex') AND vout = ${vout}`;
-
         return row?.spend_txid;
     }
 
@@ -376,9 +370,9 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async findAndLockUtxo(scripthash: Buffer): Promise<{ txid: Buffer, vout: number, satoshis: number }> {
         return this.sql.begin(async sql => {
-            const [utxo] = await sql`SELECT txid, vout, satoshis FROM fund_txos_unspent
-                WHERE scripthash = ${scripthash} AND 
-                    lock_until < ${new Date()}
+            const [utxo] = await sql`SELECT txid, vout, satoshis 
+                FROM fund_txos_unspent
+                WHERE scripthash = ${scripthash} AND lock_until < ${new Date()}
                 LIMIT 1`;
             if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
             await sql`UPDATE fund_txos_unspent
