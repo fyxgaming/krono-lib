@@ -4,6 +4,7 @@ import axios from './fyx-axios';
 import cookieparser from 'set-cookie-parser';
 import { IBlockchain } from './iblockchain';
 import { FyxCache } from './fyx-cache';
+import orderLockRegex from './order-lock-regex';
 
 const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 
@@ -34,50 +35,103 @@ export class FyxBlockchainPg implements IBlockchain {
         const txidBuf = Buffer.from(txid, 'hex');
         console.log('Broadcasting:', txid, rawtx);
 
-        console.log('Lookup derivations');
-        const scripts = tx.txOuts
+        const pubkeys = tx.txIns.map(t => t.script.isPubKeyHashIn() && t.script.chunks[1].buf);
+        const outScripts = tx.txOuts
             .filter(txOut => txOut.script.isPubKeyHashOut())
             .map(txOut => txOut.script.toBuffer());
-        let outCount = 0;
-        if (scripts.length) {
-            console.log('Count Out Scripts');
-            const [row] = await this.sql`SELECT count(scripthash) as count FROM derivations
-                WHERE script IN (${scripts})`;
-            outCount = row.count;
+
+        const derivations = await this.sql`SELECT encode(script, 'hex') as script, 
+                encode(pubkey, 'hex') as pubkey, path
+            FROM derivations
+            WHERE pubkey IN (${pubkeys.length ? pubkeys : null}) 
+                OR script IN (${outScripts.length ? outScripts : null})`;
+        if(!derivations.length) {
+            console.log('No pubkeys or scripts:', txid);
+            throw new createError.NotFound();
         }
 
-        const spends = tx.txIns.map(t => ({
-            txid: Buffer.from(t.txHashBuf).reverse(),
-            vout: t.txOutNum,
-            spend_txid: txidBuf
+        const pubkeysPaths = new Map<string, string>();
+        const scriptPaths = new Map<string, string>();
+        derivations.forEach(d => {
+            pubkeysPaths.set(d.pubkey, d.path);
+            scriptPaths.set(d.script, d.path);
+        });
+
+        const fundSpends = [];
+        const jigSpends = [];
+        const marketSpends = [];
+        await Promise.all(tx.txIns.map(async (t, vin) => {
+            const pubkey = t.script.isPubKeyHashIn() && t.script.chunks[1].buf.toString('hex');
+            const path = pubkeysPaths.get(pubkey);
+            const spend = {
+                txid: Buffer.from(t.txHashBuf).reverse(),
+                vout: t.txOutNum
+            }
+            if(path === 'm/0/0') {
+                const [spent] = await this.sql`SELECT encode(spend_txid, 'hex') as spend_txid
+                    FROM fund_txos_spent
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                if(spent && spent.spend_txid !== txid) {
+                    throw createError(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
+                }
+                fundSpends.push(spend);
+            } else if(path) {
+                const [spent] = await this.sql`SELECT encode(spend_txid, 'hex') as spend_txid
+                    FROM jig_txos_spent
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                if(spent && spent.spend_txid !== txid) {
+                    throw createError(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
+                }
+                jigSpends.push(spend);
+            } else if(t.script.toHex().match(orderLockRegex)){
+                const [spent] = await this.sql`SELECT encode(spend_txid, 'hex') as spend_txid
+                    FROM market_txos_spent
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                if(spent && spent.spend_txid !== txid) {
+                    throw createError(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
+                }
+                marketSpends.push(spend);
+            }
+        }))
+
+        const fundUtxos = [];
+        const jigUtxos = [];
+        const marketUtxos = [];
+        await Promise.all(tx.txOuts.map(async (t: any, vout: number) => {
+            if (t.script.isSafeDataOut()) return;
+            const script = t.script.toHex();
+            if(t.script.isPubKeyHashOut()) {
+                const path = scriptPaths.get(script);
+                if(path === 'm/0/0') {
+                    fundUtxos.push({
+                        txid: txidBuf,
+                        vout,
+                        scripthash: (await Hash.asyncSha256(t.script.toBuffer)).reverse(),
+                        satoshis: t.valueBn.toNumber(),
+                    });
+                } else if(path) {
+                    jigUtxos.push({
+                        txid: txidBuf,
+                        vout,
+                        scripthash: (await Hash.asyncSha256(t.script.toBuffer)).reverse(),
+                        satoshis: t.valueBn.toNumber(),
+                    });
+                } else if(t.script.toHex().match(orderLockRegex)){
+                    marketUtxos.push({
+                        txid: txidBuf,
+                        vout
+                    })
+                }
+            }
         }));
 
-        // Find inputs
-        const spendValues = spends.map(s => `(decode('${s.txid.toString('hex')}', 'hex'), ${s.vout})`).join(', ');
-        let query = `SELECT t.txid, t.vout, t.spend_txid FROM txos t
-            JOIN (VALUES ${spendValues}) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
-        console.log('Spends Query:', JSON.stringify(query));
-        const spentIns = await this.sql.unsafe(query);
-
-        // Throw error if this transaction doesn't create outputs for our users or spend exiting outputs
-        if (!outCount && !spentIns.count) throw new createError.Forbidden();
-
-        // Throw error if any input is already spent, unless this is a rebroadcast
-        if (spentIns.find(s => s.spend_txid !== null && s.spend_txid.toString('hex') !== txid)) {
-            throw createError(422, `Input already spent: ${txid} - ${spentIns[0].txid.toString('hex')} ${spentIns[0].vout}`);
+        if (BLOCKCHAIN_BUCKET) {
+            await this.aws?.s3.putObject({
+                Bucket: BLOCKCHAIN_BUCKET,
+                Key: `txns/${txid}`,
+                Body: rawtx
+            }).promise();
         }
-
-        const utxos = [];
-        await Promise.all(tx.txOuts.map(async (txOut: any, vout: number) => {
-            if (txOut.script.isSafeDataOut()) return;
-            const script = txOut.script.toBuffer()
-            utxos.push({
-                txid: txidBuf,
-                vout,
-                scripthash: (await Hash.asyncSha256(script)).reverse(),
-                satoshis: txOut.valueBn.toNumber(),
-            });
-        }));
 
         // Broadcast transaction
         let response;
@@ -143,27 +197,36 @@ export class FyxBlockchainPg implements IBlockchain {
         }
 
         await this.sql`INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
+        await this.sql.begin(async sql => {
+            for(let spend of fundSpends) {
+                await sql`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
+                    SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
+                    FROM fund_txos_unspent
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                await sql`DELETE FROM fund_txos_unspent
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+            }
+            for(let spend of jigSpends) {
+                await sql`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
+                    SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
+                    FROM jig_txos_unspent
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                await sql`DELETE FROM jig_txos_unspent
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+            }
+            for(let spend of marketSpends) {
+                await sql`INSERT INTO market_txos_spent(txid, vout, spend_txid)
+                    SELECT txid, vout, ${txidBuf} as spend_txid
+                    FROM market_txos_unspent
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                await sql`DELETE FROM market_txos_unspent
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+            }
+        })
         await Promise.all([
-            spends.length && this.sql`INSERT INTO txos 
-                ${this.sql(spends, 'txid', 'vout', 'spend_txid')}
-                ON CONFLICT(txid, vout) DO UPDATE 
-                    SET spend_txid = EXCLUDED.spend_txid`,
-            utxos.length && this.sql`INSERT INTO txos 
-                ${this.sql(utxos, 'txid', 'vout', 'scripthash', 'satoshis')}
-                ON CONFLICT(txid, vout) DO UPDATE 
-                    SET scripthash = EXCLUDED.scripthash,
-                        satoshis = EXCLUDED.satoshis`,
             this.cache.set(`tx://${txid}`, rawtx),
             this.redis.publish('txn', txid)
         ]);
-
-        if (BLOCKCHAIN_BUCKET) {
-            await this.aws?.s3.putObject({
-                Bucket: BLOCKCHAIN_BUCKET,
-                Key: `txns/${txid}`,
-                Body: rawtx
-            }).promise();
-        }
 
         const isRun = tx.txOuts.find(txOut => {
             return txOut.script.chunks.length > 5 &&

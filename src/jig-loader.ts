@@ -16,7 +16,7 @@ export class JigLoader {
             const obj = await this.aws?.s3.getObject({
                 Bucket: BLOCKCHAIN_BUCKET || '',
                 Key: `jig/${location}`
-            }).promise().catch(e => console.log('GetObject Error:', `jig/${location}`, e.message));
+            }).promise().catch(e => false);
             if (obj && obj.Body) {
                 outputString = obj.Body.toString('utf8');
                 await this.redis.set(`jigvalue://${location}`, outputString);
