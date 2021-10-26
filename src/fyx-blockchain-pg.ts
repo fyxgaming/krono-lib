@@ -49,6 +49,7 @@ export class FyxBlockchainPg implements IBlockchain {
             console.log('No pubkeys or scripts:', txid);
             throw new createError.NotFound();
         }
+        console.log('Derivations:', derivations);
 
         const pubkeysPaths = new Map<string, string>();
         const scriptPaths = new Map<string, string>();
@@ -92,7 +93,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 }
                 marketSpends.push(spend);
             }
-        }))
+        }));
 
         const fundUtxos = [];
         const jigUtxos = [];
@@ -197,30 +198,56 @@ export class FyxBlockchainPg implements IBlockchain {
         }
 
         await this.sql`INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
+        console.log('Fund Spends:', fundSpends.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
+        console.log('Fund Utxos:', fundUtxos.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
+        console.log('Jig Spends:', jigSpends.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
+        console.log('Jig Utxos:', jigUtxos.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
+        console.log('Market Spends:', marketSpends.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
+        console.log('Market Utxos:', marketUtxos.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
         await this.sql.begin(async sql => {
             for(let spend of fundSpends) {
                 await sql`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
                     SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
                     FROM fund_txos_unspent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}
+                    ON CONFLICT DO NOTHING`;
                 await sql`DELETE FROM fund_txos_unspent
                     WHERE txid=${spend.txid} AND vout=${spend.vout}`;
             }
+            if(fundUtxos.length) {
+                await sql`INSERT INTO fund_txos_unspent 
+                    ${sql(fundUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
+                    ON CONFLICT DO NOTHING`;
+            }
+
             for(let spend of jigSpends) {
                 await sql`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
                     SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
                     FROM jig_txos_unspent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}
+                    ON CONFLICT DO NOTHING`;
                 await sql`DELETE FROM jig_txos_unspent
                     WHERE txid=${spend.txid} AND vout=${spend.vout}`;
             }
+            if(jigUtxos.length) {
+                await sql`INSERT INTO jig_txos_unspent 
+                    ${sql(jigUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
+                    ON CONFLICT DO NOTHING`;
+            }
+
             for(let spend of marketSpends) {
                 await sql`INSERT INTO market_txos_spent(txid, vout, spend_txid)
                     SELECT txid, vout, ${txidBuf} as spend_txid
                     FROM market_txos_unspent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                    WHERE txid=${spend.txid} AND vout=${spend.vout}
+                    ON CONFLICT DO NOTHING`;
                 await sql`DELETE FROM market_txos_unspent
                     WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+            }
+            if(marketUtxos.length) {
+                await sql`INSERT INTO market_txos_unspent 
+                    ${sql(marketUtxos, 'txid', 'vout')}
+                    ON CONFLICT DO NOTHING`;
             }
         })
         await Promise.all([
