@@ -318,8 +318,8 @@ export class FyxBlockchainPg implements IBlockchain {
 
         const utxos = await this.sql`
             SELECT encode(txid, 'hex') as txid, vout, satoshis 
-            FROM txos 
-            WHERE scripthash = ${scripthash} AND spend_txid IS NULL`;
+            FROM fund_txos_unspent 
+            WHERE scripthash = ${scripthash}`;
 
         return utxos;
     }
@@ -328,8 +328,8 @@ export class FyxBlockchainPg implements IBlockchain {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
 
         const [{ count }] = await this.sql`
-            SELECT count(*) as count FROM txos 
-            WHERE scripthash = ${scripthash} AND spend_txid IS NULL`;
+            SELECT count(*) as count FROM fund_txos_unspent 
+            WHERE scripthash = ${scripthash}`;
 
         return count || 0;
     }
@@ -337,15 +337,15 @@ export class FyxBlockchainPg implements IBlockchain {
     async balance(owner: string, ownerType = 'script') {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
         const [{ balance }] = await this.sql`
-            SELECT sum(satoshis) as balance FROM txos 
-            WHERE scripthash = ${scripthash} AND spend_txid IS NULL`;
+            SELECT sum(satoshis) as balance FROM fund_txos_unspent 
+            WHERE scripthash = ${scripthash}`;
 
         return balance || 0;
     }
 
     async spends(txid: string, vout: number | string) {
         const [row] = await this.sql`
-            SELECT encode(spend_txid, 'hex') as spend_txid FROM txos
+            SELECT encode(spend_txid, 'hex') as spend_txid FROM fund_txos_spent
             WHERE txid = decode(${txid}, 'hex') AND vout = ${vout}`;
 
         return row?.spend_txid;
@@ -376,13 +376,12 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async findAndLockUtxo(scripthash: Buffer): Promise<{ txid: Buffer, vout: number, satoshis: number }> {
         return this.sql.begin(async sql => {
-            const [utxo] = await sql`SELECT txid, vout, satoshis FROM txos
+            const [utxo] = await sql`SELECT txid, vout, satoshis FROM fund_txos_unspent
                 WHERE scripthash = ${scripthash} AND 
-                    spend_txid IS NULL AND
                     lock_until < ${new Date()}
                 LIMIT 1`;
             if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
-            await sql`UPDATE txos
+            await sql`UPDATE fund_txos_unspent
                 SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
                 WHERE txid = ${utxo.txid} AND vout = ${utxo.vout}`;
 
