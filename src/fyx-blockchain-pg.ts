@@ -107,14 +107,14 @@ export class FyxBlockchainPg implements IBlockchain {
                     fundUtxos.push({
                         txid: txidBuf,
                         vout,
-                        scripthash: (await Hash.asyncSha256(t.script.toBuffer)).reverse(),
+                        scripthash: (await Hash.asyncSha256(t.script.toBuffer())).reverse(),
                         satoshis: t.valueBn.toNumber(),
                     });
                 } else if(path) {
                     jigUtxos.push({
                         txid: txidBuf,
                         vout,
-                        scripthash: (await Hash.asyncSha256(t.script.toBuffer)).reverse(),
+                        scripthash: (await Hash.asyncSha256(t.script.toBuffer())).reverse(),
                         satoshis: t.valueBn.toNumber(),
                     });
                 } else if(t.script.toHex().match(orderLockRegex)){

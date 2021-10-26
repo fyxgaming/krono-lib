@@ -105,7 +105,7 @@ class FyxBlockchainPg {
                     fundUtxos.push({
                         txid: txidBuf,
                         vout,
-                        scripthash: (await bsv_1.Hash.asyncSha256(t.script.toBuffer)).reverse(),
+                        scripthash: (await bsv_1.Hash.asyncSha256(t.script.toBuffer())).reverse(),
                         satoshis: t.valueBn.toNumber(),
                     });
                 }
@@ -113,7 +113,7 @@ class FyxBlockchainPg {
                     jigUtxos.push({
                         txid: txidBuf,
                         vout,
-                        scripthash: (await bsv_1.Hash.asyncSha256(t.script.toBuffer)).reverse(),
+                        scripthash: (await bsv_1.Hash.asyncSha256(t.script.toBuffer())).reverse(),
                         satoshis: t.valueBn.toNumber(),
                     });
                 }
