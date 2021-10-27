@@ -226,8 +226,8 @@ class FyxBlockchainPg {
                     ON CONFLICT DO NOTHING`;
             }
             for (let spend of jigSpends) {
-                await sql `INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
-                    SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
+                await sql `INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
+                    SELECT txid, vout, scripthash, satoshis, origin, kind, type, ${txidBuf} as spend_txid
                     FROM jig_txos_unspent
                     WHERE txid=${spend.txid} AND vout=${spend.vout}
                     ON CONFLICT DO NOTHING`;
@@ -240,8 +240,8 @@ class FyxBlockchainPg {
                     ON CONFLICT DO NOTHING`;
             }
             for (let spend of marketSpends) {
-                await sql `INSERT INTO market_txos_spent(txid, vout, spend_txid)
-                    SELECT txid, vout, ${txidBuf} as spend_txid
+                await sql `INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
+                    SELECT txid, vout, origin, user_id, ${txidBuf} as spend_txid
                     FROM market_txos_unspent
                     WHERE txid=${spend.txid} AND vout=${spend.vout}
                     ON CONFLICT DO NOTHING`;
@@ -386,27 +386,19 @@ class FyxBlockchainPg {
         }));
     }
     async findAndLockUtxo(scripthash) {
-        return this.sql.begin(async (sql) => {
-            const [utxo] = await sql `UPDATE fund_txos_unspent f
-                SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
-                FROM (SELECT txid, vout
-                    FROM fund_txos_unspent
-                    WHERE scripthash = ${scripthash} AND lock_until < current_timestamp
-                    LIMIT 1
-                ) l 
-                WHERE l.txid = f.txid AND l.vout = f.vout
-                RETURNING f.txid, f.vout, f.satoshis`;
-            // const [utxo] = await sql`SELECT txid, vout, satoshis 
-            //     FROM fund_txos_unspent
-            //     WHERE scripthash = ${scripthash} AND lock_until < ${new Date()}
-            //     LIMIT 1`;
-            // if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
-            // await sql`UPDATE fund_txos_unspent
-            //     SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
-            //     WHERE txid = ${utxo.txid} AND vout = ${utxo.vout}`;
-            console.log('UTXO Selected:', JSON.stringify(utxo));
-            return utxo;
-        });
+        const [utxo] = await this.sql `UPDATE fund_txos_unspent f
+            SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
+            FROM (SELECT txid, vout
+                FROM fund_txos_unspent
+                WHERE scripthash = ${scripthash} AND lock_until < current_timestamp
+                LIMIT 1
+            ) l 
+            WHERE l.txid = f.txid AND l.vout = f.vout
+            RETURNING f.txid, f.vout, f.satoshis`;
+        if (!utxo)
+            throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`);
+        console.log('UTXO Selected:', JSON.stringify(utxo));
+        return utxo;
     }
     async applyPayment(tx, payment, change = true) {
         const address = bsv_1.Address.fromString(payment.from);
