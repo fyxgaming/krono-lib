@@ -41,8 +41,8 @@ class FyxBlockchainPg {
         const derivations = await this.sql `SELECT encode(script, 'hex') as script, 
                 encode(pubkey, 'hex') as pubkey, path
             FROM derivations
-            WHERE pubkey IN (${pubkeys.length ? pubkeys : null}) 
-                OR script IN (${outScripts.length ? outScripts : null})`;
+            WHERE pubkey IN (${pubkeys.length ? pubkeys : Buffer.from('00', 'hex')}) 
+                OR script IN (${outScripts.length ? outScripts : Buffer.from('00', 'hex')})`;
         if (!derivations.length) {
             console.log('No pubkeys or scripts:', txid);
             throw new http_errors_1.default.NotFound();
@@ -117,12 +117,12 @@ class FyxBlockchainPg {
                         satoshis: t.valueBn.toNumber(),
                     });
                 }
-                else if (t.script.toHex().match(order_lock_regex_1.default)) {
-                    marketUtxos.push({
-                        txid: txidBuf,
-                        vout
-                    });
-                }
+            }
+            else if (t.script.toHex().match(order_lock_regex_1.default)) {
+                marketUtxos.push({
+                    txid: txidBuf,
+                    vout
+                });
             }
         }));
         if (BLOCKCHAIN_BUCKET) {

@@ -43,8 +43,8 @@ export class FyxBlockchainPg implements IBlockchain {
         const derivations = await this.sql`SELECT encode(script, 'hex') as script, 
                 encode(pubkey, 'hex') as pubkey, path
             FROM derivations
-            WHERE pubkey IN (${pubkeys.length ? pubkeys : null}) 
-                OR script IN (${outScripts.length ? outScripts : null})`;
+            WHERE pubkey IN (${pubkeys.length ? pubkeys : Buffer.from('00', 'hex')}) 
+                OR script IN (${outScripts.length ? outScripts : Buffer.from('00', 'hex')})`;
         if(!derivations.length) {
             console.log('No pubkeys or scripts:', txid);
             throw new createError.NotFound();
@@ -117,12 +117,12 @@ export class FyxBlockchainPg implements IBlockchain {
                         scripthash: (await Hash.asyncSha256(t.script.toBuffer())).reverse(),
                         satoshis: t.valueBn.toNumber(),
                     });
-                } else if(t.script.toHex().match(orderLockRegex)){
-                    marketUtxos.push({
-                        txid: txidBuf,
-                        vout
-                    })
                 }
+            } else if(t.script.toHex().match(orderLockRegex)){
+                marketUtxos.push({
+                    txid: txidBuf,
+                    vout
+                })
             }
         }));
 
@@ -249,7 +249,7 @@ export class FyxBlockchainPg implements IBlockchain {
                     ${sql(marketUtxos, 'txid', 'vout')}
                     ON CONFLICT DO NOTHING`;
             }
-        })
+        });
         await Promise.all([
             this.cache.set(`tx://${txid}`, rawtx),
             this.redis.publish('txn', txid)
