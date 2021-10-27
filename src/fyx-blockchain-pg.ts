@@ -35,7 +35,7 @@ export class FyxBlockchainPg implements IBlockchain {
         const txidBuf = Buffer.from(txid, 'hex');
         console.log('Broadcasting:', txid, rawtx);
 
-        const pubkeys = tx.txIns.map(t => t.script.isPubKeyHashIn() && t.script.chunks[1].buf);
+        const pubkeys = tx.txIns.map(t => t.script.isPubKeyHashIn() && t.script.chunks[1].buf).filter(b => b);
         const outScripts = tx.txOuts
             .filter(txOut => txOut.script.isPubKeyHashOut())
             .map(txOut => txOut.script.toBuffer());
