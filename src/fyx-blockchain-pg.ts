@@ -415,6 +415,7 @@ export class FyxBlockchainPg implements IBlockchain {
             //     SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
             //     WHERE txid = ${utxo.txid} AND vout = ${utxo.vout}`;
 
+            console.log('UTXO Selected:', JSON.stringify(utxo));
             return utxo;
         });
     }
