@@ -204,12 +204,18 @@ class FyxBlockchainPg {
             }
         }
         await this.sql `INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
-            console.log('Fund Spends:', JSON.stringify(fundSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))));
-        console.log('Fund Utxos:', JSON.stringify(fundUtxos.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))));
-        console.log('Jig Spends:', JSON.stringify(jigSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))));
-        console.log('Jig Utxos:', JSON.stringify(jigUtxos.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))));
-        console.log('Market Spends:', JSON.stringify(marketSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))));
-        console.log('Market Utxos:', JSON.stringify(marketUtxos.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))));
+            console.log('TX Updates:', txid, JSON.stringify({
+                spends: {
+                    fund: fundSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout })),
+                    jig: jigSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout })),
+                    market: marketSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))
+                },
+                txos: {
+                    fund: fundUtxos.map(s => ({ txid, vout: s.vout })),
+                    jig: jigUtxos.map(s => ({ txid, vout: s.vout })),
+                    market: marketUtxos.map(s => ({ txid, vout: s.vout }))
+                }
+            }));
         await this.sql.begin(async (sql) => {
             for (let spend of fundSpends) {
                 await sql `INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
