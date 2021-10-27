@@ -397,14 +397,23 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async findAndLockUtxo(scripthash: Buffer): Promise<{ txid: Buffer, vout: number, satoshis: number }> {
         return this.sql.begin(async sql => {
-            const [utxo] = await sql`SELECT txid, vout, satoshis 
-                FROM fund_txos_unspent
-                WHERE scripthash = ${scripthash} AND lock_until < ${new Date()}
-                LIMIT 1`;
-            if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
-            await sql`UPDATE fund_txos_unspent
+            const [utxo] = await sql`UPDATE fund_txos_unspent f
                 SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
-                WHERE txid = ${utxo.txid} AND vout = ${utxo.vout}`;
+                FROM (SELECT txid, vout
+                    FROM fund_txos_unspent
+                    WHERE scripthash = ${scripthash} AND lock_until < current_timestamp
+                    LIMIT 1
+                ) l 
+                WHERE l.txid = f.txid AND l.vout = f.vout
+                RETURNING f.txid, f.vout, f.satoshis`;
+            // const [utxo] = await sql`SELECT txid, vout, satoshis 
+            //     FROM fund_txos_unspent
+            //     WHERE scripthash = ${scripthash} AND lock_until < ${new Date()}
+            //     LIMIT 1`;
+            // if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
+            // await sql`UPDATE fund_txos_unspent
+            //     SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
+            //     WHERE txid = ${utxo.txid} AND vout = ${utxo.vout}`;
 
             return utxo;
         });
