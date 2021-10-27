@@ -49,7 +49,7 @@ export class FyxBlockchainPg implements IBlockchain {
             console.log('No pubkeys or scripts:', txid);
             throw new createError.NotFound();
         }
-        console.log('Derivations:', derivations);
+        console.log('Derivations:', JSON.stringify(derivations));
 
         const pubkeysPaths = new Map<string, string>();
         const scriptPaths = new Map<string, string>();
@@ -198,12 +198,12 @@ export class FyxBlockchainPg implements IBlockchain {
         }
 
         await this.sql`INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
-        console.log('Fund Spends:', fundSpends.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
-        console.log('Fund Utxos:', fundUtxos.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
-        console.log('Jig Spends:', jigSpends.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
-        console.log('Jig Utxos:', jigUtxos.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
-        console.log('Market Spends:', marketSpends.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
-        console.log('Market Utxos:', marketUtxos.map(s => ({txid: s.txid.toString('hex'), vout: s.vout})));
+        console.log('Fund Spends:', JSON.stringify(fundSpends.map(s => ({txid: s.txid.toString('hex'), vout: s.vout}))));
+        console.log('Fund Utxos:', JSON.stringify(fundUtxos.map(s => ({txid: s.txid.toString('hex'), vout: s.vout}))));
+        console.log('Jig Spends:', JSON.stringify(jigSpends.map(s => ({txid: s.txid.toString('hex'), vout: s.vout}))));
+        console.log('Jig Utxos:', JSON.stringify(jigUtxos.map(s => ({txid: s.txid.toString('hex'), vout: s.vout}))));
+        console.log('Market Spends:', JSON.stringify(marketSpends.map(s => ({txid: s.txid.toString('hex'), vout: s.vout}))));
+        console.log('Market Utxos:', JSON.stringify(marketUtxos.map(s => ({txid: s.txid.toString('hex'), vout: s.vout}))));
         await this.sql.begin(async sql => {
             for(let spend of fundSpends) {
                 await sql`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
