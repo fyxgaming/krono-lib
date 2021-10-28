@@ -6,7 +6,7 @@ import cookieparser from 'set-cookie-parser';
 import { IBlockchain } from './iblockchain';
 import { FyxCache } from './fyx-cache';
 import orderLockRegex from './order-lock-regex';
-import format from 'pg-format';
+import fmt from 'pg-format';
 
 const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 
@@ -33,9 +33,9 @@ export class FyxBlockchainPg implements IBlockchain {
 
     buildSpendSelect(tableName: string, outPoints: {txid: Buffer, vout: number}[]) {
         return `SELECT encode(t.txid, 'hex'), t.vout, encode(t.spend_txid, 'hex') as spend_txid
-            FROM ${format.ident(tableName)} t
+            FROM ${fmt.ident(tableName)} t
             JOIN (VALUES 
-                ${outPoints.map(s => `(${format.literal(s.txid)}, ${s.vout})`).join(', ')}
+                ${outPoints.map(s => `('${fmt.string(s.txid)}', ${s.vout})`).join(', ')}
             ) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
     }
 
