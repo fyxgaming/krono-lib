@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FyxBlockchainPg = void 0;
 const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
+const crypto_1 = require("crypto");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const set_cookie_parser_1 = __importDefault(require("set-cookie-parser"));
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
@@ -61,18 +62,16 @@ class FyxBlockchainPg {
         const fundSpends = [];
         const jigSpends = [];
         const marketSpends = [];
-        console.log(`Entering Promise.all for spends...`);
+        console.log(`Analyzing spends...`);
         try {
-            await Promise.all(tx.txIns.map(async (t, vin) => {
+            for (let i = 0; i < tx.txIns.length; i++) {
+                const t = tx.txIns[i];
                 const pubkey = t.script.isPubKeyHashIn() && t.script.chunks[1].buf.toString('hex');
                 const path = pubkeysPaths.get(pubkey);
                 const spend = {
                     txid: Buffer.from(t.txHashBuf).reverse(),
                     vout: t.txOutNum
                 };
-                // console.log(`pubkey: ${JSON.stringify(pubkey)}`);
-                // console.log(`path: ${path}`);
-                // console.log(`spend: ${JSON.stringify(spend)}`);
                 if (path === 'm/0/0') {
                     const [spent] = await this.sql `SELECT encode(spend_txid, 'hex') as spend_txid
                     FROM fund_txos_spent
@@ -80,9 +79,7 @@ class FyxBlockchainPg {
                     if (spent && spent.spend_txid !== txid) {
                         throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
                     }
-                    // console.log(`In path m/0/0 - retrieved spent ${JSON.stringify(spent)}`);
                     fundSpends.push(spend);
-                    // console.log(`Added spend to fundSpends`);
                 }
                 else if (path) {
                     const [spent] = await this.sql `SELECT encode(spend_txid, 'hex') as spend_txid
@@ -91,9 +88,7 @@ class FyxBlockchainPg {
                     if (spent && spent.spend_txid !== txid) {
                         throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
                     }
-                    // console.log(`In path ${path} - retrieved spent ${JSON.stringify(spent)}`);
                     jigSpends.push(spend);
-                    // console.log(`Added spend to jigSpends`);
                 }
                 else if (t.script.toHex().match(order_lock_regex_1.default)) {
                     const [spent] = await this.sql `SELECT encode(spend_txid, 'hex') as spend_txid
@@ -102,19 +97,16 @@ class FyxBlockchainPg {
                     if (spent && spent.spend_txid !== txid) {
                         throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
                     }
-                    // console.log(`In condition path not set - retrieved spent ${JSON.stringify(spent)}`);
-                    // console.log(`t.script.toHex().match(orderLockRegex)) - ${JSON.stringify(t.script.toHex().match(orderLockRegex))}`);
                     marketSpends.push(spend);
-                    // console.log(`Added spend to marketSpends`);
                 }
-            }));
+            }
         }
         catch (e) {
-            console.error(`Error from spends Promise.all code block`, e);
+            console.error(`Error from Analyzing spends block`, e);
             throw e;
         }
         // logging
-        console.log(`Done with Promise.all for spends...`);
+        console.log(`Done Analyzing spends...`);
         // if (fundSpends.length > 0) console.log(`fundSpends array is ${JSON.stringify(fundSpends, null, 4)}`);
         // if (jigSpends.length > 0) console.log(`jigSpends array is ${JSON.stringify(jigSpends, null, 4)}`);
         // if (marketSpends.length > 0) console.log(`marketSpends array is ${JSON.stringify(marketSpends, null, 4)}`);
@@ -122,9 +114,9 @@ class FyxBlockchainPg {
         const fundUtxos = [];
         const jigUtxos = [];
         const marketUtxos = [];
-        console.log(`Entering Promise.all for utxos...`);
+        console.log(`Building utxos...`);
         try {
-            await Promise.all(tx.txOuts.map(async (t, vout) => {
+            tx.txOuts.forEach(async (t, vout) => {
                 if (t.script.isSafeDataOut())
                     return;
                 const script = t.script.toHex();
@@ -134,7 +126,7 @@ class FyxBlockchainPg {
                         fundUtxos.push({
                             txid: txidBuf,
                             vout,
-                            scripthash: (await bsv_1.Hash.asyncSha256(t.script.toBuffer())).reverse(),
+                            scripthash: (0, crypto_1.createHash)('sha256').update(t.script.toBuffer()).digest().reverse(),
                             satoshis: t.valueBn.toNumber(),
                         });
                     }
@@ -142,7 +134,7 @@ class FyxBlockchainPg {
                         jigUtxos.push({
                             txid: txidBuf,
                             vout,
-                            scripthash: (await bsv_1.Hash.asyncSha256(t.script.toBuffer())).reverse(),
+                            scripthash: (0, crypto_1.createHash)('sha256').update(t.script.toBuffer()).digest().reverse(),
                             satoshis: t.valueBn.toNumber(),
                         });
                     }
@@ -153,15 +145,13 @@ class FyxBlockchainPg {
                         vout
                     });
                 }
-            }));
+            });
         }
         catch (e) {
-            console.error(`Error from utxos Promise.all code block`, e);
+            console.error(`Error from Building utxos`, e);
             throw e;
         }
-        // logging
-        console.log(`Done with Promise.all for utxos...`);
-        // end logging
+        console.log(`Done Building utxos...`);
         if (BLOCKCHAIN_BUCKET) {
             await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.putObject({
                 Bucket: BLOCKCHAIN_BUCKET,
