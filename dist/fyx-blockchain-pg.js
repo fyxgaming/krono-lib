@@ -34,7 +34,7 @@ class FyxBlockchainPg {
         return `SELECT encode(t.txid, 'hex'), t.vout, encode(t.spend_txid, 'hex') as spend_txid
             FROM ${pg_format_1.default.ident(tableName)} t
             JOIN (VALUES 
-                ${outPoints.map(s => `('${pg_format_1.default.string(s.txid)}', ${s.vout})`).join(', ')}
+                ${outPoints.map(s => `('${pg_format_1.default.string(s.txid)}'::bytea, ${s.vout})`).join(', ')}
             ) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
     }
     async broadcast(rawtx, mapiKey) {

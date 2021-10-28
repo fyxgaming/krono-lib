@@ -35,7 +35,7 @@ export class FyxBlockchainPg implements IBlockchain {
         return `SELECT encode(t.txid, 'hex'), t.vout, encode(t.spend_txid, 'hex') as spend_txid
             FROM ${fmt.ident(tableName)} t
             JOIN (VALUES 
-                ${outPoints.map(s => `('${fmt.string(s.txid)}', ${s.vout})`).join(', ')}
+                ${outPoints.map(s => `('${fmt.string(s.txid)}'::bytea, ${s.vout})`).join(', ')}
             ) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
     }
 
