@@ -112,7 +112,7 @@ export class FyxBlockchainPg implements IBlockchain {
         }
         catch (e: any) {
             console.error(`Error from spends Promise.all code block`, e);
-            throw createError(422, e.message);
+            throw e;
         }
         // logging
         console.log(`Done with Promise.all for spends...`);
@@ -156,7 +156,7 @@ export class FyxBlockchainPg implements IBlockchain {
         }
         catch (e: any) {
             console.error(`Error from utxos Promise.all code block`, e);
-            throw createError(422, e.message);
+            throw e;
         }
         // logging
         console.log(`Done with Promise.all for utxos...`);
@@ -299,7 +299,7 @@ export class FyxBlockchainPg implements IBlockchain {
         }
         catch (e: any) {
             console.error(`Error from Insert into DB code block`, e);
-            throw createError(422, e.message);
+            throw e;
         }
 
         console.log(`Setting Redis cache`);
@@ -312,7 +312,7 @@ export class FyxBlockchainPg implements IBlockchain {
         }
         catch (e: any) {
             console.error(`Error from set Redis cache code block`, e);
-            throw createError(422, e.message);
+            throw e;
         }
 
         const isRun = tx.txOuts.find(txOut => {
