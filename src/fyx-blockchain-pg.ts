@@ -111,7 +111,7 @@ export class FyxBlockchainPg implements IBlockchain {
             }));
         }
         catch (e: any) {
-            console.error(`Error from spends Promise.all code block - ${e.message}`);
+            console.error(`Error from spends Promise.all code block`, e);
             throw createError(422, e.message);
         }
         // logging
@@ -155,7 +155,7 @@ export class FyxBlockchainPg implements IBlockchain {
             }));
         }
         catch (e: any) {
-            console.error(`Error from utxos Promise.all code block - ${e.message}`);
+            console.error(`Error from utxos Promise.all code block`, e);
             throw createError(422, e.message);
         }
         // logging
@@ -298,7 +298,7 @@ export class FyxBlockchainPg implements IBlockchain {
             });
         }
         catch (e: any) {
-            console.error(`Error from Insert into DB code block - ${e.message}`);
+            console.error(`Error from Insert into DB code block`, e);
             throw createError(422, e.message);
         }
 
@@ -311,7 +311,7 @@ export class FyxBlockchainPg implements IBlockchain {
             ]);
         }
         catch (e: any) {
-            console.error(`Error from set Redis cache code block - ${e.message}`);
+            console.error(`Error from set Redis cache code block`, e);
             throw createError(422, e.message);
         }
 
@@ -350,7 +350,7 @@ export class FyxBlockchainPg implements IBlockchain {
 
         if (this.rpcClient) {
             rawtx = await this.rpcClient.getRawTransaction(txid)
-                .catch(e => console.error('getRawTransaction Error:', e.message));
+                .catch(e => console.error(e => false));
             if (DEBUG && rawtx) console.log('Loaded from node:', txid);
         }
 
