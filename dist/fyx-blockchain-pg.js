@@ -102,7 +102,7 @@ class FyxBlockchainPg {
                 if (subQueries.length) {
                     const sql = `SELECT * FROM (
                         ${subQueries.join(' UNION ALL ')}
-                    )`;
+                    ) spends`;
                     console.log('Spends SQL:', sql);
                     const spends = await this.sql.unsafe(sql);
                     spends.forEach(s => {
