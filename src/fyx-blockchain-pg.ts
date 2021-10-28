@@ -402,6 +402,7 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async findAndLockUtxo(scripthash: Buffer): Promise<{ txid: Buffer, vout: number, satoshis: number }> {
+        console.log('findAndLockUtxo', scripthash.toString('hex'));
         const [utxo] = await this.sql`UPDATE fund_txos_unspent f
             SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
             FROM (SELECT txid, vout
@@ -412,7 +413,7 @@ export class FyxBlockchainPg implements IBlockchain {
             WHERE l.txid = f.txid AND l.vout = f.vout
             RETURNING f.txid, f.vout, f.satoshis`;
         if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
-        console.log('UTXO Selected:', JSON.stringify(utxo));
+        console.log('UTXO Selected:', scripthash.toString('hex'), JSON.stringify(utxo));
         return utxo;
     }
     
@@ -442,19 +443,22 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async applyPayments(rawtx, payments: { from: string, amount: number }[], payer?: string, changeSplitSats = 0, satsPerByte = 0.25) {
-        console.log('PAY:', payer, JSON.stringify(payments), rawtx, changeSplitSats, satsPerByte);
         const tx = Tx.fromHex(rawtx);
+        const txid = tx.id();
+        console.log('PAY:', payer, JSON.stringify(payments), txid, changeSplitSats, satsPerByte);
         let size = tx.toBuffer().length;
         let totalIn = 0;
         const parents = await this.loadParentTxOuts(tx);
+        console.time(`loading parents: ${txid}`);
         parents.forEach((txOut, i) => {
             const scriptBuf = tx.txIns[i].script.toBuffer()
             size += (scriptBuf.length > 50 ? 0 : SIG_SIZE);
             totalIn += txOut.valueBn.toNumber();
         }, 0);
+        console.timeEnd(`loading parents: ${txid}`);
         let totalOut = tx.txOuts.reduce((a, { valueBn }) => a + valueBn.toNumber(), 0);
-        const now = Date.now();
 
+        console.time(`applying payments: ${txid}`);
         await Promise.all(payments.map(async (payment) => {
             const { inputSats, outputSats, inputCount } = await this.applyPayment(tx, payment, payment.from !== payer);
             totalIn += inputSats;
@@ -462,10 +466,14 @@ export class FyxBlockchainPg implements IBlockchain {
             size += inputCount * INPUT_SIZE;
             if (outputSats) size += OUTPUT_SIZE;
         }));
+        console.timeEnd(`applying payments: ${txid}`);
 
         if (payer) {
             const address = Address.fromString(payer);
+            console.time(`calculating scripthash: ${txid}`);
             const scripthash = (await Hash.asyncSha256(address.toTxOutScript().toBuffer())).reverse();
+            console.timeEnd(`calculating scripthash: ${txid}`);
+            console.time(`applying fees: ${txid}`);
             while (totalIn < totalOut + (size * satsPerByte)) {
                 const utxo = await this.findAndLockUtxo(scripthash);
                 totalIn += utxo.satoshis;
@@ -477,7 +485,9 @@ export class FyxBlockchainPg implements IBlockchain {
                 );
                 size += INPUT_SIZE;
             }
+            console.timeEnd(`applying fees: ${txid}`);
 
+            console.time(`calculating change: ${txid}`);
             let change = totalIn - totalOut - Math.ceil(size * satsPerByte);
             console.log('Size:', size, 'TotalIn:', totalIn, 'TotalOut:', totalOut, 'Change:', change);
             if (change < 0) throw new Error(`Inadequate UTXOs for purse: ${payer}`);
@@ -493,6 +503,7 @@ export class FyxBlockchainPg implements IBlockchain {
                     change = 0;
                 }
             }
+            console.timeEnd(`calculating change: ${txid}`);
         }
         return tx.toHex();
     }
