@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { KeyPair, PubKey } from 'bsv';
 export declare class SignedMessage {
     from: string;
@@ -9,8 +10,8 @@ export declare class SignedMessage {
     ts: number;
     sig?: string;
     constructor(message?: Partial<SignedMessage>, userId?: string, keyPair?: KeyPair);
-    get hash(): any;
-    get id(): any;
+    get hash(): Buffer;
+    get id(): string;
     get payloadObj(): any;
     sign(userId: string, keyPair: KeyPair): void;
     verify(pubkey: PubKey | string): Promise<any>;

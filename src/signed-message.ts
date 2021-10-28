@@ -1,5 +1,6 @@
 import { Bw, Ecdsa, Hash, KeyPair, PubKey, Sig } from 'bsv';
 import { Buffer } from 'buffer';
+import { createHash } from 'crypto';
 const MAGIC_BYTES = Buffer.from('Bitcoin Signed Message:\n');
 const MAGIC_BYTES_PREFIX = Bw.varIntBufNum(MAGIC_BYTES.length);
 
@@ -33,7 +34,7 @@ export class SignedMessage {
             Bw.varIntBufNum(payloadBuf.length),
             payloadBuf
         ]);
-        return Hash.sha256Sha256(messageBuf);
+        return createHash('sha256').update(createHash('sha256').update(messageBuf).digest()).digest();
     }
 
     get id() {

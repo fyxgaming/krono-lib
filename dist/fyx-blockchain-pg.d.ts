@@ -15,7 +15,7 @@ export declare class FyxBlockchainPg implements IBlockchain {
     }, rpcClient?: any);
     broadcast(rawtx: string, mapiKey?: string): Promise<any>;
     fetch(txid: string): Promise<any>;
-    calculateScriptHash(owner: string, ownerType: string): Promise<Buffer>;
+    calculateScriptHash(owner: string, ownerType: string): Buffer;
     utxos(owner: string, ownerType?: string, limit?: number): Promise<any>;
     utxoCount(owner: string, ownerType?: string): Promise<any>;
     balance(owner: string, ownerType?: string): Promise<any>;

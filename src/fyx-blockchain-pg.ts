@@ -1,4 +1,5 @@
 import { Address, Bn, Hash, Script, Tx, TxIn } from 'bsv';
+import { createHash } from 'crypto';
 import createError from 'http-errors';
 import axios from './fyx-axios';
 import cookieparser from 'set-cookie-parser';
@@ -107,14 +108,14 @@ export class FyxBlockchainPg implements IBlockchain {
                     fundUtxos.push({
                         txid: txidBuf,
                         vout,
-                        scripthash: (await Hash.asyncSha256(t.script.toBuffer())).reverse(),
+                        scripthash: createHash('sha256').update(t.script.toBuffer()).digest().reverse(),
                         satoshis: t.valueBn.toNumber(),
                     });
                 } else if(path) {
                     jigUtxos.push({
                         txid: txidBuf,
                         vout,
-                        scripthash: (await Hash.asyncSha256(t.script.toBuffer())).reverse(),
+                        scripthash: createHash('sha256').update(t.script.toBuffer()).digest().reverse(),
                         satoshis: t.valueBn.toNumber(),
                     });
                 }
@@ -330,7 +331,7 @@ export class FyxBlockchainPg implements IBlockchain {
         return rawtx;
     }
 
-    async calculateScriptHash(owner: string, ownerType: string): Promise<Buffer> {
+    calculateScriptHash(owner: string, ownerType: string): Buffer {
         let script;
         if(ownerType === 'scripthash') {
             return Buffer.from(owner, 'hex');
@@ -342,12 +343,12 @@ export class FyxBlockchainPg implements IBlockchain {
         } else {
             throw new Error('Invalid ownerType');
         }
-        return (await Hash.asyncSha256(script.toBuffer())).reverse();
+        return createHash('sha256').update(script.toBuffer()).digest().reverse();
         
     }
 
     async utxos(owner: string, ownerType = 'script', limit = 1000) {
-        const scripthash = await this.calculateScriptHash(owner, ownerType);
+        const scripthash = this.calculateScriptHash(owner, ownerType);
         const utxos = await this.sql`
             SELECT encode(txid, 'hex') as txid, vout, satoshis 
             FROM fund_txos_unspent 
@@ -356,7 +357,7 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async utxoCount(owner: string, ownerType = 'script') {
-        const scripthash = await this.calculateScriptHash(owner, ownerType);
+        const scripthash = this.calculateScriptHash(owner, ownerType);
         const [{ count }] = await this.sql`
             SELECT count(*) as count FROM fund_txos_unspent 
             WHERE scripthash = ${scripthash}`;
@@ -364,7 +365,7 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async balance(owner: string, ownerType = 'script') {
-        const scripthash = await this.calculateScriptHash(owner, ownerType);
+        const scripthash = this.calculateScriptHash(owner, ownerType);
         const [{ balance }] = await this.sql`
             SELECT sum(satoshis) as balance FROM fund_txos_unspent 
             WHERE scripthash = ${scripthash}`;
@@ -402,6 +403,7 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async findAndLockUtxo(scripthash: Buffer): Promise<{ txid: Buffer, vout: number, satoshis: number }> {
+        console.log('findAndLockUtxo', scripthash.toString('hex'));
         const [utxo] = await this.sql`UPDATE fund_txos_unspent f
             SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
             FROM (SELECT txid, vout
@@ -412,13 +414,13 @@ export class FyxBlockchainPg implements IBlockchain {
             WHERE l.txid = f.txid AND l.vout = f.vout
             RETURNING f.txid, f.vout, f.satoshis`;
         if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
-        console.log('UTXO Selected:', JSON.stringify(utxo));
+        console.log('UTXO Selected:', scripthash.toString('hex'), JSON.stringify(utxo));
         return utxo;
     }
     
     async applyPayment(tx, payment: { from: string, amount: number }, change = true) {
         const address = Address.fromString(payment.from);
-        const scripthash = (await Hash.asyncSha256(address.toTxOutScript().toBuffer())).reverse();
+        const scripthash = createHash('sha256').update(address.toTxOutScript().toBuffer()).digest().reverse();
 
         let inputSats = 0, outputSats = 0, byteCount = 0, inputCount = 0;
         while (inputSats < payment.amount) {
@@ -465,7 +467,7 @@ export class FyxBlockchainPg implements IBlockchain {
 
         if (payer) {
             const address = Address.fromString(payer);
-            const scripthash = (await Hash.asyncSha256(address.toTxOutScript().toBuffer())).reverse();
+            const scripthash = createHash('sha256').update(address.toTxOutScript().toBuffer()).digest().reverse();
             while (totalIn < totalOut + (size * satsPerByte)) {
                 const utxo = await this.findAndLockUtxo(scripthash);
                 totalIn += utxo.satoshis;

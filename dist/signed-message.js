@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SignedMessage = void 0;
 const bsv_1 = require("bsv");
 const buffer_1 = require("buffer");
+const crypto_1 = require("crypto");
 const MAGIC_BYTES = buffer_1.Buffer.from('Bitcoin Signed Message:\n');
 const MAGIC_BYTES_PREFIX = bsv_1.Bw.varIntBufNum(MAGIC_BYTES.length);
 class SignedMessage {
@@ -33,7 +34,7 @@ class SignedMessage {
             bsv_1.Bw.varIntBufNum(payloadBuf.length),
             payloadBuf
         ]);
-        return bsv_1.Hash.sha256Sha256(messageBuf);
+        return (0, crypto_1.createHash)('sha256').update((0, crypto_1.createHash)('sha256').update(messageBuf).digest()).digest();
     }
     get id() {
         return this.hash.toString('hex');

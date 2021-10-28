@@ -1,5 +1,6 @@
 import * as argon2 from 'argon2-browser';
 import { Bip32, Bip39, Bn, Constants, Ecdsa, Ecies, Hash, KeyPair, Point, PrivKey } from 'bsv';
+import { createHash } from 'crypto';
 import axios from './fyx-axios';
 import { SignedMessage } from './signed-message';
 import { Buffer } from 'buffer';
@@ -7,16 +8,17 @@ import { Buffer } from 'buffer';
 export class AuthService {
     private network: string;
 
-    constructor(private apiUrl: string, network: string) { 
+    constructor(private apiUrl: string, network: string) {
         this.network = network.slice(0, 4);
     }
 
     async generateKeyPair(id: string, password: string): Promise<KeyPair> {
         id = id.toLowerCase().normalize('NFKC');
-        const salt = Hash.sha256(Buffer.concat([Buffer.from(this.network), Buffer.from(id)]));
-        const pass = Hash.sha256(Buffer.from(password.normalize('NFKC')));
+        
+        const salt = createHash('sha256').update(Buffer.concat([Buffer.from(this.network), Buffer.from(id)])).digest();
+        const pass = createHash('sha256').update(Buffer.from(password.normalize('NFKC'))).digest();
         const { hash } = await argon2.hash({ pass, salt, time: 100, mem: 1024, hashLen: 32 });
-        if(!(new Bn().fromBuffer(Buffer.from(hash)).lt(Point.getN()))){
+        if (!(new Bn().fromBuffer(Buffer.from(hash)).lt(Point.getN()))) {
             throw new Error('BigInteger is out of range of valid private keys')
         }
         const versionByteNum = this.network === 'main' ?
@@ -52,9 +54,9 @@ export class AuthService {
         };
 
         let msgBuf = Buffer.from(`${id}|${reg.xpub}|${reg.recovery}|${email}`);
-        if(firstName) msgBuf = Buffer.concat([msgBuf, Buffer.from(`|${firstName}`)]);
-        if(lastName) msgBuf = Buffer.concat([msgBuf, Buffer.from(`|${lastName}`)]);
-        const msgHash = await Hash.asyncSha256(msgBuf);
+        if (firstName) msgBuf = Buffer.concat([msgBuf, Buffer.from(`|${firstName}`)]);
+        if (lastName) msgBuf = Buffer.concat([msgBuf, Buffer.from(`|${lastName}`)]);
+        const msgHash = createHash('sha256').update(msgBuf).digest();
         const sig = Ecdsa.sign(msgHash, keyPair);
         reg.sig = sig.toString();
 
@@ -64,9 +66,9 @@ export class AuthService {
 
     async recoverBip39(id: string, keyPair: KeyPair): Promise<Bip32> {
         id = id.toLowerCase().normalize('NFKC');
-        const { data: { path, recovery }} = await axios.post(
-            `${this.apiUrl}/accounts/${id}/recover`, 
-            new SignedMessage({subject: 'recover'}, id, keyPair)
+        const { data: { path, recovery } } = await axios.post(
+            `${this.apiUrl}/accounts/${id}/recover`,
+            new SignedMessage({ subject: 'recover' }, id, keyPair)
         );
 
         const recoveryBuf = Ecies.bitcoreDecrypt(
@@ -75,7 +77,7 @@ export class AuthService {
         );
         return Bip39.fromBuffer(recoveryBuf);
     }
-    
+
     async recover(id: string, keyPair: KeyPair): Promise<Bip32> {
         const bip39 = await this.recoverBip39(id, keyPair);
         return Bip32.fromSeed(bip39.toSeed());
@@ -88,9 +90,9 @@ export class AuthService {
 
     async getProfile(id: string, keyPair: KeyPair): Promise<Bip32> {
         id = id.toLowerCase().normalize('NFKC');
-        const { data: user} = await axios.post(
-            `${this.apiUrl}/accounts/${id}/recover`, 
-            new SignedMessage({subject: 'recover'}, id, keyPair)
+        const { data: user } = await axios.post(
+            `${this.apiUrl}/accounts/${id}/recover`,
+            new SignedMessage({ subject: 'recover' }, id, keyPair)
         );
 
         return user;
@@ -98,7 +100,7 @@ export class AuthService {
 
     async rekey(mnemonic: string, id: string, password: string): Promise<KeyPair> {
         const bip39 = Bip39.fromString(mnemonic);
-        const bip32 = Bip32.fromSeed(bip39.toSeed());        
+        const bip32 = Bip32.fromSeed(bip39.toSeed());
         const keyPair = await this.generateKeyPair(id, password);
         const recoveryBuf = Ecies.bitcoreEncrypt(
             bip39.toBuffer(),
@@ -106,7 +108,7 @@ export class AuthService {
             keyPair
         );
         await axios.put(
-            `${this.apiUrl}/accounts/${id}`, 
+            `${this.apiUrl}/accounts/${id}`,
             new SignedMessage({
                 subject: 'rekey',
                 payload: JSON.stringify({
@@ -126,7 +128,7 @@ export class AuthService {
             const user = await axios(`${this.apiUrl}/accounts/${id}`);
             return false;
         } catch (e) {
-            if(e.status === 404) return true;
+            if (e.status === 404) return true;
             throw e;
         }
     }
@@ -135,8 +137,8 @@ export class AuthService {
         try {
             await axios.post(`${this.apiUrl}/accounts/emails/verify/${id}/${nonce}`);
             return true;
-        } catch(e) {
-            if(e.status === 401) return false;
+        } catch (e) {
+            if (e.status === 401) return false;
             throw e;
         }
     }

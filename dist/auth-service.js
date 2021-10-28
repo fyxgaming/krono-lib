@@ -25,6 +25,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const argon2 = __importStar(require("argon2-browser"));
 const bsv_1 = require("bsv");
+const crypto_1 = require("crypto");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const signed_message_1 = require("./signed-message");
 const buffer_1 = require("buffer");
@@ -35,8 +36,8 @@ class AuthService {
     }
     async generateKeyPair(id, password) {
         id = id.toLowerCase().normalize('NFKC');
-        const salt = bsv_1.Hash.sha256(buffer_1.Buffer.concat([buffer_1.Buffer.from(this.network), buffer_1.Buffer.from(id)]));
-        const pass = bsv_1.Hash.sha256(buffer_1.Buffer.from(password.normalize('NFKC')));
+        const salt = (0, crypto_1.createHash)('sha256').update(buffer_1.Buffer.concat([buffer_1.Buffer.from(this.network), buffer_1.Buffer.from(id)])).digest();
+        const pass = (0, crypto_1.createHash)('sha256').update(buffer_1.Buffer.from(password.normalize('NFKC'))).digest();
         const { hash } = await argon2.hash({ pass, salt, time: 100, mem: 1024, hashLen: 32 });
         if (!(new bsv_1.Bn().fromBuffer(buffer_1.Buffer.from(hash)).lt(bsv_1.Point.getN()))) {
             throw new Error('BigInteger is out of range of valid private keys');
@@ -71,7 +72,7 @@ class AuthService {
             msgBuf = buffer_1.Buffer.concat([msgBuf, buffer_1.Buffer.from(`|${firstName}`)]);
         if (lastName)
             msgBuf = buffer_1.Buffer.concat([msgBuf, buffer_1.Buffer.from(`|${lastName}`)]);
-        const msgHash = await bsv_1.Hash.asyncSha256(msgBuf);
+        const msgHash = (0, crypto_1.createHash)('sha256').update(msgBuf).digest();
         const sig = bsv_1.Ecdsa.sign(msgHash, keyPair);
         reg.sig = sig.toString();
         await fyx_axios_1.default.post(`${this.apiUrl}/accounts/${id}`, reg);
