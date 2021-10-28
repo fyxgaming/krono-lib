@@ -13,6 +13,10 @@ export declare class FyxBlockchainPg implements IBlockchain {
         sns: any;
         sqs: any;
     }, rpcClient?: any);
+    buildSpendSelect(tableName: string, outPoints: {
+        txid: Buffer;
+        vout: number;
+    }[]): string;
     broadcast(rawtx: string, mapiKey?: string): Promise<any>;
     fetch(txid: string): Promise<any>;
     calculateScriptHash(owner: string, ownerType: string): Promise<Buffer>;

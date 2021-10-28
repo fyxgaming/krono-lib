@@ -10,6 +10,7 @@ const crypto_1 = require("crypto");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const set_cookie_parser_1 = __importDefault(require("set-cookie-parser"));
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
+const pg_format_1 = __importDefault(require("pg-format"));
 const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
@@ -28,6 +29,13 @@ class FyxBlockchainPg {
         this.cache = cache;
         this.aws = aws;
         this.rpcClient = rpcClient;
+    }
+    buildSpendSelect(tableName, outPoints) {
+        return `SELECT encode(t.txid, 'hex'), t.vout, encode(t.spend_txid, 'hex') as spend_txid
+            FROM ${pg_format_1.default.ident(tableName)} t
+            JOIN (VALUES 
+                ${outPoints.map(s => `(${pg_format_1.default.literal(s.txid)}, ${s.vout})`).join(', ')}
+            ) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
     }
     async broadcast(rawtx, mapiKey) {
         var _a, _b, _c;
@@ -73,31 +81,35 @@ class FyxBlockchainPg {
                     vout: t.txOutNum
                 };
                 if (path === 'm/0/0') {
-                    const [spent] = await this.sql `SELECT encode(spend_txid, 'hex') as spend_txid
-                    FROM fund_txos_spent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
-                    if (spent && spent.spend_txid !== txid) {
-                        throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
-                    }
                     fundSpends.push(spend);
                 }
                 else if (path) {
-                    const [spent] = await this.sql `SELECT encode(spend_txid, 'hex') as spend_txid
-                    FROM jig_txos_spent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
-                    if (spent && spent.spend_txid !== txid) {
-                        throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
-                    }
                     jigSpends.push(spend);
                 }
                 else if (t.script.toHex().match(order_lock_regex_1.default)) {
-                    const [spent] = await this.sql `SELECT encode(spend_txid, 'hex') as spend_txid
-                    FROM market_txos_spent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
-                    if (spent && spent.spend_txid !== txid) {
-                        throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
-                    }
                     marketSpends.push(spend);
+                }
+                const subQueries = [];
+                if (fundSpends.length) {
+                    subQueries.push(`(${this.buildSpendSelect('fund_txos_spent', fundSpends)})`);
+                }
+                if (jigSpends.length) {
+                    subQueries.push(`(${this.buildSpendSelect('jig_txos_spent', jigSpends)})`);
+                }
+                if (marketSpends.length) {
+                    subQueries.push(`(${this.buildSpendSelect('market_txos_spent', marketSpends)})`);
+                }
+                if (subQueries.length) {
+                    const sql = `SELECT * FROM (
+                        ${subQueries.join(' UNION ALL ')}
+                    )`;
+                    console.log('Spends SQL:', sql);
+                    const spends = await this.sql.unsafe(sql);
+                    spends.forEach(s => {
+                        if (s.spend_txid !== txid) {
+                            throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
+                        }
+                    });
                 }
             }
         }
@@ -105,12 +117,7 @@ class FyxBlockchainPg {
             console.error(`Error from Analyzing spends block`, e);
             throw e;
         }
-        // logging
         console.log(`Done Analyzing spends...`);
-        // if (fundSpends.length > 0) console.log(`fundSpends array is ${JSON.stringify(fundSpends, null, 4)}`);
-        // if (jigSpends.length > 0) console.log(`jigSpends array is ${JSON.stringify(jigSpends, null, 4)}`);
-        // if (marketSpends.length > 0) console.log(`marketSpends array is ${JSON.stringify(marketSpends, null, 4)}`);
-        // end logging
         const fundUtxos = [];
         const jigUtxos = [];
         const marketUtxos = [];
@@ -250,12 +257,12 @@ class FyxBlockchainPg {
             await this.sql.begin(async (sql) => {
                 for (let spend of fundSpends) {
                     await sql `INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
-                    SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
-                    FROM fund_txos_unspent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}
-                    ON CONFLICT DO NOTHING`;
+                        SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
+                        FROM fund_txos_unspent
+                        WHERE txid=${spend.txid} AND vout=${spend.vout}
+                        ON CONFLICT DO NOTHING`;
                     await sql `DELETE FROM fund_txos_unspent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                        WHERE txid=${spend.txid} AND vout=${spend.vout}`;
                 }
                 if (fundUtxos.length) {
                     await sql `INSERT INTO fund_txos_unspent 
@@ -264,26 +271,26 @@ class FyxBlockchainPg {
                 }
                 for (let spend of jigSpends) {
                     await sql `INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
-                    SELECT txid, vout, scripthash, satoshis, origin, kind, type, ${txidBuf} as spend_txid
-                    FROM jig_txos_unspent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}
-                    ON CONFLICT DO NOTHING`;
+                        SELECT txid, vout, scripthash, satoshis, origin, kind, type, ${txidBuf} as spend_txid
+                        FROM jig_txos_unspent
+                        WHERE txid=${spend.txid} AND vout=${spend.vout}
+                        ON CONFLICT DO NOTHING`;
                     await sql `DELETE FROM jig_txos_unspent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                        WHERE txid=${spend.txid} AND vout=${spend.vout}`;
                 }
                 if (jigUtxos.length) {
                     await sql `INSERT INTO jig_txos_unspent 
-                    ${sql(jigUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
-                    ON CONFLICT DO NOTHING`;
+                        ${sql(jigUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
+                        ON CONFLICT DO NOTHING`;
                 }
                 for (let spend of marketSpends) {
                     await sql `INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
-                    SELECT txid, vout, origin, user_id, ${txidBuf} as spend_txid
-                    FROM market_txos_unspent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}
-                    ON CONFLICT DO NOTHING`;
+                        SELECT txid, vout, origin, user_id, ${txidBuf} as spend_txid
+                        FROM market_txos_unspent
+                        WHERE txid=${spend.txid} AND vout=${spend.vout}
+                        ON CONFLICT DO NOTHING`;
                     await sql `DELETE FROM market_txos_unspent
-                    WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+                        WHERE txid=${spend.txid} AND vout=${spend.vout}`;
                 }
                 if (marketUtxos.length) {
                     await sql `INSERT INTO market_txos_unspent 
