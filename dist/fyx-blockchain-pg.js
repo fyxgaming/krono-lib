@@ -264,47 +264,47 @@ class FyxBlockchainPg {
         try {
             await client.query('BEGIN');
             for (let spend of fundSpends) {
-                await this.pool.query(`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
+                await client.query(`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
                     SELECT txid, vout, scripthash, satoshis, $1 as spend_txid
                     FROM fund_txos_unspent
                     WHERE txid=$2 AND vout=$3
                     ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
-                await this.pool.query(`DELETE FROM fund_txos_unspent
+                await client.query(`DELETE FROM fund_txos_unspent
                     WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
             }
             if (fundUtxos.length) {
                 const values = fundUtxos.map(u => `('${pg_format_1.default.string(u.txid)}', ${u.vout}, '${pg_format_1.default.string(u.scripthash)}', ${u.satoshis})`);
-                await this.pool.query(`INSERT INTO fund_txos_unspent(txid, vout, scripthash, satoshis)
+                await client.query(`INSERT INTO fund_txos_unspent(txid, vout, scripthash, satoshis)
                     VALUES ${values.join(', ')}
                     ON CONFLICT DO NOTHING`);
             }
             for (let spend of jigSpends) {
-                await this.pool.query(`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
+                await client.query(`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
                     SELECT txid, vout, scripthash, satoshis, origin, kind, type, $1 as spend_txid
                     FROM jig_txos_unspent
                     WHERE txid=$2 AND vout=$3
                     ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
-                await this.pool.query(`DELETE FROM jig_txos_unspent
+                await client.query(`DELETE FROM jig_txos_unspent
                     WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
             }
             if (jigUtxos.length) {
                 const values = jigUtxos.map(u => `('${pg_format_1.default.string(u.txid)}', ${u.vout}, '${pg_format_1.default.string(u.scripthash)}', ${u.satoshis})`);
-                await this.pool.query(`INSERT INTO jig_txos_unspent(txid, vout, scripthash, satoshis)
+                await client.query(`INSERT INTO jig_txos_unspent(txid, vout, scripthash, satoshis)
                     VALUES ${values.join(', ')}
                     ON CONFLICT DO NOTHING`);
             }
             for (let spend of marketSpends) {
-                await this.pool.query(`INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
+                await client.query(`INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
                     SELECT txid, vout, origin, user_id, $1 as spend_txid
                     FROM market_txos_unspent
                     WHERE txid=$2 AND vout=$3
                     ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
-                await this.pool.query(`DELETE FROM market_txos_unspent
+                await client.query(`DELETE FROM market_txos_unspent
                     WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
             }
             if (marketUtxos.length) {
                 const values = jigUtxos.map(u => `('${pg_format_1.default.string(u.txid)}', ${u.vout})`);
-                await this.pool.query(`INSERT INTO market_txos_unspent(txid, vout)
+                await client.query(`INSERT INTO market_txos_unspent(txid, vout)
                     VALUES ${values.join(', ')}
                     ON CONFLICT DO NOTHING`);
             }
