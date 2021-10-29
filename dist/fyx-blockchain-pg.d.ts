@@ -1,14 +1,15 @@
 /// <reference types="node" />
 import { IBlockchain } from './iblockchain';
 import { FyxCache } from './fyx-cache';
+import { Pool } from 'pg';
 export declare class FyxBlockchainPg implements IBlockchain {
     network: string;
-    private sql;
+    private pool;
     private redis;
     private cache;
     private aws?;
     private rpcClient?;
-    constructor(network: string, sql: any, redis: any, cache: FyxCache, aws?: {
+    constructor(network: string, pool: Pool, redis: any, cache: FyxCache, aws?: {
         s3: any;
         sns: any;
         sqs: any;
@@ -20,7 +21,7 @@ export declare class FyxBlockchainPg implements IBlockchain {
     broadcast(rawtx: string, mapiKey?: string): Promise<any>;
     fetch(txid: string): Promise<any>;
     calculateScriptHash(owner: string, ownerType: string): Promise<Buffer>;
-    utxos(owner: string, ownerType?: string, limit?: number): Promise<any>;
+    utxos(owner: string, ownerType?: string, limit?: number): Promise<any[]>;
     utxoCount(owner: string, ownerType?: string): Promise<any>;
     balance(owner: string, ownerType?: string): Promise<any>;
     spends(txid: string, vout: number | string): Promise<any>;

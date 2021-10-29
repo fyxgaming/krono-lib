@@ -22,9 +22,9 @@ const runBuf = Buffer.from('run', 'utf8');
 const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
 const fyxBuf = Buffer.from('fyx', 'utf8');
 class FyxBlockchainPg {
-    constructor(network, sql, redis, cache, aws, rpcClient) {
+    constructor(network, pool, redis, cache, aws, rpcClient) {
         this.network = network;
-        this.sql = sql;
+        this.pool = pool;
         this.redis = redis;
         this.cache = cache;
         this.aws = aws;
@@ -47,11 +47,19 @@ class FyxBlockchainPg {
         const outScripts = tx.txOuts
             .filter(txOut => txOut.script.isPubKeyHashOut())
             .map(txOut => txOut.script.toBuffer());
-        const derivations = await this.sql `SELECT encode(script, 'hex') as script, 
+        const { rows: derivations } = await this.pool.query(`SELECT encode(script, 'hex') as script, 
                 encode(pubkey, 'hex') as pubkey, path
             FROM derivations
-            WHERE pubkey IN (${pubkeys.length ? pubkeys : Buffer.from('00', 'hex')}) 
-                OR script IN (${outScripts.length ? outScripts : Buffer.from('00', 'hex')})`;
+            WHERE pubkey = ANY($1) 
+                OR script = ANY($2)`, [
+            pubkeys.length ? pubkeys : [Buffer.from('00', 'hex')],
+            outScripts.length ? outScripts : [Buffer.from('00', 'hex')]
+        ]);
+        // const derivations = await this.sql`SELECT encode(script, 'hex') as script, 
+        //         encode(pubkey, 'hex') as pubkey, path
+        //     FROM derivations
+        //     WHERE pubkey IN (${pubkeys.length ? pubkeys : Buffer.from('00', 'hex')}) 
+        //         OR script IN (${outScripts.length ? outScripts : Buffer.from('00', 'hex')})`;
         if (!derivations.length) {
             console.log('No pubkeys or scripts:', txid);
             throw new http_errors_1.default.NotFound();
@@ -101,7 +109,8 @@ class FyxBlockchainPg {
                     ${subQueries.join(' UNION ALL ')}
                 ) spends`;
                 console.log('Spends SQL:', sql);
-                const spends = await this.sql.unsafe(sql);
+                const { rows: spends } = await this.pool.query(sql);
+                console.log('Spends:', txid, spends);
                 spends.forEach(s => {
                     if (s.spend_txid !== txid) {
                         throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${s.txid.toString('hex')} ${s.vout}`);
@@ -236,72 +245,128 @@ class FyxBlockchainPg {
         }
         console.timeEnd(`Broadcasting: ${txid}`);
         console.time(`Updating DB: ${txid}`);
+        await this.pool.query(`INSERT INTO txns(txid) 
+            VALUES ($1) 
+            ON CONFLICT DO NOTHING`, [txidBuf]);
+        console.log('TX Updates:', txid, JSON.stringify({
+            spends: {
+                fund: fundSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout })),
+                jig: jigSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout })),
+                market: marketSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))
+            },
+            txos: {
+                fund: fundUtxos.map(s => ({ txid, vout: s.vout })),
+                jig: jigUtxos.map(s => ({ txid, vout: s.vout })),
+                market: marketUtxos.map(s => ({ txid, vout: s.vout }))
+            }
+        }));
+        const client = await this.pool.connect();
         try {
-            await this.sql `INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
-                console.log('TX Updates:', txid, JSON.stringify({
-                    spends: {
-                        fund: fundSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout })),
-                        jig: jigSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout })),
-                        market: marketSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))
-                    },
-                    txos: {
-                        fund: fundUtxos.map(s => ({ txid, vout: s.vout })),
-                        jig: jigUtxos.map(s => ({ txid, vout: s.vout })),
-                        market: marketUtxos.map(s => ({ txid, vout: s.vout }))
-                    }
-                }));
-            await this.sql.begin(async (sql) => {
-                for (let spend of fundSpends) {
-                    await sql `INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
-                        SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
-                        FROM fund_txos_unspent
-                        WHERE txid=${spend.txid} AND vout=${spend.vout}
-                        ON CONFLICT DO NOTHING`;
-                    await sql `DELETE FROM fund_txos_unspent
-                        WHERE txid=${spend.txid} AND vout=${spend.vout}`;
-                }
-                if (fundUtxos.length) {
-                    await sql `INSERT INTO fund_txos_unspent 
-                    ${sql(fundUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
-                    ON CONFLICT DO NOTHING`;
-                }
-                for (let spend of jigSpends) {
-                    await sql `INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
-                        SELECT txid, vout, scripthash, satoshis, origin, kind, type, ${txidBuf} as spend_txid
-                        FROM jig_txos_unspent
-                        WHERE txid=${spend.txid} AND vout=${spend.vout}
-                        ON CONFLICT DO NOTHING`;
-                    await sql `DELETE FROM jig_txos_unspent
-                        WHERE txid=${spend.txid} AND vout=${spend.vout}`;
-                }
-                if (jigUtxos.length) {
-                    await sql `INSERT INTO jig_txos_unspent 
-                        ${sql(jigUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
-                        ON CONFLICT DO NOTHING`;
-                }
-                for (let spend of marketSpends) {
-                    await sql `INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
-                        SELECT txid, vout, origin, user_id, ${txidBuf} as spend_txid
-                        FROM market_txos_unspent
-                        WHERE txid=${spend.txid} AND vout=${spend.vout}
-                        ON CONFLICT DO NOTHING`;
-                    await sql `DELETE FROM market_txos_unspent
-                        WHERE txid=${spend.txid} AND vout=${spend.vout}`;
-                }
-                if (marketUtxos.length) {
-                    await sql `INSERT INTO market_txos_unspent 
-                    ${sql(marketUtxos, 'txid', 'vout')}
-                    ON CONFLICT DO NOTHING`;
-                }
-            });
+            await client.query('BEGIN');
+            for (let spend of fundSpends) {
+                await this.pool.query(`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
+                    SELECT txid, vout, scripthash, satoshis, $1 as spend_txid
+                    FROM fund_txos_unspent
+                    WHERE txid=$2 AND vout=$3
+                    ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
+                await this.pool.query(`DELETE FROM fund_txos_unspent
+                    WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
+            }
+            if (fundUtxos.length) {
+                const values = fundUtxos.map(u => `('${pg_format_1.default.string(u.txid)}', ${u.vout}, '${pg_format_1.default.string(u.scripthash)}', ${u.satoshis})`);
+                await this.pool.query(`INSERT INTO fund_txos_unspent(txid, vout, scripthash, satoshis)
+                    VALUES ${values.join(', ')}
+                    ON CONFLICT DO NOTHING`);
+            }
+            for (let spend of jigSpends) {
+                await this.pool.query(`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
+                    SELECT txid, vout, scripthash, satoshis, origin, kind, type, $1 as spend_txid
+                    FROM jig_txos_unspent
+                    WHERE txid=$2 AND vout=$3
+                    ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
+                await this.pool.query(`DELETE FROM jig_txos_unspent
+                    WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
+            }
+            if (jigUtxos.length) {
+                const values = jigUtxos.map(u => `('${pg_format_1.default.string(u.txid)}', ${u.vout}, '${pg_format_1.default.string(u.scripthash)}', ${u.satoshis})`);
+                await this.pool.query(`INSERT INTO jig_txos_unspent(txid, vout, scripthash, satoshis)
+                    VALUES ${values.join(', ')}
+                    ON CONFLICT DO NOTHING`);
+            }
+            for (let spend of marketSpends) {
+                await this.pool.query(`INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
+                    SELECT txid, vout, origin, user_id, $1 as spend_txid
+                    FROM market_txos_unspent
+                    WHERE txid=$2 AND vout=$3
+                    ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
+                await this.pool.query(`DELETE FROM market_txos_unspent
+                    WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
+            }
+            if (marketUtxos.length) {
+                const values = jigUtxos.map(u => `('${pg_format_1.default.string(u.txid)}', ${u.vout})`);
+                await this.pool.query(`INSERT INTO market_txos_unspent(txid, vout)
+                    VALUES ${values.join(', ')}
+                    ON CONFLICT DO NOTHING`);
+            }
+            await client.query('COMMIT');
         }
         catch (e) {
-            console.error(`Error from Insert into DB code block`, e);
+            await client.query('ROLLBACK');
             throw e;
         }
         finally {
-            console.timeEnd(`Updating DB: ${txid}`);
+            client.release();
         }
+        // await this.sql.begin(async sql => {
+        // for (let spend of fundSpends) {
+        //     await sql`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
+        //         SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
+        //         FROM fund_txos_unspent
+        //         WHERE txid=${spend.txid} AND vout=${spend.vout}
+        //         ON CONFLICT DO NOTHING`;
+        //     await sql`DELETE FROM fund_txos_unspent
+        //         WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+        // }
+        // if (fundUtxos.length) {
+        //     await sql`INSERT INTO fund_txos_unspent 
+        //         ${sql(fundUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
+        //         ON CONFLICT DO NOTHING`;
+        // }
+        // for (let spend of jigSpends) {
+        //     await sql`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
+        //             SELECT txid, vout, scripthash, satoshis, origin, kind, type, ${txidBuf} as spend_txid
+        //             FROM jig_txos_unspent
+        //             WHERE txid=${spend.txid} AND vout=${spend.vout}
+        //             ON CONFLICT DO NOTHING`;
+        //     await sql`DELETE FROM jig_txos_unspent
+        //             WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+        // }
+        // if (jigUtxos.length) {
+        //     await sql`INSERT INTO jig_txos_unspent 
+        //             ${sql(jigUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
+        //             ON CONFLICT DO NOTHING`;
+        // }
+        // for (let spend of marketSpends) {
+        //     await sql`INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
+        //             SELECT txid, vout, origin, user_id, ${txidBuf} as spend_txid
+        //             FROM market_txos_unspent
+        //             WHERE txid=${spend.txid} AND vout=${spend.vout}
+        //             ON CONFLICT DO NOTHING`;
+        //     await sql`DELETE FROM market_txos_unspent
+        //             WHERE txid=${spend.txid} AND vout=${spend.vout}`;
+        // }
+        // if (marketUtxos.length) {
+        //     await sql`INSERT INTO market_txos_unspent 
+        //         ${sql(marketUtxos, 'txid', 'vout')}
+        //         ON CONFLICT DO NOTHING`;
+        // }
+        // });
+        // } catch(e: any) {
+        //     console.error(`Error from Insert into DB code block`, e);
+        //     throw e;
+        // } finally {
+        //     console.timeEnd(`Updating DB: ${txid}`);
+        // }
         try {
             await Promise.all([
                 this.cache.set(`tx://${txid}`, rawtx),
@@ -395,31 +460,31 @@ class FyxBlockchainPg {
     }
     async utxos(owner, ownerType = 'script', limit = 1000) {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
-        const utxos = await this.sql `
-            SELECT encode(txid, 'hex') as txid, vout, satoshis 
+        const { rows: utxos } = await this.pool.query(`SELECT encode(txid, 'hex') as txid, vout, satoshis 
             FROM fund_txos_unspent 
-            WHERE scripthash = ${scripthash}`;
+            WHERE scripthash = $1`, [scripthash]);
         return utxos;
     }
     async utxoCount(owner, ownerType = 'script') {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
-        const [{ count }] = await this.sql `
-            SELECT count(*) as count FROM fund_txos_unspent 
-            WHERE scripthash = ${scripthash}`;
+        const { rows: [{ count }] } = await this.pool.query(`
+            SELECT count(txid) as count FROM fund_txos_unspent 
+            WHERE scripthash = $1`, [scripthash]);
         return count || 0;
     }
     async balance(owner, ownerType = 'script') {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
-        const [{ balance }] = await this.sql `
+        const { rows: [{ balance }] } = await this.pool.query(`
             SELECT sum(satoshis) as balance FROM fund_txos_unspent 
-            WHERE scripthash = ${scripthash}`;
+            WHERE scripthash = $1`, [scripthash]);
         return balance || 0;
     }
     async spends(txid, vout) {
-        const [row] = await this.sql `
-            SELECT encode(spend_txid, 'hex') as spend_txid FROM jig_txos_spent
-            WHERE txid = decode(${txid}, 'hex') AND vout = ${vout}`;
-        return row === null || row === void 0 ? void 0 : row.spend_txid;
+        const { rows: [spend] } = await this.pool.query(`
+            SELECT encode(spend_txid, 'hex') as spend_txid 
+            FROM jig_txos_spent
+            WHERE txid = decode($1, 'hex') AND vout=$2`, [txid, vout]);
+        return spend === null || spend === void 0 ? void 0 : spend.spend_txid;
     }
     // TODO: Figure out what to do with this
     async time(txid) {
@@ -440,15 +505,15 @@ class FyxBlockchainPg {
     }
     async findAndLockUtxo(scripthash) {
         console.log('findAndLockUtxo', scripthash.toString('hex'));
-        const [utxo] = await this.sql `UPDATE fund_txos_unspent f
-            SET lock_until = ${new Date(Date.now() + LOCK_TIME)}
+        const { rows: [utxo] } = await this.pool.query(`UPDATE fund_txos_unspent f
+            SET lock_until = $1
             FROM (SELECT txid, vout
                 FROM fund_txos_unspent
-                WHERE scripthash = ${scripthash} AND lock_until < current_timestamp
+                WHERE scripthash = $2 AND lock_until < current_timestamp
                 LIMIT 1
             ) l 
             WHERE l.txid = f.txid AND l.vout = f.vout
-            RETURNING f.txid, f.vout, f.satoshis`;
+            RETURNING f.txid, f.vout, f.satoshis`, [new Date(Date.now() + LOCK_TIME), scripthash]);
         if (!utxo)
             throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`);
         console.log('UTXO Selected:', scripthash.toString('hex'), JSON.stringify(utxo));
