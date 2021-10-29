@@ -89,28 +89,28 @@ class FyxBlockchainPg {
                 else if (t.script.toHex().match(order_lock_regex_1.default)) {
                     marketSpends.push(spend);
                 }
-                const subQueries = [];
-                if (fundSpends.length) {
-                    subQueries.push(`(${this.buildSpendSelect('fund_txos_spent', fundSpends)})`);
-                }
-                if (jigSpends.length) {
-                    subQueries.push(`(${this.buildSpendSelect('jig_txos_spent', jigSpends)})`);
-                }
-                if (marketSpends.length) {
-                    subQueries.push(`(${this.buildSpendSelect('market_txos_spent', marketSpends)})`);
-                }
-                if (subQueries.length) {
-                    const sql = `SELECT * FROM (
-                        ${subQueries.join(' UNION ALL ')}
-                    ) spends`;
-                    console.log('Spends SQL:', sql);
-                    const spends = await this.sql.unsafe(sql);
-                    spends.forEach(s => {
-                        if (s.spend_txid !== txid) {
-                            throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${spend.txid.toString('hex')} ${spend.vout}`);
-                        }
-                    });
-                }
+            }
+            const subQueries = [];
+            if (fundSpends.length) {
+                subQueries.push(`(${this.buildSpendSelect('fund_txos_spent', fundSpends)})`);
+            }
+            if (jigSpends.length) {
+                subQueries.push(`(${this.buildSpendSelect('jig_txos_spent', jigSpends)})`);
+            }
+            if (marketSpends.length) {
+                subQueries.push(`(${this.buildSpendSelect('market_txos_spent', marketSpends)})`);
+            }
+            if (subQueries.length) {
+                const sql = `SELECT * FROM (
+                    ${subQueries.join(' UNION ALL ')}
+                ) spends`;
+                console.log('Spends SQL:', sql);
+                const spends = await this.sql.unsafe(sql);
+                spends.forEach(s => {
+                    if (s.spend_txid !== txid) {
+                        throw (0, http_errors_1.default)(422, `Input already spent: ${txid} - ${s.txid.toString('hex')} ${s.vout}`);
+                    }
+                });
             }
         }
         catch (e) {
