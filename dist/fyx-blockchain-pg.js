@@ -517,7 +517,11 @@ class FyxBlockchainPg {
         if (!utxo)
             throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`);
         console.log('UTXO Selected:', scripthash.toString('hex'), JSON.stringify(utxo));
-        return utxo;
+        return {
+            txid: utxo.txid,
+            vout: utxo.vout,
+            satoshis: parseInt(utxo.satoshis)
+        };
     }
     async applyPayment(tx, payment, change = true) {
         const address = bsv_1.Address.fromString(payment.from);

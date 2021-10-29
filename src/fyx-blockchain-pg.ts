@@ -562,7 +562,11 @@ export class FyxBlockchainPg implements IBlockchain {
         );
         if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
         console.log('UTXO Selected:', scripthash.toString('hex'), JSON.stringify(utxo));
-        return utxo;
+        return {
+            txid: utxo.txid,
+            vout: utxo.vout,
+            satoshis: parseInt(utxo.satoshis)
+        };
     }
 
     async applyPayment(tx, payment: { from: string, amount: number }, change = true) {
