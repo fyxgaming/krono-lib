@@ -66,6 +66,7 @@ class FyxBlockchainPg {
         const fundSpends = [];
         const jigSpends = [];
         const marketSpends = [];
+        console.time(`Evaluating spends: ${txid}`);
         try {
             for (let i = 0; i < tx.txIns.length; i++) {
                 const t = tx.txIns[i];
@@ -112,9 +113,13 @@ class FyxBlockchainPg {
             console.error(`Error from Analyzing spends block`, e);
             throw e;
         }
+        finally {
+            console.timeEnd(`Evaluating spends: ${txid}`);
+        }
         const fundUtxos = [];
         const jigUtxos = [];
         const marketUtxos = [];
+        console.time(`Building utxos: ${txid}`);
         try {
             tx.txOuts.forEach(async (t, vout) => {
                 if (t.script.isSafeDataOut())
@@ -151,6 +156,9 @@ class FyxBlockchainPg {
             console.error(`Error from Building utxos`, e);
             throw e;
         }
+        finally {
+            console.timeEnd(`Building utxos: ${txid}`);
+        }
         if (BLOCKCHAIN_BUCKET) {
             await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.putObject({
                 Bucket: BLOCKCHAIN_BUCKET,
@@ -160,6 +168,7 @@ class FyxBlockchainPg {
         }
         // Broadcast transaction
         let response;
+        console.time(`Broadcasting: ${txid}`);
         if (MAPI) {
             let resp, axiosInstance = fyx_axios_1.default.create({ withCredentials: true });
             let cookie = JSON.parse((await this.redis.get(`taal-elb-cookie`)) || '[]');
@@ -225,6 +234,8 @@ class FyxBlockchainPg {
                     throw (0, http_errors_1.default)(422, e.message);
             }
         }
+        console.timeEnd(`Broadcasting: ${txid}`);
+        console.time(`Updating DB: ${txid}`);
         try {
             await this.sql `INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
                 console.log('TX Updates:', txid, JSON.stringify({
@@ -287,6 +298,9 @@ class FyxBlockchainPg {
         catch (e) {
             console.error(`Error from Insert into DB code block`, e);
             throw e;
+        }
+        finally {
+            console.timeEnd(`Updating DB: ${txid}`);
         }
         try {
             await Promise.all([

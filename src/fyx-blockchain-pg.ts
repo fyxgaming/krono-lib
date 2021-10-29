@@ -71,6 +71,7 @@ export class FyxBlockchainPg implements IBlockchain {
         const fundSpends = [];
         const jigSpends = [];
         const marketSpends = [];
+        console.time(`Evaluating spends: ${txid}`);
         try {
             for(let i = 0; i < tx.txIns.length; i++ ) {
                 const t = tx.txIns[i];
@@ -116,12 +117,14 @@ export class FyxBlockchainPg implements IBlockchain {
         } catch (e: any) {
             console.error(`Error from Analyzing spends block`, e);
             throw e;
+        } finally {
+            console.timeEnd(`Evaluating spends: ${txid}`);
         }
-
 
         const fundUtxos = [];
         const jigUtxos = [];
         const marketUtxos = [];
+        console.time(`Building utxos: ${txid}`);
         try {
             tx.txOuts.forEach(async (t: any, vout: number) => {
                 if (t.script.isSafeDataOut()) return;
@@ -153,6 +156,8 @@ export class FyxBlockchainPg implements IBlockchain {
         } catch (e: any) {
             console.error(`Error from Building utxos`, e);
             throw e;
+        } finally {
+            console.timeEnd(`Building utxos: ${txid}`);
         }
 
         if (BLOCKCHAIN_BUCKET) {
@@ -165,6 +170,7 @@ export class FyxBlockchainPg implements IBlockchain {
 
         // Broadcast transaction
         let response;
+        console.time(`Broadcasting: ${txid}`);
         if (MAPI) {
             let resp, axiosInstance = axios.create({ withCredentials: true });
             let cookie = JSON.parse((await this.redis.get(`taal-elb-cookie`)) || '[]');
@@ -222,7 +228,9 @@ export class FyxBlockchainPg implements IBlockchain {
                 else throw createError(422, e.message);
             }
         }
+        console.timeEnd(`Broadcasting: ${txid}`);
 
+        console.time(`Updating DB: ${txid}`);
         try {
             await this.sql`INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
                 console.log('TX Updates:', txid, JSON.stringify({
@@ -286,6 +294,8 @@ export class FyxBlockchainPg implements IBlockchain {
         } catch (e: any) {
             console.error(`Error from Insert into DB code block`, e);
             throw e;
+        } finally {
+            console.timeEnd(`Updating DB: ${txid}`);
         }
 
         try {
