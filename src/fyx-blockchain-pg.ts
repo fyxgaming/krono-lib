@@ -67,14 +67,10 @@ export class FyxBlockchainPg implements IBlockchain {
             pubkeysPaths.set(d.pubkey, d.path);
             scriptPaths.set(d.script, d.path);
         });
-        // logging
-        console.log(`pubkeysPaths: ${JSON.stringify(pubkeysPaths, null, 4)}`);
-        console.log(`scriptPaths: ${JSON.stringify(scriptPaths, null, 4)}`);
-        // end logging
+
         const fundSpends = [];
         const jigSpends = [];
         const marketSpends = [];
-        console.log(`Analyzing spends...`);
         try {
             for(let i = 0; i < tx.txIns.length; i++ ) {
                 const t = tx.txIns[i];
@@ -121,13 +117,11 @@ export class FyxBlockchainPg implements IBlockchain {
             console.error(`Error from Analyzing spends block`, e);
             throw e;
         }
-        console.log(`Done Analyzing spends...`);
 
 
         const fundUtxos = [];
         const jigUtxos = [];
         const marketUtxos = [];
-        console.log(`Building utxos...`);
         try {
             tx.txOuts.forEach(async (t: any, vout: number) => {
                 if (t.script.isSafeDataOut()) return;
@@ -160,7 +154,6 @@ export class FyxBlockchainPg implements IBlockchain {
             console.error(`Error from Building utxos`, e);
             throw e;
         }
-        console.log(`Done Building utxos...`);
 
         if (BLOCKCHAIN_BUCKET) {
             await this.aws?.s3.putObject({
@@ -172,7 +165,6 @@ export class FyxBlockchainPg implements IBlockchain {
 
         // Broadcast transaction
         let response;
-        console.log(`Broadcasting transaction...`);
         if (MAPI) {
             let resp, axiosInstance = axios.create({ withCredentials: true });
             let cookie = JSON.parse((await this.redis.get(`taal-elb-cookie`)) || '[]');
@@ -190,18 +182,15 @@ export class FyxBlockchainPg implements IBlockchain {
                 timeout: 5000
             };
             mapiKey = mapiKey || MAPI_KEY;
-            console.log('MAPI_KEY:', mapiKey);
             if (mapiKey) config.headers['Authorization'] = `Bearer ${mapiKey}`;
             for (let retry = 0; retry < 3; retry++) {
                 try {
                     resp = await axiosInstance(config);
-                    console.log(`Response from Axios call to Taal - ${JSON.stringify(resp.headers)}`);
                     let respCookie = cookieparser.parse(resp).map(cookie => `${cookie.name}=${cookie.value}`);
                     if (Array.isArray(respCookie) && respCookie.length > 0) {
-                        console.log(`Saving response cookie from Taal - ${JSON.stringify(respCookie)}`)
+                        console.log(`Saving response cookies - ${JSON.stringify(respCookie)}`)
                         await this.redis.set('taal-elb-cookie', JSON.stringify(respCookie));
                     }
-                    else console.log(`No cookie set in the response header from Taal. Retaining previously set value - ${cookie.join('; ')}`);
                     console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
                     break;
                 } catch (e: any) {
@@ -225,7 +214,6 @@ export class FyxBlockchainPg implements IBlockchain {
         } else {
             try {
                 await this.rpcClient.sendRawTransaction(rawtx);
-                console.log(`MAPI Not Set - Successfully broadcasted transaction.`);
             } catch (e: any) {
                 if (e.message.includes('Transaction already known') || e.message.includes('Transaction already in the mempool')) {
                     console.log(`Error from sendRawTransaction: ${e.message}`);
@@ -235,7 +223,6 @@ export class FyxBlockchainPg implements IBlockchain {
             }
         }
 
-        console.log(`Inserting data into database`);
         try {
             await this.sql`INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
                 console.log('TX Updates:', txid, JSON.stringify({
@@ -296,21 +283,17 @@ export class FyxBlockchainPg implements IBlockchain {
                     ON CONFLICT DO NOTHING`;
                 }
             });
-        }
-        catch (e: any) {
+        } catch (e: any) {
             console.error(`Error from Insert into DB code block`, e);
             throw e;
         }
-
-        console.log(`Setting Redis cache`);
 
         try {
             await Promise.all([
                 this.cache.set(`tx://${txid}`, rawtx),
                 this.redis.publish('txn', txid)
             ]);
-        }
-        catch (e: any) {
+        } catch (e: any) {
             console.error(`Error from set Redis cache code block`, e);
             throw e;
         }
@@ -336,7 +319,6 @@ export class FyxBlockchainPg implements IBlockchain {
                 MessageBody: JSON.stringify({ txid })
             }).promise();
         }
-        console.log(`All processes complete. Returning txid ${txid}`);
         return txid;
     }
 

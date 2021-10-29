@@ -63,14 +63,9 @@ class FyxBlockchainPg {
             pubkeysPaths.set(d.pubkey, d.path);
             scriptPaths.set(d.script, d.path);
         });
-        // logging
-        console.log(`pubkeysPaths: ${JSON.stringify(pubkeysPaths, null, 4)}`);
-        console.log(`scriptPaths: ${JSON.stringify(scriptPaths, null, 4)}`);
-        // end logging
         const fundSpends = [];
         const jigSpends = [];
         const marketSpends = [];
-        console.log(`Analyzing spends...`);
         try {
             for (let i = 0; i < tx.txIns.length; i++) {
                 const t = tx.txIns[i];
@@ -117,11 +112,9 @@ class FyxBlockchainPg {
             console.error(`Error from Analyzing spends block`, e);
             throw e;
         }
-        console.log(`Done Analyzing spends...`);
         const fundUtxos = [];
         const jigUtxos = [];
         const marketUtxos = [];
-        console.log(`Building utxos...`);
         try {
             tx.txOuts.forEach(async (t, vout) => {
                 if (t.script.isSafeDataOut())
@@ -158,7 +151,6 @@ class FyxBlockchainPg {
             console.error(`Error from Building utxos`, e);
             throw e;
         }
-        console.log(`Done Building utxos...`);
         if (BLOCKCHAIN_BUCKET) {
             await ((_a = this.aws) === null || _a === void 0 ? void 0 : _a.s3.putObject({
                 Bucket: BLOCKCHAIN_BUCKET,
@@ -168,7 +160,6 @@ class FyxBlockchainPg {
         }
         // Broadcast transaction
         let response;
-        console.log(`Broadcasting transaction...`);
         if (MAPI) {
             let resp, axiosInstance = fyx_axios_1.default.create({ withCredentials: true });
             let cookie = JSON.parse((await this.redis.get(`taal-elb-cookie`)) || '[]');
@@ -187,20 +178,16 @@ class FyxBlockchainPg {
                 timeout: 5000
             };
             mapiKey = mapiKey || MAPI_KEY;
-            console.log('MAPI_KEY:', mapiKey);
             if (mapiKey)
                 config.headers['Authorization'] = `Bearer ${mapiKey}`;
             for (let retry = 0; retry < 3; retry++) {
                 try {
                     resp = await axiosInstance(config);
-                    console.log(`Response from Axios call to Taal - ${JSON.stringify(resp.headers)}`);
                     let respCookie = set_cookie_parser_1.default.parse(resp).map(cookie => `${cookie.name}=${cookie.value}`);
                     if (Array.isArray(respCookie) && respCookie.length > 0) {
-                        console.log(`Saving response cookie from Taal - ${JSON.stringify(respCookie)}`);
+                        console.log(`Saving response cookies - ${JSON.stringify(respCookie)}`);
                         await this.redis.set('taal-elb-cookie', JSON.stringify(respCookie));
                     }
-                    else
-                        console.log(`No cookie set in the response header from Taal. Retaining previously set value - ${cookie.join('; ')}`);
                     console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
                     break;
                 }
@@ -228,7 +215,6 @@ class FyxBlockchainPg {
         else {
             try {
                 await this.rpcClient.sendRawTransaction(rawtx);
-                console.log(`MAPI Not Set - Successfully broadcasted transaction.`);
             }
             catch (e) {
                 if (e.message.includes('Transaction already known') || e.message.includes('Transaction already in the mempool')) {
@@ -239,7 +225,6 @@ class FyxBlockchainPg {
                     throw (0, http_errors_1.default)(422, e.message);
             }
         }
-        console.log(`Inserting data into database`);
         try {
             await this.sql `INSERT INTO txns(txid) VALUES(${txidBuf}) ON CONFLICT DO NOTHING`,
                 console.log('TX Updates:', txid, JSON.stringify({
@@ -303,7 +288,6 @@ class FyxBlockchainPg {
             console.error(`Error from Insert into DB code block`, e);
             throw e;
         }
-        console.log(`Setting Redis cache`);
         try {
             await Promise.all([
                 this.cache.set(`tx://${txid}`, rawtx),
@@ -332,7 +316,6 @@ class FyxBlockchainPg {
                 MessageBody: JSON.stringify({ txid })
             }).promise());
         }
-        console.log(`All processes complete. Returning txid ${txid}`);
         return txid;
     }
     async fetch(txid) {
