@@ -439,7 +439,6 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async loadParentTxOuts(tx): Promise<any[]> {
-        // TODO: read from database once populated
         return Promise.all(tx.txIns.map(async txIn => {
             const txid = Buffer.from(txIn.txHashBuf).reverse().toString('hex');
             const rawtx = await this.fetch(txid);
@@ -506,13 +505,15 @@ export class FyxBlockchainPg implements IBlockchain {
         let totalOut = tx.txOuts.reduce((a, { valueBn }) => a + valueBn.toNumber(), 0);
 
         console.time(`applying payments: ${txid}`);
-        await Promise.all(payments.map(async (payment) => {
+
+        for(let payment of payments) {
             const { inputSats, outputSats, inputCount } = await this.applyPayment(tx, payment, payment.from !== payer);
             totalIn += inputSats;
             totalOut += outputSats;
             size += inputCount * INPUT_SIZE;
             if (outputSats) size += OUTPUT_SIZE;
-        }));
+        }
+
         console.timeEnd(`applying payments: ${txid}`);
 
         if (payer) {
