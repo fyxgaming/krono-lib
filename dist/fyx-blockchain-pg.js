@@ -31,11 +31,9 @@ class FyxBlockchainPg {
         this.rpcClient = rpcClient;
     }
     buildSpendSelect(tableName, outPoints, values) {
-        return `SELECT encode(t.txid, 'hex'), t.vout, encode(t.spend_txid, 'hex') as spend_txid
+        return `SELECT encode(txid, 'hex'), vout, encode(spend_txid, 'hex') as spend_txid
             FROM ${pg_format_1.default.ident(tableName)} t
-            JOIN (VALUES 
-                ${outPoints.map(s => `($${values.push(s.txid)}, $${values.push(s.vout)})`).join(', ')}
-            ) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
+            WHERE ${outPoints.map(s => `(txid=$${values.push(s.txid)} AND vout=$${values.push(s.vout)})`).join(' OR ')}`;
     }
     async broadcast(rawtx, mapiKey) {
         var _a, _b, _c;
