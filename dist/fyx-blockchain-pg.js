@@ -48,11 +48,7 @@ class FyxBlockchainPg {
         const { rows: derivations } = await this.pool.query(`SELECT encode(script, 'hex') as script, 
                 encode(pubkey, 'hex') as pubkey, path
             FROM derivations
-            WHERE pubkey = ANY($1) 
-                OR script = ANY($2)`, [
-            pubkeys.length ? pubkeys : [Buffer.from('00', 'hex')],
-            outScripts.length ? outScripts : [Buffer.from('00', 'hex')]
-        ]);
+            WHERE pubkey = ANY($1) OR script = ANY($2)`, [pubkeys, outScripts]);
         if (!derivations.length) {
             console.log('No pubkeys or scripts:', txid);
             throw new http_errors_1.default.NotFound();
@@ -71,11 +67,12 @@ class FyxBlockchainPg {
         try {
             for (let i = 0; i < tx.txIns.length; i++) {
                 const t = tx.txIns[i];
-                const pubkey = t.script.isPubKeyHashIn() && t.script.chunks[1].buf.toString('hex');
-                const path = pubkeysPaths.get(pubkey);
+                const pubkey = t.script.isPubKeyHashIn() && t.script.chunks[1].buf;
+                const path = pubkeysPaths.get(pubkey.toString('hex'));
                 const spend = {
                     txid: Buffer.from(t.txHashBuf).reverse(),
-                    vout: t.txOutNum
+                    vout: t.txOutNum,
+                    pubkey
                 };
                 if (path === 'm/0/0') {
                     fundSpends.push(spend);
@@ -256,11 +253,11 @@ class FyxBlockchainPg {
         try {
             await client.query('BEGIN');
             for (let spend of fundSpends) {
-                await client.query(`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
-                    SELECT txid, vout, scripthash, satoshis, $1 as spend_txid
-                    FROM fund_txos_unspent
-                    WHERE txid=$2 AND vout=$3
-                    ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
+                await client.query(`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid, pubkey)
+                    SELECT s.txid, s.vout, u.scripthash, u.satoshis, $1 as spend_txid, $2 as pubkey
+                    FROM (VALUES ($3::bytea, $4::integer)) as s(txid, vout)
+                    LEFT JOIN fund_txos_unspent u ON u.txid = s.txid AND u.vout = s.vout
+                    ON CONFLICT DO NOTHING`, [txidBuf, spend.pubkey, spend.txid, spend.vout]);
                 await client.query(`DELETE FROM fund_txos_unspent
                     WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
             }
@@ -272,11 +269,11 @@ class FyxBlockchainPg {
                     ON CONFLICT DO NOTHING`, values);
             }
             for (let spend of jigSpends) {
-                await client.query(`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
-                    SELECT txid, vout, scripthash, satoshis, origin, kind, type, $1 as spend_txid
-                    FROM jig_txos_unspent
-                    WHERE txid=$2 AND vout=$3
-                    ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
+                await client.query(`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid, pubkey)
+                    SELECT s.txid, s.vout, u.scripthash, u.satoshis, u.origin, u.kind, u.type, $1 as spend_txid, $2 as pubkey
+                    FROM (VALUES ($3::bytea, $4::integer)) as s(txid, vout)
+                    LEFT JOIN jig_txos_unspent u ON u.txid = s.txid AND u.vout = s.vout
+                    ON CONFLICT DO NOTHING`, [txidBuf, spend.pubkey, spend.txid, spend.vout]);
                 await client.query(`DELETE FROM jig_txos_unspent
                     WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
             }
@@ -289,9 +286,9 @@ class FyxBlockchainPg {
             }
             for (let spend of marketSpends) {
                 await client.query(`INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
-                    SELECT txid, vout, origin, user_id, $1 as spend_txid
-                    FROM market_txos_unspent
-                    WHERE txid=$2 AND vout=$3
+                    SELECT s.txid, s.vout, u.origin, u.user_id, $1 as spend_txid
+                    FROM (VALUES ($2::bytea, $3::integer)) as s(txid, vout)
+                    LEFT JOIN market_txos_unspent u ON u.txid = s.txid AND u.vout = s.vout
                     ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
                 await client.query(`DELETE FROM market_txos_unspent
                     WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
