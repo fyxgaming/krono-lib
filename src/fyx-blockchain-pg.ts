@@ -277,12 +277,13 @@ export class FyxBlockchainPg implements IBlockchain {
                 );
             }
             if (fundUtxos.length) {
-                const values = fundUtxos.map(u =>
-                    `('${fmt.string(u.txid)}', ${u.vout}, '${fmt.string(u.scripthash)}', ${u.satoshis})`
-                )
+                const values: any[] = []
                 await client.query(`INSERT INTO fund_txos_unspent(txid, vout, scripthash, satoshis)
-                    VALUES ${values.join(', ')}
-                    ON CONFLICT DO NOTHING`
+                    VALUES ${fundUtxos.map(u => `
+                        ($${values.push(u.txid)}, $${values.push(u.vout)}, $${values.push(u.scripthash)}, $${values.push(u.satoshis)})`
+                    ).join(', ')}
+                    ON CONFLICT DO NOTHING`,
+                    values
                 );
             }
             for (let spend of jigSpends) {
@@ -299,12 +300,13 @@ export class FyxBlockchainPg implements IBlockchain {
                 );
             }
             if (jigUtxos.length) {
-                const values = jigUtxos.map(u =>
-                    `('${fmt.string(u.txid)}', ${u.vout}, '${fmt.string(u.scripthash)}', ${u.satoshis})`
-                )
+                const values: any[] = []
                 await client.query(`INSERT INTO jig_txos_unspent(txid, vout, scripthash, satoshis)
-                    VALUES ${values.join(', ')}
-                    ON CONFLICT DO NOTHING`
+                    VALUES ${jigUtxos.map(u => `
+                        ($${values.push(u.txid)}, $${values.push(u.vout)}, $${values.push(u.scripthash)}, $${values.push(u.satoshis)})`
+                    ).join(', ')}
+                    ON CONFLICT DO NOTHING`,
+                    values
                 );
             }
             for (let spend of marketSpends) {
@@ -321,12 +323,13 @@ export class FyxBlockchainPg implements IBlockchain {
                 );
             }
             if (marketUtxos.length) {
-                const values = jigUtxos.map(u =>
-                    `('${fmt.string(u.txid)}', ${u.vout})`
-                )
+                const values: any[] = []
                 await client.query(`INSERT INTO market_txos_unspent(txid, vout)
-                    VALUES ${values.join(', ')}
-                    ON CONFLICT DO NOTHING`
+                    VALUES ${marketUtxos.map(u => `
+                        ($${values.push(u.txid)}, $${values.push(u.vout)})`
+                    ).join(', ')}
+                    ON CONFLICT DO NOTHING`,
+                    values
                 );
             }
             await client.query('COMMIT');
@@ -487,9 +490,9 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async utxos(owner: string, ownerType = 'script', limit = 1000) {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
-        const {rows: utxos} = await this.pool.query(`SELECT encode(txid, 'hex') as txid, vout, satoshis 
+        const { rows: utxos } = await this.pool.query(`SELECT encode(txid, 'hex') as txid, vout, satoshis 
             FROM fund_txos_unspent 
-            WHERE scripthash = $1`, 
+            WHERE scripthash = $1`,
             [scripthash]
         );
         return utxos;
@@ -497,9 +500,9 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async utxoCount(owner: string, ownerType = 'script') {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
-        const {rows: [{ count }]} = await this.pool.query(`
+        const { rows: [{ count }] } = await this.pool.query(`
             SELECT count(txid) as count FROM fund_txos_unspent 
-            WHERE scripthash = $1`, 
+            WHERE scripthash = $1`,
             [scripthash]
         );
         return count || 0;
@@ -507,7 +510,7 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async balance(owner: string, ownerType = 'script') {
         const scripthash = await this.calculateScriptHash(owner, ownerType);
-        const {rows: [{ balance }]} = await this.pool.query(`
+        const { rows: [{ balance }] } = await this.pool.query(`
             SELECT sum(satoshis) as balance FROM fund_txos_unspent 
             WHERE scripthash = $1`,
             [scripthash]
@@ -516,7 +519,7 @@ export class FyxBlockchainPg implements IBlockchain {
     }
 
     async spends(txid: string, vout: number | string) {
-        const {rows: [spend]} = await this.pool.query(`
+        const { rows: [spend] } = await this.pool.query(`
             SELECT encode(spend_txid, 'hex') as spend_txid 
             FROM jig_txos_spent
             WHERE txid = decode($1, 'hex') AND vout=$2`,
@@ -549,7 +552,7 @@ export class FyxBlockchainPg implements IBlockchain {
 
     async findAndLockUtxo(scripthash: Buffer): Promise<{ txid: Buffer, vout: number, satoshis: number }> {
         console.log('findAndLockUtxo', scripthash.toString('hex'));
-        const {rows: [utxo]} = await this.pool.query(`UPDATE fund_txos_unspent f
+        const { rows: [utxo] } = await this.pool.query(`UPDATE fund_txos_unspent f
             SET lock_until = $1
             FROM (SELECT txid, vout
                 FROM fund_txos_unspent
@@ -557,7 +560,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 LIMIT 1
             ) l 
             WHERE l.txid = f.txid AND l.vout = f.vout
-            RETURNING f.txid, f.vout, f.satoshis`, 
+            RETURNING f.txid, f.vout, f.satoshis`,
             [new Date(Date.now() + LOCK_TIME), scripthash]
         );
         if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)

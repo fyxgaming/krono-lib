@@ -273,10 +273,11 @@ class FyxBlockchainPg {
                     WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
             }
             if (fundUtxos.length) {
-                const values = fundUtxos.map(u => `('${pg_format_1.default.string(u.txid)}', ${u.vout}, '${pg_format_1.default.string(u.scripthash)}', ${u.satoshis})`);
+                const values = [];
                 await client.query(`INSERT INTO fund_txos_unspent(txid, vout, scripthash, satoshis)
-                    VALUES ${values.join(', ')}
-                    ON CONFLICT DO NOTHING`);
+                    VALUES ${fundUtxos.map(u => `
+                        ($${values.push(u.txid)}, $${values.push(u.vout)}, $${values.push(u.scripthash)}, $${values.push(u.satoshis)})`).join(', ')}
+                    ON CONFLICT DO NOTHING`, values);
             }
             for (let spend of jigSpends) {
                 await client.query(`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
@@ -288,10 +289,11 @@ class FyxBlockchainPg {
                     WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
             }
             if (jigUtxos.length) {
-                const values = jigUtxos.map(u => `('${pg_format_1.default.string(u.txid)}', ${u.vout}, '${pg_format_1.default.string(u.scripthash)}', ${u.satoshis})`);
+                const values = [];
                 await client.query(`INSERT INTO jig_txos_unspent(txid, vout, scripthash, satoshis)
-                    VALUES ${values.join(', ')}
-                    ON CONFLICT DO NOTHING`);
+                    VALUES ${jigUtxos.map(u => `
+                        ($${values.push(u.txid)}, $${values.push(u.vout)}, $${values.push(u.scripthash)}, $${values.push(u.satoshis)})`).join(', ')}
+                    ON CONFLICT DO NOTHING`, values);
             }
             for (let spend of marketSpends) {
                 await client.query(`INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
@@ -303,10 +305,11 @@ class FyxBlockchainPg {
                     WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
             }
             if (marketUtxos.length) {
-                const values = jigUtxos.map(u => `('${pg_format_1.default.string(u.txid)}', ${u.vout})`);
+                const values = [];
                 await client.query(`INSERT INTO market_txos_unspent(txid, vout)
-                    VALUES ${values.join(', ')}
-                    ON CONFLICT DO NOTHING`);
+                    VALUES ${marketUtxos.map(u => `
+                        ($${values.push(u.txid)}, $${values.push(u.vout)})`).join(', ')}
+                    ON CONFLICT DO NOTHING`, values);
             }
             await client.query('COMMIT');
         }
