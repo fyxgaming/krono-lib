@@ -1,6 +1,7 @@
 import { PubKey } from 'bsv';
 import createError from 'http-errors';
 import { SignedMessage } from './signed-message';
+import { Pool } from 'pg';
 export interface IUser {
     userId: string;
     pubkey: string;
@@ -8,12 +9,15 @@ export interface IUser {
 }
 
 export class FyxUtil {
-    constructor(private sql) { }
+    constructor(private pool: Pool) { }
 
     async loadUser(userId): Promise<IUser> {
         userId = userId.toLowerCase().normalize('NFKC');
-        const [user] = await this.sql`SELECT id, encode(pubkey, 'hex') as pubkey, xpub 
-            FROM users WHERE id=${userId}`;
+        const {rows: [user]} = await this.pool.query(
+            `SELECT id, encode(pubkey, 'hex') as pubkey, xpub 
+            FROM users WHERE id=$1`,
+            [userId]
+        );
 
         if (!user) throw new createError.NotFound();
         return {
@@ -43,9 +47,11 @@ export class FyxUtil {
     async authAdmin(fyxId: string, message: SignedMessage): Promise<Boolean> {
         let user = await this.validateMessage(message);
 
-        const rows = await this.sql`SELECT count(*) as count FROM client_admins
-            WHERE fyx_id=${fyxId} AND user_id=${user.userId}`;
+        const {rows: [count]} = await this.pool.query(`SELECT count(*) as count FROM client_admins
+            WHERE fyx_id=$1 AND user_id=$2`,
+            [fyxId, user.userId]
+        );
         
-        return !!rows.count;
+        return !!count;
     }
 }

@@ -7,13 +7,13 @@ exports.FyxUtil = void 0;
 const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
 class FyxUtil {
-    constructor(sql) {
-        this.sql = sql;
+    constructor(pool) {
+        this.pool = pool;
     }
     async loadUser(userId) {
         userId = userId.toLowerCase().normalize('NFKC');
-        const [user] = await this.sql `SELECT id, encode(pubkey, 'hex') as pubkey, xpub 
-            FROM users WHERE id=${userId}`;
+        const { rows: [user] } = await this.pool.query(`SELECT id, encode(pubkey, 'hex') as pubkey, xpub 
+            FROM users WHERE id=$1`, [userId]);
         if (!user)
             throw new http_errors_1.default.NotFound();
         return {
@@ -39,9 +39,9 @@ class FyxUtil {
     }
     async authAdmin(fyxId, message) {
         let user = await this.validateMessage(message);
-        const rows = await this.sql `SELECT count(*) as count FROM client_admins
-            WHERE fyx_id=${fyxId} AND user_id=${user.userId}`;
-        return !!rows.count;
+        const { rows: [count] } = await this.pool.query(`SELECT count(*) as count FROM client_admins
+            WHERE fyx_id=$1 AND user_id=$2`, [fyxId, user.userId]);
+        return !!count;
     }
 }
 exports.FyxUtil = FyxUtil;

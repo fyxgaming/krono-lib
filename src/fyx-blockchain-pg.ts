@@ -32,11 +32,11 @@ export class FyxBlockchainPg implements IBlockchain {
         private rpcClient?
     ) { }
 
-    buildSpendSelect(tableName: string, outPoints: { txid: Buffer, vout: number }[]) {
+    buildSpendSelect(tableName: string, outPoints: { txid: Buffer, vout: number }[], values: any[]) {
         return `SELECT encode(t.txid, 'hex'), t.vout, encode(t.spend_txid, 'hex') as spend_txid
             FROM ${fmt.ident(tableName)} t
             JOIN (VALUES 
-                ${outPoints.map(s => `('${fmt.string(s.txid)}'::bytea, ${s.vout})`).join(', ')}
+                ${outPoints.map(s => `($${values.push(s.txid)}, $${values.push(s.vout)})`).join(', ')}
             ) as s(txid, vout) ON s.txid = t.txid AND s.vout = t.vout`;
     }
 
@@ -61,11 +61,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 outScripts.length ? outScripts : [Buffer.from('00', 'hex')]
             ]
         );
-        // const derivations = await this.sql`SELECT encode(script, 'hex') as script, 
-        //         encode(pubkey, 'hex') as pubkey, path
-        //     FROM derivations
-        //     WHERE pubkey IN (${pubkeys.length ? pubkeys : Buffer.from('00', 'hex')}) 
-        //         OR script IN (${outScripts.length ? outScripts : Buffer.from('00', 'hex')})`;
+
         if (!derivations.length) {
             console.log('No pubkeys or scripts:', txid);
             throw new createError.NotFound();
@@ -103,21 +99,20 @@ export class FyxBlockchainPg implements IBlockchain {
             }
 
             const subQueries = [];
+            const values: any[] = [];
             if (fundSpends.length) {
-                subQueries.push(`(${this.buildSpendSelect('fund_txos_spent', fundSpends)})`);
+                subQueries.push(`(${this.buildSpendSelect('fund_txos_spent', fundSpends, values)})`,);
             }
             if (jigSpends.length) {
-                subQueries.push(`(${this.buildSpendSelect('jig_txos_spent', jigSpends)})`)
+                subQueries.push(`(${this.buildSpendSelect('jig_txos_spent', jigSpends, values)})`)
             }
             if (marketSpends.length) {
-                subQueries.push(`(${this.buildSpendSelect('market_txos_spent', marketSpends)})`);
+                subQueries.push(`(${this.buildSpendSelect('market_txos_spent', marketSpends, values)})`);
             }
             if (subQueries.length) {
-                const sql = `SELECT * FROM (
-                    ${subQueries.join(' UNION ALL ')}
-                ) spends`;
-                console.log('Spends SQL:', sql);
-                const { rows: spends } = await this.pool.query(sql);
+                const query = `SELECT * FROM (${subQueries.join(' UNION ALL ')}) spends`;
+                console.log('Spends SQL:', query);
+                const { rows: spends } = await this.pool.query(query, values);
                 console.log('Spends:', txid, spends);
                 spends.forEach(s => {
                     if (s.spend_txid !== txid) {
@@ -339,59 +334,6 @@ export class FyxBlockchainPg implements IBlockchain {
         } finally {
             client.release();
         }
-
-        // await this.sql.begin(async sql => {
-        // for (let spend of fundSpends) {
-        //     await sql`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
-        //         SELECT txid, vout, scripthash, satoshis, ${txidBuf} as spend_txid
-        //         FROM fund_txos_unspent
-        //         WHERE txid=${spend.txid} AND vout=${spend.vout}
-        //         ON CONFLICT DO NOTHING`;
-        //     await sql`DELETE FROM fund_txos_unspent
-        //         WHERE txid=${spend.txid} AND vout=${spend.vout}`;
-        // }
-        // if (fundUtxos.length) {
-        //     await sql`INSERT INTO fund_txos_unspent 
-        //         ${sql(fundUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
-        //         ON CONFLICT DO NOTHING`;
-        // }
-
-        // for (let spend of jigSpends) {
-        //     await sql`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
-        //             SELECT txid, vout, scripthash, satoshis, origin, kind, type, ${txidBuf} as spend_txid
-        //             FROM jig_txos_unspent
-        //             WHERE txid=${spend.txid} AND vout=${spend.vout}
-        //             ON CONFLICT DO NOTHING`;
-        //     await sql`DELETE FROM jig_txos_unspent
-        //             WHERE txid=${spend.txid} AND vout=${spend.vout}`;
-        // }
-        // if (jigUtxos.length) {
-        //     await sql`INSERT INTO jig_txos_unspent 
-        //             ${sql(jigUtxos, 'txid', 'vout', 'scripthash', 'satoshis')}
-        //             ON CONFLICT DO NOTHING`;
-        // }
-
-        // for (let spend of marketSpends) {
-        //     await sql`INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
-        //             SELECT txid, vout, origin, user_id, ${txidBuf} as spend_txid
-        //             FROM market_txos_unspent
-        //             WHERE txid=${spend.txid} AND vout=${spend.vout}
-        //             ON CONFLICT DO NOTHING`;
-        //     await sql`DELETE FROM market_txos_unspent
-        //             WHERE txid=${spend.txid} AND vout=${spend.vout}`;
-        // }
-        // if (marketUtxos.length) {
-        //     await sql`INSERT INTO market_txos_unspent 
-        //         ${sql(marketUtxos, 'txid', 'vout')}
-        //         ON CONFLICT DO NOTHING`;
-        // }
-        // });
-        // } catch(e: any) {
-        //     console.error(`Error from Insert into DB code block`, e);
-        //     throw e;
-        // } finally {
-        //     console.timeEnd(`Updating DB: ${txid}`);
-        // }
 
         try {
             await Promise.all([
