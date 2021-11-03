@@ -502,7 +502,10 @@ export class FyxBlockchainPg implements IBlockchain {
             [new Date(Date.now() + LOCK_TIME), scripthash]
         );
         if (!utxo) throw new Error(`Insufficient UTXOS for ${scripthash.toString('hex')}`)
-        console.log('UTXO Selected:', scripthash.toString('hex'), JSON.stringify(utxo));
+        console.log('UTXO Selected:', scripthash.toString('hex'), JSON.stringify({
+            ...utxo,
+            txid: utxo.txid.toString('hex')
+        }));
         return {
             txid: utxo.txid,
             vout: utxo.vout,
