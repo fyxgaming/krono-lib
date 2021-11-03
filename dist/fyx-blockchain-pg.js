@@ -31,7 +31,7 @@ class FyxBlockchainPg {
         this.rpcClient = rpcClient;
     }
     buildSpendSelect(tableName, outPoints, values) {
-        return `SELECT encode(txid, 'hex'), vout, encode(spend_txid, 'hex') as spend_txid
+        return `SELECT encode(txid, 'hex') as txid, vout, encode(spend_txid, 'hex') as spend_txid
             FROM ${pg_format_1.default.ident(tableName)} t
             WHERE ${outPoints.map(s => `(txid=$${values.push(s.txid)} AND vout=$${values.push(s.vout)})`).join(' OR ')}`;
     }
