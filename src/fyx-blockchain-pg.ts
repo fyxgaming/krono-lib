@@ -32,12 +32,19 @@ export class FyxBlockchainPg implements IBlockchain {
         private rpcClient?
     ) { }
 
-    buildSpendSelect(tableName: string, outPoints: { txid: Buffer, vout: number }[], values: any[]) {
-        return `SELECT encode(txid, 'hex') as txid, vout, encode(spend_txid, 'hex') as spend_txid
+    async evalSpends(tableName: string, outPoints: { txid: Buffer, vout: number }[], txid: string) {
+        const values: any[] = [];
+        const query = `SELECT encode(txid, 'hex') as txid, vout, encode(spend_txid, 'hex') as spend_txid
             FROM ${fmt.ident(tableName)} t
             WHERE ${
                 outPoints.map(s => `(txid=$${values.push(s.txid)} AND vout=$${values.push(s.vout)})`).join(' OR ')
             }`;
+        const { rows: spends } = await this.pool.query(query, values);
+        spends.forEach(s => {
+            if (s.spend_txid !== txid) {
+                throw createError(422, `Input to ${txid} already spent in ${tableName}: ${s.txid} ${s.vout} spent in ${s.spend_txid}`);
+            }
+        });
     }
 
     async broadcast(rawtx: string, mapiKey?: string) {
@@ -79,43 +86,31 @@ export class FyxBlockchainPg implements IBlockchain {
             for (let i = 0; i < tx.txIns.length; i++) {
                 const t = tx.txIns[i];
                 const pubkey = t.script.isPubKeyHashIn() && t.script.chunks[1].buf;
-                const path = pubkeysPaths.get(pubkey.toString('hex'));
                 const spend = {
                     txid: Buffer.from(t.txHashBuf).reverse(),
                     vout: t.txOutNum,
                     pubkey
                 }
-
-                if (path === 'm/0/0') {
-                    fundSpends.push(spend);
-                } else if (path) {
-                    jigSpends.push(spend);
+                if(pubkey) {
+                    const path = pubkeysPaths.get(pubkey.toString('hex'));
+                    if (path === 'm/0/0') {
+                        fundSpends.push(spend);
+                    } else if (path) {
+                        jigSpends.push(spend);
+                    }
                 } else if (t.script.toHex().match(orderLockRegex)) {
                     marketSpends.push(spend);
                 }
             }
 
-            const subQueries = [];
-            const values: any[] = [];
             if (fundSpends.length) {
-                subQueries.push(`(${this.buildSpendSelect('fund_txos_spent', fundSpends, values)})`,);
+                await this.evalSpends('fund_txos_spent', fundSpends, txid);                
             }
             if (jigSpends.length) {
-                subQueries.push(`(${this.buildSpendSelect('jig_txos_spent', jigSpends, values)})`)
+                await this.evalSpends('jig_txos_spent', jigSpends, txid);
             }
             if (marketSpends.length) {
-                subQueries.push(`(${this.buildSpendSelect('market_txos_spent', marketSpends, values)})`);
-            }
-            if (subQueries.length) {
-                const query = `SELECT * FROM (${subQueries.join(' UNION ALL ')}) spends`;
-                console.log('Spends SQL:', query);
-                const { rows: spends } = await this.pool.query(query, values);
-                console.log('Spends:', txid, spends);
-                spends.forEach(s => {
-                    if (s.spend_txid !== txid) {
-                        throw createError(422, `Input already spent: ${txid} - ${s.txid.toString('hex')} ${s.vout}`);
-                    }
-                });
+                await this.evalSpends('market_txos_spent', marketSpends, txid);
             }
         } catch (e: any) {
             console.error(`Error from Analyzing spends block`, e);
@@ -184,8 +179,8 @@ export class FyxBlockchainPg implements IBlockchain {
                 method: 'POST',
                 data: {
                     rawtx,
-                    callBackUrl: `${API}/mapi-callback`,
-                    callBackToken: CALLBACK_TOKEN
+                    // callBackUrl: `${API}/mapi-callback`,
+                    // callBackToken: CALLBACK_TOKEN
                 },
                 headers: headerConfig,
                 timeout: 5000
@@ -251,6 +246,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 market: marketUtxos.map(s => ({ txid, vout: s.vout }))
             }
         }));
+
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
@@ -326,9 +322,11 @@ export class FyxBlockchainPg implements IBlockchain {
             await client.query('COMMIT');
         } catch (e) {
             await client.query('ROLLBACK');
+            console.error(`Error Saving TX Data:`, e);
             throw e;
         } finally {
             client.release();
+            console.timeEnd(`Updating DB: ${txid}`);
         }
 
         try {
