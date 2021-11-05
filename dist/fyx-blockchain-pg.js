@@ -16,7 +16,7 @@ const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
-const LOCK_TIME = 60000;
+const LOCK_TIME = 120000;
 const MAX_SPLITS = 100;
 const runBuf = Buffer.from('run', 'utf8');
 const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
@@ -178,7 +178,7 @@ class FyxBlockchainPg {
                     // callBackToken: CALLBACK_TOKEN
                 },
                 headers: headerConfig,
-                timeout: 5000
+                timeout: 20000
             };
             mapiKey = mapiKey || MAPI_KEY;
             if (mapiKey)
