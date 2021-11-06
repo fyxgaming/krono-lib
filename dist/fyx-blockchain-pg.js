@@ -451,7 +451,7 @@ class FyxBlockchainPg {
                 FROM fund_txos_unspent
                 WHERE scripthash = $2 AND lock_until < current_timestamp
                 LIMIT 1
-            ) l 
+                FOR UPDATE SKIP LOCKED) l 
             WHERE l.txid = f.txid AND l.vout = f.vout
             RETURNING f.txid, f.vout, f.satoshis`, [new Date(Date.now() + LOCK_TIME), scripthash]);
         if (!utxo)
