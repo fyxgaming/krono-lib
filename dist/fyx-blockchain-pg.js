@@ -9,7 +9,6 @@ const http_errors_1 = __importDefault(require("http-errors"));
 const crypto_1 = require("crypto");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
-const pg_format_1 = __importDefault(require("pg-format"));
 const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
@@ -29,24 +28,12 @@ class FyxBlockchainPg {
         this.aws = aws;
         this.rpcClient = rpcClient;
     }
-    async evalSpends(tableName, outPoints, txid) {
-        const values = [];
-        const query = `SELECT encode(txid, 'hex') as txid, vout, encode(spend_txid, 'hex') as spend_txid
-            FROM ${pg_format_1.default.ident(tableName)} t
-            WHERE ${outPoints.map(s => `(txid=$${values.push(s.txid)} AND vout=$${values.push(s.vout)})`).join(' OR ')}`;
-        const { rows: spends } = await this.pool.query(query, values);
-        spends.forEach(s => {
-            if (s.spend_txid !== txid) {
-                throw (0, http_errors_1.default)(422, `Input to ${txid} already spent in ${tableName}: ${s.txid} ${s.vout} spent in ${s.spend_txid}`);
-            }
-        });
-    }
     async broadcast(rawtx, mapiKey) {
         var _a, _b, _c;
         const tx = bsv_1.Tx.fromHex(rawtx);
         const txid = tx.id();
         const txidBuf = Buffer.from(txid, 'hex');
-        console.log('Broadcasting:', txid, rawtx);
+        console.log('Broadcast:', txid, rawtx);
         const pubkeys = tx.txIns.map(t => t.script.isPubKeyHashIn() && t.script.chunks[1].buf).filter(b => b);
         const outScripts = tx.txOuts
             .filter(txOut => txOut.script.isPubKeyHashOut())
@@ -66,49 +53,6 @@ class FyxBlockchainPg {
             pubkeysPaths.set(d.pubkey, d.path);
             scriptPaths.set(d.script, d.path);
         });
-        const fundSpends = [];
-        const jigSpends = [];
-        const marketSpends = [];
-        console.time(`Evaluating spends: ${txid}`);
-        try {
-            for (let i = 0; i < tx.txIns.length; i++) {
-                const t = tx.txIns[i];
-                const pubkey = t.script.isPubKeyHashIn() && t.script.chunks[1].buf;
-                const spend = {
-                    txid: Buffer.from(t.txHashBuf).reverse(),
-                    vout: t.txOutNum,
-                    pubkey
-                };
-                if (pubkey) {
-                    const path = pubkeysPaths.get(pubkey.toString('hex'));
-                    if (path === 'm/0/0') {
-                        fundSpends.push(spend);
-                    }
-                    else if (path) {
-                        jigSpends.push(spend);
-                    }
-                }
-                else if (t.script.toHex().match(order_lock_regex_1.default)) {
-                    marketSpends.push(spend);
-                }
-            }
-            if (fundSpends.length) {
-                await this.evalSpends('fund_txos_spent', fundSpends, txid);
-            }
-            if (jigSpends.length) {
-                await this.evalSpends('jig_txos_spent', jigSpends, txid);
-            }
-            if (marketSpends.length) {
-                await this.evalSpends('market_txos_spent', marketSpends, txid);
-            }
-        }
-        catch (e) {
-            console.error(`Error from Analyzing spends block`, e);
-            throw e;
-        }
-        finally {
-            console.timeEnd(`Evaluating spends: ${txid}`);
-        }
         const fundUtxos = [];
         const jigUtxos = [];
         const marketUtxos = [];
@@ -159,93 +103,73 @@ class FyxBlockchainPg {
                 Body: rawtx
             }).promise());
         }
-        // Broadcast transaction
-        let response;
-        console.time(`Broadcasting: ${txid}`);
-        if (MAPI) {
-            let resp;
-            const config = {
-                url: `${MAPI}/tx`,
-                method: 'POST',
-                data: {
-                    rawtx,
-                    // callBackUrl: `${API}/mapi-callback`,
-                    // callBackToken: CALLBACK_TOKEN
-                },
-                headers: { 'Content-type': 'application/json' },
-                timeout: 60000
-            };
-            mapiKey = mapiKey || MAPI_KEY;
-            if (mapiKey)
-                config.headers['Authorization'] = `Bearer ${mapiKey}`;
-            for (let retry = 0; retry < 3; retry++) {
-                try {
-                    resp = await (0, fyx_axios_1.default)(config);
-                    console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
-                    break;
-                }
-                catch (e) {
-                    if (e.response) {
-                        console.error('Broadcast Error:', txid, e.response.status, e.response.status, e.response.config, e.response.headers, e.response.data);
-                    }
-                    else {
-                        console.error('Broadcast Error:', txid, ' - Response missing', e);
-                    }
-                    if (retry >= 2)
-                        throw e;
-                    console.log('Retrying Broadcast:', txid, retry);
-                }
-            }
-            response = resp.data;
-            const parsedPayload = JSON.parse(response.payload);
-            const { returnResult, resultDescription } = parsedPayload;
-            if (returnResult !== 'success' &&
-                !resultDescription.includes('Transaction already known') &&
-                !resultDescription.includes('Transaction already in the mempool')) {
-                throw (0, http_errors_1.default)(422, `${txid} - ${resultDescription}`);
-            }
-        }
-        else {
-            try {
-                await this.rpcClient.sendRawTransaction(rawtx);
-            }
-            catch (e) {
-                if (e.message.includes('Transaction already known') || e.message.includes('Transaction already in the mempool')) {
-                    console.log(`Error from sendRawTransaction: ${e.message}`);
-                    console.log(`Error is ignored. Continuing`);
-                }
-                else
-                    throw (0, http_errors_1.default)(422, e.message);
-            }
-        }
-        console.timeEnd(`Broadcasting: ${txid}`);
         console.time(`Updating DB: ${txid}`);
-        await this.pool.query(`INSERT INTO txns(txid) 
-            VALUES ($1) 
-            ON CONFLICT DO NOTHING`, [txidBuf]);
-        console.log('TX Updates:', txid, JSON.stringify({
-            spends: {
-                fund: fundSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout })),
-                jig: jigSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout })),
-                market: marketSpends.map(s => ({ txid: s.txid.toString('hex'), vout: s.vout }))
-            },
-            txos: {
-                fund: fundUtxos.map(s => ({ txid, vout: s.vout })),
-                jig: jigUtxos.map(s => ({ txid, vout: s.vout })),
-                market: marketUtxos.map(s => ({ txid, vout: s.vout }))
-            }
-        }));
         const client = await this.pool.connect();
         try {
             await client.query('BEGIN');
-            for (let spend of fundSpends) {
-                await client.query(`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid, pubkey)
-                    SELECT s.txid, s.vout, u.scripthash, u.satoshis, $1 as spend_txid, $2 as pubkey
-                    FROM (VALUES ($3::bytea, $4::integer)) as s(txid, vout)
-                    LEFT JOIN fund_txos_unspent u ON u.txid = s.txid AND u.vout = s.vout
-                    ON CONFLICT DO NOTHING`, [txidBuf, spend.pubkey, spend.txid, spend.vout]);
-                await client.query(`DELETE FROM fund_txos_unspent
-                    WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
+            await client.query(`INSERT INTO txns(txid) 
+                VALUES ($1) 
+                ON CONFLICT DO NOTHING`, [txidBuf]);
+            console.time(`Evaluating spends: ${txid}`);
+            try {
+                for (let i = 0; i < tx.txIns.length; i++) {
+                    const t = tx.txIns[i];
+                    const pubkey = t.script.isPubKeyHashIn() && t.script.chunks[1].buf;
+                    const spend = {
+                        txid: Buffer.from(t.txHashBuf).reverse(),
+                        vout: t.txOutNum,
+                        pubkey
+                    };
+                    if (pubkey) {
+                        const path = pubkeysPaths.get(pubkey.toString('hex'));
+                        if (path === 'm/0/0') {
+                            const { rows: [spendRow] } = await client.query(`INSERT INTO fund_txos_spent(txid, vout, scripthash, satoshis, spend_txid)
+                                SELECT txid, vout, scripthash, satoshis, $1 as spend_txid
+                                FROM fund_txos_unspent
+                                WHERE txid=$2 AND vout=$3
+                                RETURNING txid, vout`, [txidBuf, spend.txid, spend.vout]);
+                            if (!spendRow) {
+                                throw (0, http_errors_1.default)(422, `Input to ${txid} missing in funds: ${spend.txid.toString('hex')}:${spend.vout}`);
+                            }
+                            await client.query(`DELETE FROM fund_txos_unspent
+                                WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
+                        }
+                        else if (path) {
+                            const { rows: [spendRow] } = await client.query(`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid)
+                                SELECT txid, vout, scripthash, satoshis, origin, kind, type, $1 as spend_txid
+                                FROM fund_txos_unspent
+                                WHERE txid=$2 AND vout=$3
+                                RETURNING txid, vout`, [txidBuf, spend.txid, spend.vout]);
+                            if (!spendRow) {
+                                throw (0, http_errors_1.default)(422, `Input to ${txid} missing in jigs: ${spend.txid.toString('hex')}:${spend.vout}`);
+                            }
+                            await client.query(`DELETE FROM jig_txos_unspent
+                                WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
+                        }
+                    }
+                    else if (t.script.toHex().match(order_lock_regex_1.default)) {
+                        const { rows: [spendRow] } = await client.query(`INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
+                            SELECT txid, vout, origin, user_id, $1 as spend_txid
+                            FROM market_txos_unspent
+                            WHERE txid=$2 AND vout=$3
+                            RETURNING txid, vout`, [txidBuf, spend.txid, spend.vout]);
+                        if (!spendRow) {
+                            throw (0, http_errors_1.default)(422, `Input to ${txid} missing in jigs: ${spend.txid.toString('hex')}:${spend.vout}`);
+                        }
+                        await client.query(`DELETE FROM market_txos_unspent
+                            WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
+                    }
+                    else {
+                        throw new http_errors_1.default.NotFound(`Unknown Party: ${txid} - ${spend.txid.toString('hex')}:${spend.vout}`);
+                    }
+                }
+            }
+            catch (e) {
+                console.error(`Error from Analyzing spends block`, e);
+                throw e;
+            }
+            finally {
+                console.timeEnd(`Evaluating spends: ${txid}`);
             }
             if (fundUtxos.length) {
                 const values = [];
@@ -254,30 +178,12 @@ class FyxBlockchainPg {
                         ($${values.push(u.txid)}, $${values.push(u.vout)}, $${values.push(u.scripthash)}, $${values.push(u.satoshis)})`).join(', ')}
                     ON CONFLICT DO NOTHING`, values);
             }
-            for (let spend of jigSpends) {
-                await client.query(`INSERT INTO jig_txos_spent(txid, vout, scripthash, satoshis, origin, kind, type, spend_txid, pubkey)
-                    SELECT s.txid, s.vout, u.scripthash, u.satoshis, u.origin, u.kind, u.type, $1 as spend_txid, $2 as pubkey
-                    FROM (VALUES ($3::bytea, $4::integer)) as s(txid, vout)
-                    LEFT JOIN jig_txos_unspent u ON u.txid = s.txid AND u.vout = s.vout
-                    ON CONFLICT DO NOTHING`, [txidBuf, spend.pubkey, spend.txid, spend.vout]);
-                await client.query(`DELETE FROM jig_txos_unspent
-                    WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
-            }
             if (jigUtxos.length) {
                 const values = [];
                 await client.query(`INSERT INTO jig_txos_unspent(txid, vout, scripthash, satoshis)
                     VALUES ${jigUtxos.map(u => `
                         ($${values.push(u.txid)}, $${values.push(u.vout)}, $${values.push(u.scripthash)}, $${values.push(u.satoshis)})`).join(', ')}
                     ON CONFLICT DO NOTHING`, values);
-            }
-            for (let spend of marketSpends) {
-                await client.query(`INSERT INTO market_txos_spent(txid, vout, origin, user_id, spend_txid)
-                    SELECT s.txid, s.vout, u.origin, u.user_id, $1 as spend_txid
-                    FROM (VALUES ($2::bytea, $3::integer)) as s(txid, vout)
-                    LEFT JOIN market_txos_unspent u ON u.txid = s.txid AND u.vout = s.vout
-                    ON CONFLICT DO NOTHING`, [txidBuf, spend.txid, spend.vout]);
-                await client.query(`DELETE FROM market_txos_unspent
-                    WHERE txid=$1 AND vout=$2`, [spend.txid, spend.vout]);
             }
             if (marketUtxos.length) {
                 const values = [];
@@ -286,6 +192,66 @@ class FyxBlockchainPg {
                         ($${values.push(u.txid)}, $${values.push(u.vout)})`).join(', ')}
                     ON CONFLICT DO NOTHING`, values);
             }
+            // Broadcast transaction
+            let response;
+            console.time(`Broadcasting: ${txid}`);
+            if (MAPI) {
+                let resp;
+                const config = {
+                    url: `${MAPI}/tx`,
+                    method: 'POST',
+                    data: {
+                        rawtx,
+                        // callBackUrl: `${API}/mapi-callback`,
+                        // callBackToken: CALLBACK_TOKEN
+                    },
+                    headers: { 'Content-type': 'application/json' },
+                    timeout: 60000
+                };
+                mapiKey = mapiKey || MAPI_KEY;
+                if (mapiKey)
+                    config.headers['Authorization'] = `Bearer ${mapiKey}`;
+                for (let retry = 0; retry < 3; retry++) {
+                    try {
+                        resp = await (0, fyx_axios_1.default)(config);
+                        console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
+                        break;
+                    }
+                    catch (e) {
+                        if (e.response) {
+                            console.error('Broadcast Error:', txid, e.response.status, e.response.status, e.response.config, e.response.headers, e.response.data);
+                        }
+                        else {
+                            console.error('Broadcast Error:', txid, ' - Response missing', e);
+                        }
+                        if (retry >= 2)
+                            throw e;
+                        console.log('Retrying Broadcast:', txid, retry);
+                    }
+                }
+                response = resp.data;
+                const parsedPayload = JSON.parse(response.payload);
+                const { returnResult, resultDescription } = parsedPayload;
+                if (returnResult !== 'success' &&
+                    !resultDescription.includes('Transaction already known') &&
+                    !resultDescription.includes('Transaction already in the mempool')) {
+                    throw (0, http_errors_1.default)(422, `${txid} - ${resultDescription}`);
+                }
+            }
+            else {
+                try {
+                    await this.rpcClient.sendRawTransaction(rawtx);
+                }
+                catch (e) {
+                    if (e.message.includes('Transaction already known') || e.message.includes('Transaction already in the mempool')) {
+                        console.log(`Error from sendRawTransaction: ${e.message}`);
+                        console.log(`Error is ignored. Continuing`);
+                    }
+                    else
+                        throw (0, http_errors_1.default)(422, e.message);
+                }
+            }
+            console.timeEnd(`Broadcasting: ${txid}`);
             await client.query('COMMIT');
         }
         catch (e) {
