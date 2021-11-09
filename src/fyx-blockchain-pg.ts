@@ -180,7 +180,7 @@ export class FyxBlockchainPg implements IBlockchain {
                     // callBackToken: CALLBACK_TOKEN
                 },
                 headers: { 'Content-type': 'application/json' },
-                timeout: 60000
+                timeout: 75000
             };
             mapiKey = mapiKey || MAPI_KEY;
             if (mapiKey) config.headers['Authorization'] = `Bearer ${mapiKey}`;
