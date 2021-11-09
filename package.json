@@ -1,6 +1,6 @@
 {
   "name": "@kronoverse/lib",
-  "version": "9.0.28",
+  "version": "9.0.29",
   "description": "Fyx library",
   "private": false,
   "main": "index.js",
