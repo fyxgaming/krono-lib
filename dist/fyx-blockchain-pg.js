@@ -8,7 +8,6 @@ const bsv_1 = require("bsv");
 const http_errors_1 = __importDefault(require("http-errors"));
 const crypto_1 = require("crypto");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
-const set_cookie_parser_1 = __importDefault(require("set-cookie-parser"));
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
 const pg_format_1 = __importDefault(require("pg-format"));
 const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
@@ -16,7 +15,7 @@ const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
 const OUTPUT_SIZE = 34;
-const LOCK_TIME = 120000;
+const LOCK_TIME = 300000;
 const MAX_SPLITS = 100;
 const runBuf = Buffer.from('run', 'utf8');
 const cryptofightsBuf = Buffer.from('cryptofights', 'utf8');
@@ -164,11 +163,7 @@ class FyxBlockchainPg {
         let response;
         console.time(`Broadcasting: ${txid}`);
         if (MAPI) {
-            let resp, axiosInstance = fyx_axios_1.default.create({ withCredentials: true });
-            let cookie = JSON.parse((await this.redis.get(`taal-elb-cookie`)) || '[]');
-            let headerConfig = { 'Content-type': 'application/json' };
-            if (Array.isArray(cookie) && cookie.length > 0)
-                headerConfig['Cookie'] = cookie.join('; '); // this will set the cookie as "cookie1=val1; cookie2=val2; "
+            let resp;
             const config = {
                 url: `${MAPI}/tx`,
                 method: 'POST',
@@ -177,7 +172,7 @@ class FyxBlockchainPg {
                     // callBackUrl: `${API}/mapi-callback`,
                     // callBackToken: CALLBACK_TOKEN
                 },
-                headers: headerConfig,
+                headers: { 'Content-type': 'application/json' },
                 timeout: 60000
             };
             mapiKey = mapiKey || MAPI_KEY;
@@ -185,12 +180,7 @@ class FyxBlockchainPg {
                 config.headers['Authorization'] = `Bearer ${mapiKey}`;
             for (let retry = 0; retry < 3; retry++) {
                 try {
-                    resp = await axiosInstance(config);
-                    let respCookie = set_cookie_parser_1.default.parse(resp).map(cookie => `${cookie.name}=${cookie.value}`);
-                    if (Array.isArray(respCookie) && respCookie.length > 0) {
-                        console.log(`Saving response cookies - ${JSON.stringify(respCookie)}`);
-                        await this.redis.set('taal-elb-cookie', JSON.stringify(respCookie));
-                    }
+                    resp = await (0, fyx_axios_1.default)(config);
                     console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
                     break;
                 }
