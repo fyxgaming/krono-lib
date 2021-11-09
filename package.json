@@ -19,8 +19,7 @@
     "buffer": "^6.0.3",
     "events": "^3.2.0",
     "http-errors": "^1.8.0",
-    "pg-format": "^1.0.4",
-    "set-cookie-parser": "^2.4.8"
+    "pg-format": "^1.0.4"
   },
   "devDependencies": {
     "@types/events": "^3.0.0",

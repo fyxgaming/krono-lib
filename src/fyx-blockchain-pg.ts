@@ -2,7 +2,6 @@ import { Address, Bn, Hash, Script, Tx, TxIn } from 'bsv';
 import createError from 'http-errors';
 import { createHash } from 'crypto';
 import axios from './fyx-axios';
-import cookieparser from 'set-cookie-parser';
 import { IBlockchain } from './iblockchain';
 import { FyxCache } from './fyx-cache';
 import orderLockRegex from './order-lock-regex';
