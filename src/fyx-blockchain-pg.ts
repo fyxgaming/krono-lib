@@ -249,10 +249,6 @@ export class FyxBlockchainPg implements IBlockchain {
                     ON CONFLICT DO NOTHING`,
                     [txidBuf, spend.pubkey, spend.txid, spend.vout]
                 );
-                await client.query(`DELETE FROM fund_txos_unspent
-                    WHERE txid=$1 AND vout=$2`,
-                    [spend.txid, spend.vout]
-                );
             }
             if (fundUtxos.length) {
                 const values: any[] = []
@@ -272,10 +268,6 @@ export class FyxBlockchainPg implements IBlockchain {
                     ON CONFLICT DO NOTHING`,
                     [txidBuf, spend.pubkey, spend.txid, spend.vout]
                 );
-                await client.query(`DELETE FROM jig_txos_unspent
-                    WHERE txid=$1 AND vout=$2`,
-                    [spend.txid, spend.vout]
-                );
             }
             if (jigUtxos.length) {
                 const values: any[] = []
@@ -294,10 +286,6 @@ export class FyxBlockchainPg implements IBlockchain {
                     LEFT JOIN market_txos_unspent u ON u.txid = s.txid AND u.vout = s.vout
                     ON CONFLICT DO NOTHING`,
                     [txidBuf, spend.txid, spend.vout]
-                );
-                await client.query(`DELETE FROM market_txos_unspent
-                    WHERE txid=$1 AND vout=$2`,
-                    [spend.txid, spend.vout]
                 );
             }
             if (marketUtxos.length) {
