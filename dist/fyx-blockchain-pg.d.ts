@@ -1,4 +1,5 @@
 /// <reference types="node" />
+import { CloudWatch, S3, SNS, SQS } from 'aws-sdk';
 import { IBlockchain } from './iblockchain';
 import { FyxCache } from './fyx-cache';
 import { Pool } from 'pg';
@@ -10,9 +11,10 @@ export declare class FyxBlockchainPg implements IBlockchain {
     private aws?;
     private rpcClient?;
     constructor(network: string, pool: Pool, redis: any, cache: FyxCache, aws?: {
-        s3: any;
-        sns: any;
-        sqs: any;
+        s3: S3;
+        sns: SNS;
+        sqs: SQS;
+        cloudwatch: CloudWatch;
     }, rpcClient?: any);
     evalSpends(tableName: string, outPoints: {
         txid: Buffer;

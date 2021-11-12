@@ -10,7 +10,7 @@ const crypto_1 = require("crypto");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
 const pg_format_1 = __importDefault(require("pg-format"));
-const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
+const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY, NAMESPACE } = process.env;
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
@@ -42,7 +42,7 @@ class FyxBlockchainPg {
         });
     }
     async broadcast(rawtx, mapiKey) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e, _f, _g;
         const tx = bsv_1.Tx.fromHex(rawtx);
         const txid = tx.id();
         const txidBuf = Buffer.from(txid, 'hex');
@@ -163,6 +163,7 @@ class FyxBlockchainPg {
         let response;
         console.time(`Broadcasting: ${txid}`);
         if (MAPI) {
+            let timer = Date.now();
             let resp;
             const config = {
                 url: `${MAPI}/tx`,
@@ -173,26 +174,52 @@ class FyxBlockchainPg {
                     // callBackToken: CALLBACK_TOKEN
                 },
                 headers: { 'Content-type': 'application/json' },
-                timeout: 75000
+                timeout: 75000,
+                clarifyTimeoutError: true
             };
             mapiKey = mapiKey || MAPI_KEY;
             if (mapiKey)
                 config.headers['Authorization'] = `Bearer ${mapiKey}`;
-            for (let retry = 0; retry < 3; retry++) {
+            let retry = 0;
+            for (; retry < 3; retry++) {
                 try {
                     resp = await (0, fyx_axios_1.default)(config);
                     console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
                     break;
                 }
                 catch (e) {
+                    await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.cloudwatch.putMetricData({
+                        Namespace: 'broadcast',
+                        MetricData: [{
+                                MetricName: `${NAMESPACE}-broadcast-error: ${e.code || e.status}`,
+                                Unit: 'Count',
+                                Value: 1,
+                                Timestamp: new Date()
+                            }]
+                    }).promise());
                     if (e.response) {
-                        console.error('Broadcast Error:', txid, e.response.status, e.response.status, e.response.config, e.response.headers, e.response.data);
+                        console.error('Broadcast Error:', txid, e.response.status, e.response.config, e.response.headers, e.response.data);
                     }
                     else {
-                        console.error('Broadcast Error:', txid, ' - Response missing', e);
+                        console.error('Broadcast Error:', txid, e);
                     }
-                    if (retry >= 2)
+                    if (retry >= 2) {
+                        await ((_c = this.aws) === null || _c === void 0 ? void 0 : _c.cloudwatch.putMetricData({
+                            Namespace: 'broadcast',
+                            MetricData: [{
+                                    MetricName: `${NAMESPACE}-broadcast-failed: ${e.code || e.status}`,
+                                    Unit: 'Count',
+                                    Value: 1,
+                                    Timestamp: new Date()
+                                }, {
+                                    MetricName: `${NAMESPACE}-broadcast-duration`,
+                                    Unit: 'Milliseconds',
+                                    Value: Date.now() - timer,
+                                    Timestamp: new Date()
+                                }]
+                        }).promise());
                         throw e;
+                    }
                     console.log('Retrying Broadcast:', txid, retry);
                 }
             }
@@ -202,7 +229,37 @@ class FyxBlockchainPg {
             if (returnResult !== 'success' &&
                 !resultDescription.includes('Transaction already known') &&
                 !resultDescription.includes('Transaction already in the mempool')) {
+                await ((_d = this.aws) === null || _d === void 0 ? void 0 : _d.cloudwatch.putMetricData({
+                    Namespace: 'broadcast',
+                    MetricData: [{
+                            MetricName: `${NAMESPACE}-broadcast-rejected: ${resultDescription}`,
+                            Unit: 'Count',
+                            Value: 1,
+                            Timestamp: new Date()
+                        }, {
+                            MetricName: `${NAMESPACE}-broadcast-duration`,
+                            Unit: 'Milliseconds',
+                            Value: Date.now() - timer,
+                            Timestamp: new Date()
+                        }]
+                }).promise());
                 throw (0, http_errors_1.default)(422, `${txid} - ${resultDescription}`);
+            }
+            else {
+                await ((_e = this.aws) === null || _e === void 0 ? void 0 : _e.cloudwatch.putMetricData({
+                    Namespace: 'broadcast',
+                    MetricData: [{
+                            MetricName: `${NAMESPACE}-broadcast-success: ${retry}`,
+                            Unit: 'Count',
+                            Value: 1,
+                            Timestamp: new Date()
+                        }, {
+                            MetricName: `${NAMESPACE}-broadcast-duration`,
+                            Unit: 'Milliseconds',
+                            Value: Date.now() - timer,
+                            Timestamp: new Date()
+                        }]
+                }).promise());
             }
         }
         else {
@@ -314,13 +371,13 @@ class FyxBlockchainPg {
                 ((_f = (_e = txOut.script.chunks[4]) === null || _e === void 0 ? void 0 : _e.buf) === null || _f === void 0 ? void 0 : _f.compare(fyxBuf)) === 0);
         });
         if (isRun && JIG_TOPIC) {
-            await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.sns.publish({
+            await ((_f = this.aws) === null || _f === void 0 ? void 0 : _f.sns.publish({
                 TopicArn: JIG_TOPIC !== null && JIG_TOPIC !== void 0 ? JIG_TOPIC : '',
                 Message: JSON.stringify({ txid })
             }).promise());
         }
         if (BROADCAST_QUEUE) {
-            await ((_c = this.aws) === null || _c === void 0 ? void 0 : _c.sqs.sendMessage({
+            await ((_g = this.aws) === null || _g === void 0 ? void 0 : _g.sqs.sendMessage({
                 QueueUrl: BROADCAST_QUEUE || '',
                 MessageBody: JSON.stringify({ txid })
             }).promise());

@@ -196,7 +196,7 @@ export class FyxBlockchainPg implements IBlockchain {
                     await this.aws?.cloudwatch.putMetricData({
                         Namespace: 'broadcast',
                         MetricData: [{
-                            MetricName: `${NAMESPACE}-broadcast-error-${e.code || e.status}`,
+                            MetricName: `${NAMESPACE}-broadcast-error: ${e.code || e.status}`,
                             Unit: 'Count',
                             Value: 1,
                             Timestamp: new Date()
@@ -212,7 +212,7 @@ export class FyxBlockchainPg implements IBlockchain {
                         await this.aws?.cloudwatch.putMetricData({
                             Namespace: 'broadcast',
                             MetricData: [{
-                                MetricName: `${NAMESPACE}-broadcast-failed-${e.code || e.status}`,
+                                MetricName: `${NAMESPACE}-broadcast-failed: ${e.code || e.status}`,
                                 Unit: 'Count',
                                 Value: 1,
                                 Timestamp: new Date()
@@ -238,7 +238,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 await this.aws?.cloudwatch.putMetricData({
                     Namespace: 'broadcast',
                     MetricData: [{
-                        MetricName: `${NAMESPACE}-broadcast-rejected-${resultDescription}`,
+                        MetricName: `${NAMESPACE}-broadcast-rejected: ${resultDescription}`,
                         Unit: 'Count',
                         Value: 1,
                         Timestamp: new Date()
@@ -254,7 +254,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 await this.aws?.cloudwatch.putMetricData({
                     Namespace: 'broadcast',
                     MetricData: [{
-                        MetricName: `${NAMESPACE}-broadcast-success-${retry}`,
+                        MetricName: `${NAMESPACE}-broadcast-success: ${retry}`,
                         Unit: 'Count',
                         Value: 1,
                         Timestamp: new Date()
