@@ -1,3 +1,4 @@
+import { CloudWatch, S3, SNS, SQS } from 'aws-sdk';
 import { Address, Bn, Hash, Script, Tx, TxIn } from 'bsv';
 import createError from 'http-errors';
 import { createHash } from 'crypto';
@@ -8,7 +9,7 @@ import orderLockRegex from './order-lock-regex';
 import fmt from 'pg-format';
 import { Pool } from 'pg';
 
-const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY } = process.env;
+const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY, NAMESPACE } = process.env;
 
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
@@ -27,7 +28,7 @@ export class FyxBlockchainPg implements IBlockchain {
         private pool: Pool,
         private redis,
         private cache: FyxCache,
-        private aws?: { s3: any, sns: any, sqs: any },
+        private aws?: { s3: S3, sns: SNS, sqs: SQS, cloudwatch: CloudWatch},
         private rpcClient?
     ) { }
 
@@ -169,6 +170,7 @@ export class FyxBlockchainPg implements IBlockchain {
         let response;
         console.time(`Broadcasting: ${txid}`);
         if (MAPI) {
+            let timer = Date.now();
             let resp;
             const config: any = {
                 url: `${MAPI}/tx`,
@@ -179,22 +181,50 @@ export class FyxBlockchainPg implements IBlockchain {
                     // callBackToken: CALLBACK_TOKEN
                 },
                 headers: { 'Content-type': 'application/json' },
-                timeout: 75000
+                timeout: 75000,
+                clarifyTimeoutError: true
             };
             mapiKey = mapiKey || MAPI_KEY;
             if (mapiKey) config.headers['Authorization'] = `Bearer ${mapiKey}`;
-            for (let retry = 0; retry < 3; retry++) {
+            let retry = 0;
+            for (; retry < 3; retry++) {
                 try {
                     resp = await axios(config);
                     console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
                     break;
                 } catch (e: any) {
+                    await this.aws?.cloudwatch.putMetricData({
+                        Namespace: 'broadcast',
+                        MetricData: [{
+                            MetricName: `${NAMESPACE}-broadcast-error: ${e.code || e.status}`,
+                            Unit: 'Count',
+                            Value: 1,
+                            Timestamp: new Date()
+                        }]
+                    }).promise();
+
                     if (e.response) {
-                        console.error('Broadcast Error:', txid, e.response.status, e.response.status, e.response.config, e.response.headers, e.response.data);
+                        console.error('Broadcast Error:', txid, e.response.status, e.response.config, e.response.headers, e.response.data);
                     } else {
-                        console.error('Broadcast Error:', txid, ' - Response missing', e);
+                        console.error('Broadcast Error:', txid, e);
                     }
-                    if (retry >= 2) throw e;
+                    if (retry >= 2) {
+                        await this.aws?.cloudwatch.putMetricData({
+                            Namespace: 'broadcast',
+                            MetricData: [{
+                                MetricName: `${NAMESPACE}-broadcast-failed: ${e.code || e.status}`,
+                                Unit: 'Count',
+                                Value: 1,
+                                Timestamp: new Date()
+                            }, {
+                                MetricName: `${NAMESPACE}-broadcast-duration`,
+                                Unit: 'Milliseconds',
+                                Value: Date.now() - timer,
+                                Timestamp: new Date()
+                            }]
+                        }).promise();
+                        throw e;
+                    }
                     console.log('Retrying Broadcast:', txid, retry);
                 }
             }
@@ -203,8 +233,38 @@ export class FyxBlockchainPg implements IBlockchain {
             const { returnResult, resultDescription } = parsedPayload;
             if (returnResult !== 'success' &&
                 !resultDescription.includes('Transaction already known') &&
-                !resultDescription.includes('Transaction already in the mempool')) {
+                !resultDescription.includes('Transaction already in the mempool')) 
+            {
+                await this.aws?.cloudwatch.putMetricData({
+                    Namespace: 'broadcast',
+                    MetricData: [{
+                        MetricName: `${NAMESPACE}-broadcast-rejected: ${resultDescription}`,
+                        Unit: 'Count',
+                        Value: 1,
+                        Timestamp: new Date()
+                    }, {
+                        MetricName: `${NAMESPACE}-broadcast-duration`,
+                        Unit: 'Milliseconds',
+                        Value: Date.now() - timer,
+                        Timestamp: new Date()
+                    }]
+                }).promise();
                 throw createError(422, `${txid} - ${resultDescription}`);
+            } else {
+                await this.aws?.cloudwatch.putMetricData({
+                    Namespace: 'broadcast',
+                    MetricData: [{
+                        MetricName: `${NAMESPACE}-broadcast-success: ${retry}`,
+                        Unit: 'Count',
+                        Value: 1,
+                        Timestamp: new Date()
+                    }, {
+                        MetricName: `${NAMESPACE}-broadcast-duration`,
+                        Unit: 'Milliseconds',
+                        Value: Date.now() - timer,
+                        Timestamp: new Date()
+                    }]
+                }).promise();
             }
         } else {
             try {

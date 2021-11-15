@@ -7,7 +7,7 @@ const axios_1 = __importDefault(require("axios"));
 const http_errors_1 = __importDefault(require("http-errors"));
 axios_1.default.interceptors.response.use((r) => r, (e) => {
     if (e.response)
-        throw (0, http_errors_1.default)(e.response.status, `${e.config.url} -  ${JSON.stringify(e.response.data)}`);
+        throw (0, http_errors_1.default)(e.response.status, `${e.config.url} - ${JSON.stringify(e.response.data)}`);
     throw e;
 });
 exports.default = axios_1.default;
