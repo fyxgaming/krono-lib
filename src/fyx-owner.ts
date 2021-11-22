@@ -3,7 +3,7 @@ import { Address, Bn, Bw, KeyPair, Script, Sig, Tx, TxOut } from 'bsv';
 import { SignedMessage } from './signed-message';
 import orderLockRegex from './order-lock-regex';
 
-const FEE_RATE = 0.025;
+const FEE_RATE = 0.04;
 const DUST_LIMIT = 273;
 export class FyxOwner {
     public keyPairs = new Map<string, KeyPair>();

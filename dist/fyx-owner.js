@@ -8,7 +8,7 @@ const axios_1 = __importDefault(require("axios"));
 const bsv_1 = require("bsv");
 const signed_message_1 = require("./signed-message");
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
-const FEE_RATE = 0.025;
+const FEE_RATE = 0.04;
 const DUST_LIMIT = 273;
 class FyxOwner {
     constructor(apiUrl, bip32, fyxId, userId, keyPair, feeAddress) {
