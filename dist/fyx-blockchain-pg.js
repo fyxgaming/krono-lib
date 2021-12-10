@@ -373,7 +373,9 @@ class FyxBlockchainPg {
         if (BROADCAST_QUEUE) {
             await ((_g = this.aws) === null || _g === void 0 ? void 0 : _g.sqs.sendMessage({
                 QueueUrl: BROADCAST_QUEUE || '',
-                MessageBody: JSON.stringify({ txid })
+                MessageBody: JSON.stringify({ txid }),
+                MessageDeduplicationId: txid,
+                MessageGroupId: 'FyxGroup'
             }).promise());
         }
         return txid;
