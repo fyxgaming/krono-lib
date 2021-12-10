@@ -9,7 +9,7 @@ import orderLockRegex from './order-lock-regex';
 import fmt from 'pg-format';
 import { Pool } from 'pg';
 
-const { API, API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_QUEUE, CALLBACK_TOKEN, DEBUG, JIG_TOPIC, MAPI, MAPI_KEY, NAMESPACE } = process.env;
+const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_MAPI, BROADCAST_QUEUE, DEBUG, JIG_TOPIC, MAPI_KEY } = process.env;
 
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
@@ -166,114 +166,15 @@ export class FyxBlockchainPg implements IBlockchain {
         }
 
         // Broadcast transaction
-        let response;
         console.time(`Broadcasting: ${txid}`);
-        if (MAPI) {
-            let timer = Date.now();
-            let resp;
-            const config: any = {
-                url: `${MAPI}/tx`,
-                method: 'POST',
-                data: {
-                    rawtx,
-                    // callBackUrl: `${API}/mapi-callback`,
-                    // callBackToken: CALLBACK_TOKEN
-                },
-                headers: { 'Content-type': 'application/json' },
-                timeout: 75000,
-                clarifyTimeoutError: true
-            };
-            mapiKey = mapiKey || MAPI_KEY;
-            if (mapiKey) config.headers['Authorization'] = `Bearer ${mapiKey}`;
-            let retry = 0;
-            for (; retry < 3; retry++) {
-                try {
-                    resp = await axios(config);
-                    console.log('Broadcast Response:', txid, JSON.stringify(resp.data));
-                    break;
-                } catch (e: any) {
-                    await this.aws?.cloudwatch.putMetricData({
-                        Namespace: 'broadcast',
-                        MetricData: [{
-                            MetricName: `${NAMESPACE}-broadcast-error: ${e.code || e.status}`,
-                            Unit: 'Count',
-                            Value: 1,
-                            Timestamp: new Date()
-                        }]
-                    }).promise();
-
-                    if (e.response) {
-                        console.error('Broadcast Error:', txid, e.response.status, e.response.config, e.response.headers, e.response.data);
-                    } else {
-                        console.error('Broadcast Error:', txid, e);
-                    }
-                    if (retry >= 2) {
-                        await this.aws?.cloudwatch.putMetricData({
-                            Namespace: 'broadcast',
-                            MetricData: [{
-                                MetricName: `${NAMESPACE}-broadcast-failed: ${e.code || e.status}`,
-                                Unit: 'Count',
-                                Value: 1,
-                                Timestamp: new Date()
-                            }, {
-                                MetricName: `${NAMESPACE}-broadcast-duration`,
-                                Unit: 'Milliseconds',
-                                Value: Date.now() - timer,
-                                Timestamp: new Date()
-                            }]
-                        }).promise();
-                        throw e;
-                    }
-                    console.log('Retrying Broadcast:', txid, retry);
-                }
+        try {
+            await this.rpcClient.sendRawTransaction(rawtx);
+        } catch (e: any) {
+            if (e.message.includes('Transaction already known') || e.message.includes('Transaction already in the mempool')) {
+                console.log(`Error from sendRawTransaction: ${e.message}`);
+                console.log(`Error is ignored. Continuing`);
             }
-            response = resp.data;
-            const parsedPayload = JSON.parse(response.payload);
-            const { returnResult, resultDescription } = parsedPayload;
-            if (returnResult !== 'success' &&
-                !resultDescription.includes('Transaction already known') &&
-                !resultDescription.includes('Transaction already in the mempool')) {
-                await this.aws?.cloudwatch.putMetricData({
-                    Namespace: 'broadcast',
-                    MetricData: [{
-                        MetricName: `${NAMESPACE}-broadcast-rejected: ${resultDescription}`,
-                        Unit: 'Count',
-                        Value: 1,
-                        Timestamp: new Date()
-                    }, {
-                        MetricName: `${NAMESPACE}-broadcast-duration`,
-                        Unit: 'Milliseconds',
-                        Value: Date.now() - timer,
-                        Timestamp: new Date()
-                    }]
-                }).promise();
-                throw createError(422, `${txid} - ${resultDescription}`);
-            } else {
-                await this.aws?.cloudwatch.putMetricData({
-                    Namespace: 'broadcast',
-                    MetricData: [{
-                        MetricName: `${NAMESPACE}-broadcast-success: ${retry}`,
-                        Unit: 'Count',
-                        Value: 1,
-                        Timestamp: new Date()
-                    }, {
-                        MetricName: `${NAMESPACE}-broadcast-duration`,
-                        Unit: 'Milliseconds',
-                        Value: Date.now() - timer,
-                        Timestamp: new Date()
-                    }]
-                }).promise();
-            }
-        } else {
-            try {
-                await this.rpcClient.sendRawTransaction(rawtx);
-            } catch (e: any) {
-                if (e.message.includes('Transaction already known') || e.message.includes('Transaction already in the mempool')) {
-                    console.log(`Error from sendRawTransaction: ${e.message}`);
-                    console.log(`Error is ignored. Continuing`);
-                }
-                else throw createError(422, e.message);
-            }
+            else throw createError(422, e.message);
         }
         console.timeEnd(`Broadcasting: ${txid}`);
 
@@ -389,6 +290,28 @@ export class FyxBlockchainPg implements IBlockchain {
                 TopicArn: JIG_TOPIC ?? '',
                 Message: JSON.stringify({ txid })
             }).promise();
+        }
+
+        if (BROADCAST_MAPI) {
+            try {
+                const resp = await axios({
+                    url: `${BROADCAST_MAPI}/api/v1/broadcast`,
+                    method: 'POST',
+                    data: tx.toBuffer(),
+                    headers: {
+                        Authorization: `Bearer ${MAPI_KEY}`,
+                        'Content-type': 'application/octet-stream' 
+                    },
+                    timeout: 5000,
+                });
+                console.log('MAPI Response:', resp.data);
+                await this.pool.query(
+                    'UPDATE txns SET mapi_ts=current_timestamp WHERE txid=$1',
+                    [txidBuf]
+                );
+            } catch (e: any) {
+                console.error('MAPI Error:', txid, e);
+            }
         }
 
         if (BROADCAST_QUEUE) {
