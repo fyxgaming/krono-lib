@@ -28,7 +28,7 @@ export class FyxBlockchainPg implements IBlockchain {
         private pool: Pool,
         private redis,
         private cache: FyxCache,
-        private aws?: { s3: S3, sns: SNS, sqs: SQS, cloudwatch: CloudWatch},
+        private aws?: { s3: S3, sns: SNS, sqs: SQS, cloudwatch: CloudWatch },
         private rpcClient?
     ) { }
 
@@ -36,8 +36,7 @@ export class FyxBlockchainPg implements IBlockchain {
         const values: any[] = [];
         const query = `SELECT encode(txid, 'hex') as txid, vout, encode(spend_txid, 'hex') as spend_txid
             FROM ${fmt.ident(tableName)} t
-            WHERE ${
-                outPoints.map(s => `(txid=$${values.push(s.txid)} AND vout=$${values.push(s.vout)})`).join(' OR ')
+            WHERE ${outPoints.map(s => `(txid=$${values.push(s.txid)} AND vout=$${values.push(s.vout)})`).join(' OR ')
             }`;
         const { rows: spends } = await this.pool.query(query, values);
         spends.forEach(s => {
@@ -91,7 +90,7 @@ export class FyxBlockchainPg implements IBlockchain {
                     vout: t.txOutNum,
                     pubkey
                 }
-                if(pubkey) {
+                if (pubkey) {
                     const path = pubkeysPaths.get(pubkey.toString('hex'));
                     if (path === 'm/0/0') {
                         fundSpends.push(spend);
@@ -104,7 +103,7 @@ export class FyxBlockchainPg implements IBlockchain {
             }
 
             if (fundSpends.length) {
-                await this.evalSpends('fund_txos_spent', fundSpends, txid);                
+                await this.evalSpends('fund_txos_spent', fundSpends, txid);
             }
             if (jigSpends.length) {
                 await this.evalSpends('jig_txos_spent', jigSpends, txid);
@@ -233,8 +232,7 @@ export class FyxBlockchainPg implements IBlockchain {
             const { returnResult, resultDescription } = parsedPayload;
             if (returnResult !== 'success' &&
                 !resultDescription.includes('Transaction already known') &&
-                !resultDescription.includes('Transaction already in the mempool')) 
-            {
+                !resultDescription.includes('Transaction already in the mempool')) {
                 await this.aws?.cloudwatch.putMetricData({
                     Namespace: 'broadcast',
                     MetricData: [{
@@ -315,7 +313,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 await client.query(`INSERT INTO fund_txos_unspent(txid, vout, scripthash, satoshis)
                     VALUES ${fundUtxos.map(u => `
                         ($${values.push(u.txid)}, $${values.push(u.vout)}, $${values.push(u.scripthash)}, $${values.push(u.satoshis)})`
-                    ).join(', ')}
+                ).join(', ')}
                     ON CONFLICT DO NOTHING`,
                     values
                 );
@@ -334,7 +332,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 await client.query(`INSERT INTO jig_txos_unspent(txid, vout, scripthash, satoshis)
                     VALUES ${jigUtxos.map(u => `
                         ($${values.push(u.txid)}, $${values.push(u.vout)}, $${values.push(u.scripthash)}, $${values.push(u.satoshis)})`
-                    ).join(', ')}
+                ).join(', ')}
                     ON CONFLICT DO NOTHING`,
                     values
                 );
@@ -353,7 +351,7 @@ export class FyxBlockchainPg implements IBlockchain {
                 await client.query(`INSERT INTO market_txos_unspent(txid, vout)
                     VALUES ${marketUtxos.map(u => `
                         ($${values.push(u.txid)}, $${values.push(u.vout)})`
-                    ).join(', ')}
+                ).join(', ')}
                     ON CONFLICT DO NOTHING`,
                     values
                 );
@@ -396,7 +394,9 @@ export class FyxBlockchainPg implements IBlockchain {
         if (BROADCAST_QUEUE) {
             await this.aws?.sqs.sendMessage({
                 QueueUrl: BROADCAST_QUEUE || '',
-                MessageBody: JSON.stringify({ txid })
+                MessageBody: JSON.stringify({ txid }),
+                MessageDeduplicationId: txid,
+                MessageGroupId: 'FyxGroup'
             }).promise();
         }
         return txid;
