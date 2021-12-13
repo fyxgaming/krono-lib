@@ -9,7 +9,7 @@ import orderLockRegex from './order-lock-regex';
 import fmt from 'pg-format';
 import { Pool } from 'pg';
 
-const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_MAPI, BROADCAST_QUEUE, DEBUG, JIG_TOPIC, MAPI_KEY } = process.env;
+const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_MAPI, BROADCAST_QUEUE, DEBUG, JIG_TOPIC, MAPI_KEY, NAMESPACE } = process.env;
 
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
@@ -169,12 +169,41 @@ export class FyxBlockchainPg implements IBlockchain {
         console.time(`Broadcasting: ${txid}`);
         try {
             await this.rpcClient.sendRawTransaction(rawtx);
+            await this.aws?.cloudwatch.putMetricData({
+                Namespace: 'broadcast',
+                MetricData: [{
+                    MetricName: `${NAMESPACE}-broadcast-success`,
+                    Unit: 'Count',
+                    Value: 1,
+                    Timestamp: new Date()
+                }]
+            }).promise();
         } catch (e: any) {
             if (e.message.includes('Transaction already known') || e.message.includes('Transaction already in the mempool')) {
                 console.log(`Error from sendRawTransaction: ${e.message}`);
                 console.log(`Error is ignored. Continuing`);
+                await this.aws?.cloudwatch.putMetricData({
+                    Namespace: 'broadcast',
+                    MetricData: [{
+                        MetricName: `${NAMESPACE}-broadcast-success`,
+                        Unit: 'Count',
+                        Value: 1,
+                        Timestamp: new Date()
+                    }]
+                }).promise();
             }
-            else throw createError(422, e.message);
+            else {
+                await this.aws?.cloudwatch.putMetricData({
+                    Namespace: 'broadcast',
+                    MetricData: [{
+                        MetricName: `${NAMESPACE}-broadcast-failure`,
+                        Unit: 'Count',
+                        Value: 1,
+                        Timestamp: new Date()
+                    }]
+                }).promise();
+                throw createError(422, e.message);
+            }
         }
         console.timeEnd(`Broadcasting: ${txid}`);
 
@@ -300,7 +329,7 @@ export class FyxBlockchainPg implements IBlockchain {
                     data: tx.toBuffer(),
                     headers: {
                         Authorization: `Bearer ${MAPI_KEY}`,
-                        'Content-type': 'application/octet-stream' 
+                        'Content-type': 'application/octet-stream'
                     },
                     timeout: 5000,
                 });
