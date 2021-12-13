@@ -10,7 +10,7 @@ const crypto_1 = require("crypto");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
 const pg_format_1 = __importDefault(require("pg-format"));
-const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_MAPI, BROADCAST_QUEUE, DEBUG, JIG_TOPIC, MAPI_KEY } = process.env;
+const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_MAPI, BROADCAST_QUEUE, DEBUG, JIG_TOPIC, MAPI_KEY, NAMESPACE } = process.env;
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
@@ -42,7 +42,7 @@ class FyxBlockchainPg {
         });
     }
     async broadcast(rawtx, mapiKey) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e;
         const tx = bsv_1.Tx.fromHex(rawtx);
         const txid = tx.id();
         const txidBuf = Buffer.from(txid, 'hex');
@@ -169,10 +169,29 @@ class FyxBlockchainPg {
                 console.log(`Error from sendRawTransaction: ${e.message}`);
                 console.log(`Error is ignored. Continuing`);
             }
-            else
+            else {
+                await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.cloudwatch.putMetricData({
+                    Namespace: 'broadcast',
+                    MetricData: [{
+                            MetricName: `${NAMESPACE}-broadcast-failure`,
+                            Unit: 'Count',
+                            Value: 1,
+                            Timestamp: new Date()
+                        }]
+                }).promise());
                 throw (0, http_errors_1.default)(422, e.message);
+            }
         }
         console.timeEnd(`Broadcasting: ${txid}`);
+        await ((_c = this.aws) === null || _c === void 0 ? void 0 : _c.cloudwatch.putMetricData({
+            Namespace: 'broadcast',
+            MetricData: [{
+                    MetricName: `${NAMESPACE}-broadcast-success`,
+                    Unit: 'Count',
+                    Value: 1,
+                    Timestamp: new Date()
+                }]
+        }).promise());
         console.time(`Updating DB: ${txid}`);
         await this.pool.query(`INSERT INTO txns(txid) 
             VALUES ($1) 
@@ -262,7 +281,7 @@ class FyxBlockchainPg {
                 ((_f = (_e = txOut.script.chunks[4]) === null || _e === void 0 ? void 0 : _e.buf) === null || _f === void 0 ? void 0 : _f.compare(fyxBuf)) === 0);
         });
         if (isRun && JIG_TOPIC) {
-            await ((_b = this.aws) === null || _b === void 0 ? void 0 : _b.sns.publish({
+            await ((_d = this.aws) === null || _d === void 0 ? void 0 : _d.sns.publish({
                 TopicArn: JIG_TOPIC !== null && JIG_TOPIC !== void 0 ? JIG_TOPIC : '',
                 Message: JSON.stringify({ txid })
             }).promise());
@@ -287,7 +306,7 @@ class FyxBlockchainPg {
             }
         }
         if (BROADCAST_QUEUE) {
-            await ((_c = this.aws) === null || _c === void 0 ? void 0 : _c.sqs.sendMessage({
+            await ((_e = this.aws) === null || _e === void 0 ? void 0 : _e.sqs.sendMessage({
                 QueueUrl: BROADCAST_QUEUE || '',
                 MessageBody: JSON.stringify({ txid }),
                 MessageDeduplicationId: txid,
