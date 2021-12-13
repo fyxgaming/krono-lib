@@ -169,28 +169,10 @@ export class FyxBlockchainPg implements IBlockchain {
         console.time(`Broadcasting: ${txid}`);
         try {
             await this.rpcClient.sendRawTransaction(rawtx);
-            await this.aws?.cloudwatch.putMetricData({
-                Namespace: 'broadcast',
-                MetricData: [{
-                    MetricName: `${NAMESPACE}-broadcast-success`,
-                    Unit: 'Count',
-                    Value: 1,
-                    Timestamp: new Date()
-                }]
-            }).promise();
         } catch (e: any) {
             if (e.message.includes('Transaction already known') || e.message.includes('Transaction already in the mempool')) {
                 console.log(`Error from sendRawTransaction: ${e.message}`);
                 console.log(`Error is ignored. Continuing`);
-                await this.aws?.cloudwatch.putMetricData({
-                    Namespace: 'broadcast',
-                    MetricData: [{
-                        MetricName: `${NAMESPACE}-broadcast-success`,
-                        Unit: 'Count',
-                        Value: 1,
-                        Timestamp: new Date()
-                    }]
-                }).promise();
             }
             else {
                 await this.aws?.cloudwatch.putMetricData({
@@ -206,6 +188,16 @@ export class FyxBlockchainPg implements IBlockchain {
             }
         }
         console.timeEnd(`Broadcasting: ${txid}`);
+
+        await this.aws?.cloudwatch.putMetricData({
+            Namespace: 'broadcast',
+            MetricData: [{
+                MetricName: `${NAMESPACE}-broadcast-success`,
+                Unit: 'Count',
+                Value: 1,
+                Timestamp: new Date()
+            }]
+        }).promise();
 
         console.time(`Updating DB: ${txid}`);
         await this.pool.query(`INSERT INTO txns(txid) 
