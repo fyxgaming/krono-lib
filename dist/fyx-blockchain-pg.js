@@ -10,7 +10,7 @@ const crypto_1 = require("crypto");
 const fyx_axios_1 = __importDefault(require("./fyx-axios"));
 const order_lock_regex_1 = __importDefault(require("./order-lock-regex"));
 const pg_format_1 = __importDefault(require("pg-format"));
-const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_MAPI, BROADCAST_QUEUE, DEBUG, JIG_TOPIC, MAPI_KEY, NAMESPACE } = process.env;
+const { API_KEY, BLOCKCHAIN_BUCKET, DEBUG, JIG_TOPIC, NAMESPACE } = process.env;
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
 const INPUT_SIZE = 148;
@@ -42,7 +42,7 @@ class FyxBlockchainPg {
         });
     }
     async broadcast(rawtx, mapiKey) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d;
         const tx = bsv_1.Tx.fromHex(rawtx);
         const txid = tx.id();
         const txidBuf = Buffer.from(txid, 'hex');
@@ -284,33 +284,6 @@ class FyxBlockchainPg {
             await ((_d = this.aws) === null || _d === void 0 ? void 0 : _d.sns.publish({
                 TopicArn: JIG_TOPIC !== null && JIG_TOPIC !== void 0 ? JIG_TOPIC : '',
                 Message: JSON.stringify({ txid })
-            }).promise());
-        }
-        if (BROADCAST_MAPI) {
-            try {
-                const resp = await (0, fyx_axios_1.default)({
-                    url: `${BROADCAST_MAPI}/api/v1/broadcast`,
-                    method: 'POST',
-                    data: tx.toBuffer(),
-                    headers: {
-                        Authorization: `Bearer ${MAPI_KEY}`,
-                        'Content-type': 'application/octet-stream'
-                    },
-                    timeout: 5000,
-                });
-                console.log('MAPI Response:', resp.data);
-                await this.pool.query('UPDATE txns SET mapi_ts=current_timestamp WHERE txid=$1', [txidBuf]);
-            }
-            catch (e) {
-                console.error('MAPI Error:', txid, e);
-            }
-        }
-        if (BROADCAST_QUEUE) {
-            await ((_e = this.aws) === null || _e === void 0 ? void 0 : _e.sqs.sendMessage({
-                QueueUrl: BROADCAST_QUEUE || '',
-                MessageBody: JSON.stringify({ txid }),
-                MessageDeduplicationId: txid,
-                MessageGroupId: 'FyxGroup'
             }).promise());
         }
         return txid;

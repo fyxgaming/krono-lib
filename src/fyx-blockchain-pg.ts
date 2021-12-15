@@ -9,7 +9,7 @@ import orderLockRegex from './order-lock-regex';
 import fmt from 'pg-format';
 import { Pool } from 'pg';
 
-const { API_KEY, BLOCKCHAIN_BUCKET, BROADCAST_MAPI, BROADCAST_QUEUE, DEBUG, JIG_TOPIC, MAPI_KEY, NAMESPACE } = process.env;
+const { API_KEY, BLOCKCHAIN_BUCKET, DEBUG, JIG_TOPIC, NAMESPACE } = process.env;
 
 const DUST_LIMIT = 273;
 const SIG_SIZE = 107;
@@ -313,36 +313,6 @@ export class FyxBlockchainPg implements IBlockchain {
             }).promise();
         }
 
-        if (BROADCAST_MAPI) {
-            try {
-                const resp = await axios({
-                    url: `${BROADCAST_MAPI}/api/v1/broadcast`,
-                    method: 'POST',
-                    data: tx.toBuffer(),
-                    headers: {
-                        Authorization: `Bearer ${MAPI_KEY}`,
-                        'Content-type': 'application/octet-stream'
-                    },
-                    timeout: 5000,
-                });
-                console.log('MAPI Response:', resp.data);
-                await this.pool.query(
-                    'UPDATE txns SET mapi_ts=current_timestamp WHERE txid=$1',
-                    [txidBuf]
-                );
-            } catch (e: any) {
-                console.error('MAPI Error:', txid, e);
-            }
-        }
-
-        if (BROADCAST_QUEUE) {
-            await this.aws?.sqs.sendMessage({
-                QueueUrl: BROADCAST_QUEUE || '',
-                MessageBody: JSON.stringify({ txid }),
-                MessageDeduplicationId: txid,
-                MessageGroupId: 'FyxGroup'
-            }).promise();
-        }
         return txid;
     }
 
